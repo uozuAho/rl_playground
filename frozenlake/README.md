@@ -10,6 +10,6 @@ entire value table in memory.
 Install uv
 
 ```sh
-uv install
+uv sync
 uv run hello.py
 ```

@@ -9,7 +9,7 @@ to train and run an agent with minimal fuss/config.
 Install uv
 
 ```sh
-uv install
+uv sync
 
 # train an agent. This saves data to logs/
 # tinker with the config file dqn-config.yml
