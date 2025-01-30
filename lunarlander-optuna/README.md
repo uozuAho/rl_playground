@@ -7,4 +7,7 @@ Install uv
 
 ```sh
 uv sync
+# TODO: fix & test plotting before running (long) training.
+# Probably need to `uv add plotly`
+uv run lunar.py
 ```
