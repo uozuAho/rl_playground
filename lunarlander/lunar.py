@@ -6,6 +6,20 @@ from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.monitor import Monitor
 
 
+ENV_NAME = "LunarLander-v3"
+
+
+def show_env_params():
+    env = gym.make(ENV_NAME, render_mode="human")
+
+    print("action space")
+    print(env.action_space)
+
+    print("observation space")
+    print(env.observation_space)
+
+
+
 def run_env_demo():
     """ Demonstrates the environment by making random actions """
     env = gym.make("LunarLander-v3", render_mode="human")
@@ -68,7 +82,8 @@ def run_trained_agent():
     env.close()
 
 
-run_env_demo()
+show_env_params()
+# run_env_demo()
 # train_agent(1000)
 # eval_agent()
 # run_trained_agent()

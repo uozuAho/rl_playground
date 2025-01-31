@@ -6,8 +6,21 @@ from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.monitor import Monitor
 
 
+ENV_NAME = "Blackjack-v1"
+
+
+def show_env_params():
+    env = gym.make(ENV_NAME, render_mode="human")
+
+    print("action space")
+    print(env.action_space)
+
+    print("observation space")
+    print(env.observation_space)
+
+
 def run_env_demo():
-    env = gym.make("Blackjack-v1", render_mode="human")
+    env = gym.make(ENV_NAME, render_mode="human")
     observation, info = env.reset()
 
     done = False
@@ -23,4 +36,32 @@ def run_env_demo():
     env.close()
 
 
-run_env_demo()
+def train_agent(steps):
+    """
+    PPO: https://stable-baselines3.readthedocs.io/en/master/modules/ppo.html#ppo
+        - "Proximal Policy Optimisation" learning algo
+    policy networks: https://stable-baselines3.readthedocs.io/en/master/guide/custom_policy.html#policy-networks
+        - mlp:   general input types
+        - cnn:   image input types
+        - multi: mix of above
+    """
+    env = make_vec_env(ENV_NAME, n_envs=16)
+    model = PPO(
+        policy = 'MlpPolicy',
+        env = env,
+        n_steps = 1024,
+        batch_size = 64,
+        n_epochs = 4,
+        gamma = 0.999,
+        gae_lambda = 0.98,
+        ent_coef = 0.01,
+        device='cpu',
+        verbose=1)
+    model.learn(total_timesteps=steps)
+    model_name = "ppo-blackjack"
+    model.save(model_name)
+
+
+# show_env_params()
+# run_env_demo()
+train_agent(1000)
