@@ -8,6 +8,10 @@ At the moment, mostly using
 PPO algorithm to train agents in toy environments in
 [gymnasium](https://gymnasium.farama.org/).
 
+I've copied code from various places, attributed in-place. I think everything
+I've grabbed is MIT, so assume that license I guess.
+
+
 # Other stuff I've done
 Every now and then I get interested in AI/RL/machine learning. My trail of
 destruction:
