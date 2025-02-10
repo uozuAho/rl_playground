@@ -16,7 +16,7 @@ DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 def make_env(show_graphics=False):
-    r_mode = "human" if show_graphics else "rgbarray"
+    r_mode = "human" if show_graphics else "rgb_array"
     return gym.make(ENV_NAME, render_mode=r_mode)
 
 
@@ -151,6 +151,7 @@ def reinforce(policy, optimizer, n_training_episodes, max_t, gamma, print_every)
 
 
 def train(num_episodes=1000):
+    print(f'training for {num_episodes} episodes...')
     hidden_layer_size = 16
     learning_rate = 1e-2
     env = make_env()
@@ -190,7 +191,21 @@ def evaluate_agent(policy: Policy, max_steps=1000, n_eval_episodes=10):
     return mean_reward, std_reward
 
 
+def run_trained_agent(policy: Policy):
+    env = make_env(show_graphics=True)
+    observation, _ = env.reset()
+
+    done = False
+    while not done:
+        action, _ = policy.act(observation)
+        observation, reward, terminated, truncated, _ = env.step(action)
+        done = terminated or truncated
+
+    env.close()
+
+
 # show_env_params()
-run_env_demo()
-# policy = train(100)
+# run_env_demo()
+policy = train(300)
 # evaluate_agent(policy)
+run_trained_agent(policy)
