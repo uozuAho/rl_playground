@@ -15,18 +15,36 @@ ENV_NAME = "CartPole-v1"
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
-def make_env():
-    return gym.make(ENV_NAME)
+def make_env(show_graphics=False):
+    r_mode = "human" if show_graphics else "rgbarray"
+    return gym.make(ENV_NAME, render_mode=r_mode)
 
 
 def show_env_params():
-    env = gym.make(ENV_NAME, render_mode="human")
+    env = make_env()
 
     print("action space")
     print(env.action_space)
 
     print("observation space")
     print(env.observation_space)
+
+
+def run_env_demo():
+    env = make_env(show_graphics=True)
+    observation, _ = env.reset()
+
+    done = False
+    while not done:
+        action = env.action_space.sample()
+        print("Action taken:", action)
+
+        observation, reward, terminated, truncated, _ = env.step(action)
+        print("Obs:", observation)
+
+        done = terminated or truncated
+
+    env.close()
 
 
 class Policy(nn.Module):
@@ -173,5 +191,6 @@ def evaluate_agent(policy: Policy, max_steps=1000, n_eval_episodes=10):
 
 
 # show_env_params()
-policy = train(100)
-evaluate_agent(policy)
+run_env_demo()
+# policy = train(100)
+# evaluate_agent(policy)
