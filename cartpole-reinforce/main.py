@@ -148,25 +148,20 @@ def train(num_episodes=1000):
     return policy
 
 
-def evaluate_agent(env, max_steps, n_eval_episodes, policy):
-    """
-    Evaluate the agent for ``n_eval_episodes`` episodes and returns average reward and std of reward.
-    :param env: The evaluation environment
-    :param n_eval_episodes: Number of episode to evaluate the agent
-    :param policy: The Reinforce agent
-    """
+def evaluate_agent(policy: Policy, max_steps=1000, n_eval_episodes=10):
+    env = make_env()
     episode_rewards = []
     for episode in range(n_eval_episodes):
-        state = env.reset()
+        state, _ = env.reset()
         step = 0
         done = False
         total_rewards_ep = 0
 
         for step in range(max_steps):
             action, _ = policy.act(state)
-            new_state, reward, done, info = env.step(action)
+            new_state, reward, term, trunc, info = env.step(action)
+            done = term or trunc
             total_rewards_ep += reward
-
             if done:
                 break
             state = new_state
@@ -178,4 +173,5 @@ def evaluate_agent(env, max_steps, n_eval_episodes, policy):
 
 
 # show_env_params()
-train(100)
+policy = train(100)
+evaluate_agent(policy)
