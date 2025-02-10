@@ -61,6 +61,9 @@ def train(
 
             new_state, reward, terminated, truncated, info = env.step(action)
 
+            # q-learning update:
+            # bestnext = max(Q(new_state,a2) for all valid a2))
+            # Q(s,a) += lr * (r + gamma * bestnext - Q(s,a))
             Qtable[state][action] = Qtable[state][action] + learning_rate * (
                 reward + gamma * np.max(Qtable[new_state]) - Qtable[state][action]
             )
