@@ -1,0 +1,13 @@
+[project]
+name = "ttt-dqn"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "gymnasium>=1.0.0",
+    "numpy>=2.2.2",
+    "pytest>=8.3.4",
+    "sb3-contrib>=2.5.0",
+    "stable-baselines3>=2.5.0",
+]
