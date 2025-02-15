@@ -18,7 +18,8 @@ uv rur tabular.py  # tabular agents
 - try to get better performance from deep model(s)
     - note: maskppo does no better than random
     - note: ppo stays at avg -1 return during training, always does invalid actions
-    - try tabular with neg returns on invalid actions
+    - WIP: try tabular with neg returns on invalid actions
+        - do qlearn
     - try dqn
         - example: dqn/policy gradient with pytorch: https://github.com/kaifishr/TicTacToe/tree/main
             - idea from here: env returns negative reward + game over for illegal actions

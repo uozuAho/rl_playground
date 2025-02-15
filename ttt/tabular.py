@@ -3,6 +3,7 @@ Trying to figure out how best to train tabular agents.
 """
 
 import time
+import ttt.env
 from ttt.env import TicTacToeEnv
 from ttt.agents.perfect import PerfectAgent
 from ttt.agents.random import RandomAgent
@@ -12,7 +13,10 @@ import matplotlib.pyplot as plt
 
 
 def my_eval(a, opponent, num_games=20):
-    env = TicTacToeEnv(opponent=opponent)
+    env = TicTacToeEnv(
+        opponent=opponent,
+        on_invalid_action=ttt.env.INVALID_ACTION_GAME_OVER if a.allow_invalid_actions else ttt.env.INVALID_ACTION_THROW
+    )
     wins = 0
     losses = 0
     draws = 0
@@ -62,7 +66,9 @@ def train_eval(agent: SarsaAgent | QlearnAgent, opponent, total_eps, eval_interv
             # print(f'time: {time.time() - t_last}')
             t_last = time.time()
     try:
-        env = TicTacToeEnv(opponent=opponent)
+        env = TicTacToeEnv(
+            opponent=opponent,
+            on_invalid_action=ttt.env.INVALID_ACTION_GAME_OVER if agent.allow_invalid_actions else ttt.env.INVALID_ACTION_THROW)
         agent.train(env, total_eps, eps_decay_rate=0.001, learning_rate=0.1, ep_callback=callback)
     except KeyboardInterrupt:
         pass
@@ -83,7 +89,7 @@ def train_eval(agent: SarsaAgent | QlearnAgent, opponent, total_eps, eval_interv
 #     [('random', RandomAgent()), ('perfect', PerfectAgent('O'))],
 #     num_games=50
 # )
-sen, sr, se = train_eval(SarsaAgent(), RandomAgent(), total_eps=10000, eval_interval=1000)
+sen, sr, se = train_eval(SarsaAgent(allow_invalid_actions=True), RandomAgent(), total_eps=10000, eval_interval=1000)
 qen, qr, qe = train_eval(QlearnAgent(), RandomAgent(), total_eps=10000, eval_interval=1000)
 # train_eval(SarsaAgent(), PerfectAgent('O'), total_eps=10000, eval_interval=1000)
 plt.plot(sen, sr, label='sarsa avg return')
