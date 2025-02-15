@@ -90,7 +90,7 @@ def train_eval(agent: SarsaAgent | QlearnAgent, opponent, total_eps, eval_interv
 #     num_games=50
 # )
 sen, sr, se = train_eval(SarsaAgent(allow_invalid_actions=True), RandomAgent(), total_eps=10000, eval_interval=1000)
-qen, qr, qe = train_eval(QlearnAgent(), RandomAgent(), total_eps=10000, eval_interval=1000)
+qen, qr, qe = train_eval(QlearnAgent(allow_invalid_actions=True), RandomAgent(), total_eps=10000, eval_interval=1000)
 # train_eval(SarsaAgent(), PerfectAgent('O'), total_eps=10000, eval_interval=1000)
 plt.plot(sen, sr, label='sarsa avg return')
 plt.plot(sen, se, label='sarsa epsilon')

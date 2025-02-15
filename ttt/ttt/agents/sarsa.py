@@ -101,10 +101,6 @@ class SarsaAgent:
                 ep_callback(episode, epsilon)
 
 
-def make_env(opponent):
-    return TicTacToeEnv(opponent=opponent)
-
-
 def greedy_policy(env: TicTacToeEnv, qtable: Qtable, allow_invalid):
     best_value = -999999999.9
     best_action = None
