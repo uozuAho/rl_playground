@@ -1,3 +1,4 @@
+from ttt.agents.sarsa import SarsaAgent
 import ttt.env
 from ttt.env import TicTacToeEnv
 from ttt.agents.random import RandomAgent
@@ -28,3 +29,18 @@ def test_perfect_agents_always_draw():
             print('x action: ', action)
             env.step(action)
         assert env.get_status() == ttt.env.DRAW
+
+
+def test_sarsa_train_and_play():
+    for ye in [True, False]:
+        agent = SarsaAgent(allow_invalid_actions=ye)
+        env = TicTacToeEnv(
+            opponent=RandomAgent(),
+            on_invalid_action=ttt.env.INVALID_ACTION_GAME_OVER if ye else ttt.env.INVALID_ACTION_THROW)
+        agent.train(env, 1)
+        env.reset()
+        done = False
+        while not done:
+            action = agent.get_action(env)
+            obs, reward, term, trunc, info = env.step(action)
+            done = term or trunc
