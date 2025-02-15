@@ -32,8 +32,12 @@ class QlearnAgent:
     Tabular q-learning agent. Stores a state-action q table. Trains against
     itself (ie don't supply an opponent).
     """
-    def __init__(self, q_table: Qtable | None = None):
+    def __init__(
+            self,
+            q_table: Qtable | None = None,
+            allow_invalid_actions=False):
         self._q_table = q_table or Qtable()
+        self.allow_invalid_actions = allow_invalid_actions
 
     @staticmethod
     def load(path):
@@ -44,7 +48,7 @@ class QlearnAgent:
         return agent
 
     def get_action(self, env: TicTacToeEnv):
-        return greedy_policy(env, self._q_table)
+        return greedy_policy(env, self._q_table, self.allow_invalid_actions)
 
     def save(self, path):
         self._q_table.save(path)
@@ -69,7 +73,7 @@ class QlearnAgent:
             done = False
 
             while not done:
-                action = egreedy_policy(env, self._q_table, epsilon)
+                action = egreedy_policy(env, self._q_table, epsilon, self.allow_invalid_actions)
                 new_state, reward, terminated, truncated, _ = env.step(action)
                 new_state = env
                 done = terminated or truncated
@@ -85,10 +89,11 @@ class QlearnAgent:
                 ep_callback(episode, epsilon)
 
 
-def greedy_policy(env: TicTacToeEnv, qtable: Qtable):
+def greedy_policy(env: TicTacToeEnv, qtable: Qtable, allow_invalid):
     best_value = -999999999.9
     best_action = None
-    for a in env.valid_actions():
+    actions = range(9) if allow_invalid else (env.valid_actions())
+    for a in actions:
         value = qtable.value(envstate(env), a)
         if value > best_value:
             best_value = value
@@ -96,12 +101,13 @@ def greedy_policy(env: TicTacToeEnv, qtable: Qtable):
     return best_action
 
 
-def egreedy_policy(env: TicTacToeEnv, qtable: Qtable, epsilon: float):
+def egreedy_policy(env: TicTacToeEnv, qtable: Qtable, epsilon: float, allow_invalid):
     random_num = random.uniform(0, 1)
     if random_num > epsilon:
-        action = greedy_policy(env, qtable)
+        action = greedy_policy(env, qtable, allow_invalid)
     else:
-        action = env.action_space.sample(mask=env.valid_action_mask())
+        mask = np.ones(9, dtype=np.int8) if allow_invalid else env.valid_action_mask()
+        action = env.action_space.sample(mask=mask)
     return action
 
 

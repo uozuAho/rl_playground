@@ -41,8 +41,12 @@ class Qtable:
 
 
 class SarsaAgent:
-    def __init__(self, q_table: Qtable | None = None):
+    def __init__(
+            self,
+            q_table: Qtable | None = None,
+            allow_invalid_actions=False):
         self._q_table = q_table or Qtable()
+        self.allow_invalid_actions = allow_invalid_actions
 
     @staticmethod
     def load(path):
@@ -53,7 +57,7 @@ class SarsaAgent:
         return agent
 
     def get_action(self, env: TicTacToeEnv):
-        return greedy_policy(env, self._q_table)
+        return greedy_policy(env, self._q_table, self.allow_invalid_actions)
 
     def save(self, path):
         self._q_table.save(path)
@@ -75,14 +79,14 @@ class SarsaAgent:
                 np.exp(-eps_decay_rate * episode))
             env.reset()
             state = env.copy()
-            action = next_action = egreedy_policy(env, self._q_table, epsilon)
+            action = next_action = egreedy_policy(env, self._q_table, epsilon, self.allow_invalid_actions)
             done = False
 
             while not done:
                 # todo (maybe): don't update value after exploratory step? (off policy)
                 next_state, reward, terminated, truncated, _ = env.step(action)
                 next_state = env
-                next_action = egreedy_policy(env, self._q_table, epsilon)
+                next_action = egreedy_policy(env, self._q_table, epsilon, self.allow_invalid_actions)
                 done = terminated or truncated
 
                 current_q = self._q_table.value(envstate(state), action)
@@ -97,14 +101,11 @@ class SarsaAgent:
                 ep_callback(episode, epsilon)
 
 
-def make_env(opponent):
-    return TicTacToeEnv(opponent=opponent)
-
-
-def greedy_policy(env: TicTacToeEnv, qtable: Qtable):
+def greedy_policy(env: TicTacToeEnv, qtable: Qtable, allow_invalid):
     best_value = -999999999.9
     best_action = None
-    for a in env.valid_actions():
+    actions = range(9) if allow_invalid else (env.valid_actions())
+    for a in actions:
         value = qtable.value(envstate(env), a)
         if value > best_value:
             best_value = value
@@ -112,12 +113,13 @@ def greedy_policy(env: TicTacToeEnv, qtable: Qtable):
     return best_action
 
 
-def egreedy_policy(env: TicTacToeEnv, qtable: Qtable, epsilon: float):
+def egreedy_policy(env: TicTacToeEnv, qtable: Qtable, epsilon: float, allow_invalid):
     random_num = random.uniform(0, 1)
     if random_num > epsilon:
-        action = greedy_policy(env, qtable)
+        action = greedy_policy(env, qtable, allow_invalid)
     else:
-        action = env.action_space.sample(mask=env.valid_action_mask())
+        mask = np.ones(9, dtype=np.int8) if allow_invalid else env.valid_action_mask()
+        action = env.action_space.sample(mask=mask)
     return action
 
 

@@ -9,6 +9,7 @@ NUM_LOC = 9
 IN_PROGRESS_REWARD = 0
 WIN_REWARD = 1
 LOSS_REWARD = -1
+INVALID_ACTION_REWARD = -1
 EMPTY_CODE = 0
 O_CODE = 1
 X_CODE = 2
@@ -17,6 +18,10 @@ IN_PROGRESS = -1
 DRAW = 0
 O_WIN = 1
 X_WIN = 2
+
+# invalid action responses
+INVALID_ACTION_THROW = 0
+INVALID_ACTION_GAME_OVER = 1
 
 
 def tomark(code):
@@ -69,7 +74,8 @@ class TicTacToeEnv(gym.Env):
 
     def __init__(self,
                  my_mark='X',
-                 opponent=None):
+                 opponent=None,
+                 on_invalid_action=INVALID_ACTION_THROW):
         """
         Params
             - opponent: has a get_action(env) method
@@ -78,6 +84,7 @@ class TicTacToeEnv(gym.Env):
         self.observation_space = spaces.Box(low=0, high=2, shape=(3,3), dtype=np.int8)
         self.my_mark = my_mark
         self.opponent = opponent
+        self.on_invalid_action = on_invalid_action
         self.reset()
 
     def reset(self, **kwargs):
@@ -93,6 +100,7 @@ class TicTacToeEnv(gym.Env):
         c.opponent = self.opponent
         c.board = self.board[:]
         c.is_game_over = self.is_game_over
+        c.on_invalid_action = self.on_invalid_action
         return c
 
     def get_status(self):
@@ -126,7 +134,14 @@ class TicTacToeEnv(gym.Env):
             return self._get_obs(), 0, True, False, {}
 
         loc = action
-        assert self.board[loc] == 0, f"action: {loc}: position already filled"
+        if self.board[loc] != 0:
+            if self.on_invalid_action == INVALID_ACTION_GAME_OVER:
+                self.is_game_over = True
+                return self._get_obs(), INVALID_ACTION_REWARD, True, False, {}
+            elif self.on_invalid_action == INVALID_ACTION_THROW:
+                raise Exception(f"action: {loc}: position already filled")
+            else:
+                raise Exception(f"unknown invalid action response: {self.on_invalid_action}")
 
         reward = IN_PROGRESS_REWARD
         self.board[loc] = tocode(self.next_mark)
