@@ -25,7 +25,7 @@ def train(name, opponent, steps):
         env = env,
         verbose=1
     )
-    model.learn(total_timesteps=steps, log_interval=steps//10)
+    model.learn(total_timesteps=steps, log_interval=steps//30)
     model.save(name)
 
 
@@ -71,5 +71,6 @@ def eval_trained_ppo_agents(names):
         my_eval(TrainedAgent(name), PerfectAgent('O'))
 
 
-# train('dqn-mlp-vs-rng', opponent=RandomAgent(), steps=200000)
-eval_trained_ppo_agents(['dqn-mlp-vs-rng'])
+train('dqn-mlp-vs-rng', opponent=RandomAgent(), steps=300000)
+# train('dqn-mlp-vs-perfect', opponent=PerfectAgent('O'), steps=100000)
+eval_trained_ppo_agents(['dqn-mlp-vs-rng', 'dqn-mlp-vs-perfect'])
