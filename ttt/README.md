@@ -18,7 +18,9 @@ uv run mask_ppo.py # maskable ppo agent (don't do invalid actions)
 ```
 
 # todo
-- try to get better performance from deep model(s)
-    - note: maskppo does no better than random
-    - note: ppo stays at avg -1 return during training, always does invalid actions
+- optimise training: aim for highest average return with lowest training
+    - optuna dqn
+    - optuna tabular?
+    - interesting variables i can think of:
+        - net arch, opponent, num episodes
 - inline todos

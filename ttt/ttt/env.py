@@ -69,6 +69,10 @@ def check_game_status(board):
     return DRAW
 
 
+class IllegalActionError(Exception):
+    pass
+
+
 class TicTacToeEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
@@ -139,7 +143,7 @@ class TicTacToeEnv(gym.Env):
                 self.is_game_over = True
                 return self._get_obs(), INVALID_ACTION_REWARD, True, False, {}
             elif self.on_invalid_action == INVALID_ACTION_THROW:
-                raise Exception(f"action: {loc}: position already filled")
+                raise IllegalActionError(f"action: {loc}: position already filled")
             else:
                 raise Exception(f"unknown invalid action response: {self.on_invalid_action}")
 

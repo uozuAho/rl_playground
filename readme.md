@@ -20,6 +20,8 @@ destruction:
 - [blackjack: tabular(?) learning methods](https://github.com/uozuAho/rl_montecarlo_blackjack)
 - [open spiel playground](https://github.com/uozuAho/open_spiel_playground)
     - playing around with open spiel
+- [my tensorflow cheatsheets](https://github.com/uozuAho/tensorflow_cheatsheets)
+    - tf is hard to (re)learn and use. pytorch seems much nicer
 
 ## not very relevant
 - [ts_ai2](https://github.com/uozuAho/ts_ai2)
