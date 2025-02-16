@@ -82,7 +82,7 @@ class TrialEvalCallback(EvalCallback):
 def mktrain(
         mkmodel,
         mkenv,
-        train_steps=100000,
+        train_steps=10000,
         n_eval_eps=50,
         steps_per_eval=1000
         ):

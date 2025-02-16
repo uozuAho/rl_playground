@@ -1,2 +1,0 @@
-,number,value,datetime_start,datetime_complete,duration,params_act_fn,params_gamma,params_learning_rate,params_net_arch,user_attrs_gamma_,state
-0,0,0.92,2025-02-16 17:22:12.610144,2025-02-16 17:23:26.119311,0 days 00:01:13.509167,relu,0.002371749496696025,0.003641822993063176,tiny,0.997628250503304,COMPLETE

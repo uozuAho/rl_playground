@@ -18,6 +18,7 @@ uv run mask_ppo.py # maskable ppo agent (don't do invalid actions)
 ```
 
 # todo
+- fix '5' printout. clear pip cache?
 - optimise training: aim for highest average return with lowest training
     - optuna dqn
     - optuna tabular?
