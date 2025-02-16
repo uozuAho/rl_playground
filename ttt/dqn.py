@@ -6,6 +6,7 @@ import ttt.env
 from ttt.agents.perfect import PerfectAgent
 from ttt.agents.random import RandomAgent
 from ttt.env import TicTacToeEnv
+from utils import tuna
 
 
 def make_env(opponent):
@@ -116,8 +117,19 @@ def eval_trained_ppo_agents(names):
         my_eval(agent, PerfectAgent('O'))
 
 
+def auto_tune_hyperparams():
+    tuna.run_trials(
+        'dqn',
+        mkmodel=lambda kw: DQN(**kw),
+        mkenv=lambda: TicTacToeEnv(
+            opponent=RandomAgent(),
+            on_invalid_action=ttt.env.INVALID_ACTION_GAME_OVER)
+    )
+
+
 # train('dqn-mlp-vs-rng', opponent=RandomAgent(), steps=300000)
 # train('dqn-mlp-vs-perfect', opponent=PerfectAgent('O'), steps=100000)
 # dspiel = train2('dqn-spiel-rng', 400000)
-eval_trained_ppo_agents(['dqn-mlp-vs-rng', 'dqn-mlp-vs-perfect', 'dqn-spiel-rng'])
+# eval_trained_ppo_agents(['dqn-mlp-vs-rng', 'dqn-mlp-vs-perfect', 'dqn-spiel-rng'])
 # my_eval(dspiel, RandomAgent())
+auto_tune_hyperparams()
