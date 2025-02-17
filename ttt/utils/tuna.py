@@ -87,6 +87,7 @@ def run_trials(
         sample_fn,
         n_startup_trials=5,
         n_warmup_steps=10,
+        eval_period=1000,
         n_max_trials=100,
         timeout_s=1800,
         n_jobs=1
@@ -101,6 +102,7 @@ def run_trials(
         - n_startup_trials: no pruning before this many trials
         - n_warmup_steps: don't prune a trial before this many 'steps'. I think
           a step is an eval interval.
+        - eval_period: num training steps between evaluations
         - n_max_trials: stop study after this many trials
         - timeout_s: stop study after this time
         - n_jobs: parallelism. May not work well with GPU models. Try with cpu
@@ -121,7 +123,7 @@ def run_trials(
 
     try:
         study.optimize(
-            mktrain(mkmodel, mkenv, sample_fn, train_steps, steps_btwn_evals=1000),
+            mktrain(mkmodel, mkenv, sample_fn, train_steps, steps_btwn_evals=eval_period),
             n_trials=n_max_trials,
             n_jobs=n_jobs,
             timeout=timeout_s

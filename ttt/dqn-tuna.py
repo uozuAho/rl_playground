@@ -47,15 +47,11 @@ def sample_params(trial: optuna.Trial):
     }
 
 
-def auto_tune_hyperparams():
-    tuna.run_trials(
-        'dqn-ttt',
-        mkmodel=lambda kw: DQN(**kw),
-        mkenv=make_env,
-        train_steps=50000,
-        sample_fn=sample_params,
-        n_max_trials=100
-    )
-
-
-auto_tune_hyperparams()
+tuna.run_trials(
+    'dqn-ttt',
+    mkmodel=lambda kw: DQN(**kw),
+    mkenv=make_env,
+    train_steps=50000,
+    sample_fn=sample_params,
+    n_max_trials=100
+)

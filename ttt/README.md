@@ -64,6 +64,7 @@ uv run optuna-dashboard sqlite:///dqn-ttt.db  # see hyperparam report
 
 # todo
 - optimise training: aim for highest average return with lowest training
-    - WIP: optuna tabular
+    - WIP: tabular param search
+        - don't use optuna, too hard with non-sb3 model
     - run/fix tests
 - inline todos
