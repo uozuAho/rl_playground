@@ -16,6 +16,15 @@ wheels = [
 ]
 
 [[package]]
+name = "bottle"
+version = "0.13.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/1b/fb/97839b95c2a2ea1ca91877a846988f90f4ca16ee42c0bb79e079171c0c06/bottle-0.13.2.tar.gz", hash = "sha256:e53803b9d298c7d343d00ba7d27b0059415f04b9f6f40b8d58b5bf914ba9d348", size = 98472 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7e/0a/a5260c758ff813acc6967344339aa7ba15f815575f4d49141685c4345d39/bottle-0.13.2-py2.py3-none-any.whl", hash = "sha256:27569ab8d1332fbba3e400b3baab2227ab4efb4882ff147af05a7c00ed73409c", size = 104053 },
+]
+
+[[package]]
 name = "cloudpickle"
 version = "3.1.1"
 source = { registry = "https://pypi.org/simple" }
@@ -576,6 +585,21 @@ wheels = [
 ]
 
 [[package]]
+name = "optuna-dashboard"
+version = "0.17.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "bottle" },
+    { name = "optuna" },
+    { name = "packaging" },
+    { name = "scikit-learn" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fe/e7/c23ef9ba48f10f8b015df410493a7b356fe24a7131ac1f4e599bbae04e76/optuna_dashboard-0.17.0.tar.gz", hash = "sha256:59866b7c5322153cdf777cba701e5ca1d1142f1cff9974976d2295c4c01d79dc", size = 8371330 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a7/c5/51ccbce2d09607bff78174a84648b55cf1f8668658bc68d2cddfaaeb02e3/optuna_dashboard-0.17.0-py3-none-any.whl", hash = "sha256:a8e19696039ed25554f8be13c4ea2b80f99cdd444b9989222c4bdbe5036bb447", size = 8389864 },
+]
+
+[[package]]
 name = "packaging"
 version = "24.2"
 source = { registry = "https://pypi.org/simple" }
@@ -975,6 +999,7 @@ dependencies = [
     { name = "gymnasium" },
     { name = "numpy" },
     { name = "optuna" },
+    { name = "optuna-dashboard" },
     { name = "plotly" },
     { name = "pytest" },
     { name = "sb3-contrib" },
@@ -987,6 +1012,7 @@ requires-dist = [
     { name = "gymnasium", specifier = ">=1.0.0" },
     { name = "numpy", specifier = ">=2.2.2" },
     { name = "optuna", specifier = ">=4.2.1" },
+    { name = "optuna-dashboard", specifier = ">=0.17.0" },
     { name = "plotly", specifier = ">=6.0.0" },
     { name = "pytest", specifier = ">=8.3.4" },
     { name = "sb3-contrib", specifier = ">=2.5.0" },

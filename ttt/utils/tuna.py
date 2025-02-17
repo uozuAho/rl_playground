@@ -14,14 +14,12 @@ import torch.nn as nn
 
 def sample_params(trial: optuna.Trial, env: gym.Env) -> Dict[str, Any]:
     gamma = 1.0 - trial.suggest_float("gamma", 0.0001, 0.1, log=True)
-    # max_grad_norm = trial.suggest_float("max_grad_norm", 0.3, 5.0, log=True)
     learning_rate = trial.suggest_float("learning_rate", 1e-5, 1, log=True)
     net_arch = trial.suggest_categorical("net_arch", ['tiny', 'small'])
     activation_fn = trial.suggest_categorical("act_fn", ['tanh', 'relu'])
 
     # Display true values
     trial.set_user_attr("gamma_", gamma)
-    # trial.set_user_attr("n_steps", n_steps)
 
     net_arch = [32, 32] if net_arch == 'tiny' else [64, 64]
 
@@ -30,7 +28,6 @@ def sample_params(trial: optuna.Trial, env: gym.Env) -> Dict[str, Any]:
     return {
         "env": env,
         "policy": "MlpPolicy",
-        # "device": "cpu",
         "batch_size": 128,  # todo: parameterise this
         "buffer_size": 10000,  # todo: and this
         "gamma": gamma,
@@ -39,7 +36,6 @@ def sample_params(trial: optuna.Trial, env: gym.Env) -> Dict[str, Any]:
         "target_update_interval": 1000,  # todo: and this
         "exploration_initial_eps": 1.0, # tiodo
         "exploration_final_eps": 0.1, # toodeooo
-        # "max_grad_norm": max_grad_norm,
         "policy_kwargs": {
             "net_arch": net_arch,
             "activation_fn": activation_fn,
@@ -84,14 +80,14 @@ def mktrain(
         mkenv,
         train_steps=10000,
         n_eval_eps=50,
-        steps_per_eval=1000
+        steps_btwn_evals=1000
         ):
 
     def train(trial: optuna.Trial):
         kwargs = sample_params(trial, env=mkenv())
         model = mkmodel(kwargs)
         eval_envs = make_vec_env(mkenv, 5)
-        eval_callback = TrialEvalCallback(eval_envs, trial, n_eval_eps, steps_per_eval)
+        eval_callback = TrialEvalCallback(eval_envs, trial, n_eval_eps, steps_btwn_evals)
 
         nan_encountered = False
         try:
@@ -141,7 +137,12 @@ def run_trials(
     pruner = MedianPruner(
         n_startup_trials=n_startup_trials, n_warmup_steps=n_evaulations // 3
     )
-    study = optuna.create_study(sampler=sampler, pruner=pruner, direction="maximize")
+    study = optuna.create_study(
+        storage="sqlite:///db.sqlite3",
+        study_name="dqn-ttt",
+        sampler=sampler,
+        pruner=pruner,
+        direction="maximize")
 
     try:
         study.optimize(
