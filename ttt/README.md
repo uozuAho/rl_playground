@@ -24,6 +24,4 @@ uv run optuna-dashboard sqlite:///dqn-ttt.db  # see hyperparam report
     - WIP: optuna dqn
         - make more params configurable
     - optuna tabular?
-    - interesting variables i can think of:
-        - net arch, opponent, num episodes
 - inline todos

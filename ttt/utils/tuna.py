@@ -6,40 +6,7 @@ from stable_baselines3.common.callbacks import EvalCallback
 import optuna
 from optuna.pruners import MedianPruner
 from optuna.samplers import TPESampler
-from typing import Any, Dict
 import torch as th
-import torch.nn as nn
-
-
-def sample_params(trial: optuna.Trial, env: gym.Env) -> Dict[str, Any]:
-    gamma = 1.0 - trial.suggest_float("gamma", 0.0001, 0.1, log=True)
-    learning_rate = trial.suggest_float("learning_rate", 1e-5, 1, log=True)
-    net_arch = trial.suggest_categorical("net_arch", ['tiny', 'small'])
-    activation_fn = trial.suggest_categorical("act_fn", ['tanh', 'relu'])
-
-    # Display true values
-    trial.set_user_attr("gamma_", gamma)
-
-    net_arch = [32, 32] if net_arch == 'tiny' else [64, 64]
-
-    activation_fn = {"tanh": nn.Tanh, "relu": nn.ReLU}[activation_fn]
-
-    return {
-        "env": env,
-        "policy": "MlpPolicy",
-        "batch_size": 128,  # todo: parameterise this
-        "buffer_size": 10000,  # todo: and this
-        "gamma": gamma,
-        "learning_rate": learning_rate,
-        "learning_starts": 1000, # todo: and this
-        "target_update_interval": 1000,  # todo: and this
-        "exploration_initial_eps": 1.0, # tiodo
-        "exploration_final_eps": 0.1, # toodeooo
-        "policy_kwargs": {
-            "net_arch": net_arch,
-            "activation_fn": activation_fn,
-        },
-    }
 
 
 class TrialEvalCallback(EvalCallback):
@@ -77,6 +44,7 @@ class TrialEvalCallback(EvalCallback):
 def mktrain(
         mkmodel,
         mkenv,
+        sample_fn,
         train_steps=10000,
         n_eval_eps=50,
         steps_btwn_evals=None
@@ -84,8 +52,7 @@ def mktrain(
     steps_btwn_evals = steps_btwn_evals or train_steps // 10
 
     def train(trial: optuna.Trial):
-        kwargs = sample_params(trial, env=mkenv())
-
+        kwargs = sample_fn(trial)
         model = mkmodel(kwargs)
         eval_envs = make_vec_env(mkenv, 5)
         eval_callback = TrialEvalCallback(eval_envs, trial, n_eval_eps, steps_btwn_evals)
@@ -117,27 +84,33 @@ def run_trials(
         mkmodel,
         mkenv,
         train_steps,
+        sample_fn,
         n_startup_trials=5,
-        n_max_trials=10,
-        timeout_s=60,
+        n_warmup_steps=10,
+        n_max_trials=100,
+        timeout_s=1800,
         n_jobs=1
         ):
     """
     Params
-        - name: name of the study. a file with this name will be saved
+        - name: name of the study. a db file with this name will be saved
         - mkmodel: (kwargs) -> model func
         - mkenv: _ -> gym Env func
         - train_steps: number of steps to train the model in each trial
-        - n_startup_trials: Stop random sampling after this many trials
+        - sample_fn: (trial) -> kwargs dict for model creation
+        - n_startup_trials: no pruning before this many trials
+        - n_warmup_steps: don't prune a trial before this many 'steps'. I think
+          a step is an eval interval.
         - n_max_trials: stop study after this many trials
         - timeout_s: stop study after this time
+        - n_jobs: parallelism. May not work well with GPU models. Try with cpu
     """
     # Set pytorch num threads to 1 for faster training
     th.set_num_threads(1)
     sampler = TPESampler(n_startup_trials=n_startup_trials)
     pruner = MedianPruner(
         n_startup_trials=n_startup_trials,
-        n_warmup_steps=2
+        n_warmup_steps=n_warmup_steps
     )
     study = optuna.create_study(
         storage=f"sqlite:///{name}.db",
@@ -148,7 +121,7 @@ def run_trials(
 
     try:
         study.optimize(
-            mktrain(mkmodel, mkenv, train_steps),
+            mktrain(mkmodel, mkenv, sample_fn, train_steps, steps_btwn_evals=1000),
             n_trials=n_max_trials,
             n_jobs=n_jobs,
             timeout=timeout_s
