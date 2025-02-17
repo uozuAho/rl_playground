@@ -6,7 +6,6 @@ from stable_baselines3.common.callbacks import EvalCallback
 import optuna
 from optuna.pruners import MedianPruner
 from optuna.samplers import TPESampler
-from optuna.visualization import plot_optimization_history, plot_param_importances
 from typing import Any, Dict
 import torch as th
 import torch.nn as nn
@@ -80,11 +79,13 @@ def mktrain(
         mkenv,
         train_steps=10000,
         n_eval_eps=50,
-        steps_btwn_evals=1000
+        steps_btwn_evals=None
         ):
+    steps_btwn_evals = steps_btwn_evals or train_steps // 10
 
     def train(trial: optuna.Trial):
         kwargs = sample_params(trial, env=mkenv())
+
         model = mkmodel(kwargs)
         eval_envs = make_vec_env(mkenv, 5)
         eval_callback = TrialEvalCallback(eval_envs, trial, n_eval_eps, steps_btwn_evals)
@@ -115,8 +116,8 @@ def run_trials(
         name,
         mkmodel,
         mkenv,
+        train_steps,
         n_startup_trials=5,
-        n_evaulations=2,
         n_max_trials=10,
         timeout_s=60,
         n_jobs=1
@@ -126,8 +127,8 @@ def run_trials(
         - name: name of the study. a file with this name will be saved
         - mkmodel: (kwargs) -> model func
         - mkenv: _ -> gym Env func
+        - train_steps: number of steps to train the model in each trial
         - n_startup_trials: Stop random sampling after this many trials
-        - n_evaulations: Number of evaluations during the training
         - n_max_trials: stop study after this many trials
         - timeout_s: stop study after this time
     """
@@ -135,18 +136,19 @@ def run_trials(
     th.set_num_threads(1)
     sampler = TPESampler(n_startup_trials=n_startup_trials)
     pruner = MedianPruner(
-        n_startup_trials=n_startup_trials, n_warmup_steps=n_evaulations // 3
+        n_startup_trials=n_startup_trials,
+        n_warmup_steps=2
     )
     study = optuna.create_study(
-        storage="sqlite:///db.sqlite3",
-        study_name="dqn-ttt",
+        storage=f"sqlite:///{name}.db",
+        study_name=name,
         sampler=sampler,
         pruner=pruner,
         direction="maximize")
 
     try:
         study.optimize(
-            mktrain(mkmodel, mkenv),
+            mktrain(mkmodel, mkenv, train_steps),
             n_trials=n_max_trials,
             n_jobs=n_jobs,
             timeout=timeout_s
@@ -169,10 +171,5 @@ def run_trials(
     for key, value in trial.user_attrs.items():
         print(f"    {key}: {value}")
 
-    study.trials_dataframe().to_csv(f"{name}.trials.csv")
-
-    fig1 = plot_optimization_history(study)
-    fig2 = plot_param_importances(study)
-
-    fig1.show()
-    fig2.show()
+    print("For more details:")
+    print(f"uv run optuna-dashboard sqlite:///{name}.db")

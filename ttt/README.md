@@ -15,11 +15,14 @@ uv run dqn.py      # dqn agent. Doesn't do as well as tabular vs random, doesn't
 uv run ppo.py      # ppo agent .. doesn't learn properly, avg return -1 (always loses)
 uv run mask_ppo.py # maskable ppo agent (don't do invalid actions)
                    # doesn't do any better than a random agent
+uv run dqn-tuna.py # find good hyperparams
+uv run optuna-dashboard sqlite:///dqn-ttt.db  # see hyperparam report
 ```
 
 # todo
 - optimise training: aim for highest average return with lowest training
-    - optuna dqn
+    - WIP: optuna dqn
+        - make more params configurable
     - optuna tabular?
     - interesting variables i can think of:
         - net arch, opponent, num episodes
