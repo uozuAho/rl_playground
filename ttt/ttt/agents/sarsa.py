@@ -64,7 +64,7 @@ class SarsaAgent:
 
     def train(self,
             env: TicTacToeEnv,
-            n_training_episodes,
+            n_training_episodes: int,
             min_epsilon=0.001,     # epsilon: exploration rate
             max_epsilon=1.0,
             eps_decay_rate=0.0005, # rate at which exploration drops off
