@@ -66,5 +66,8 @@ uv run optuna-dashboard sqlite:///dqn-ttt.db  # see hyperparam report
 - optimise training: aim for highest average return with lowest training
     - WIP: tabular param search
         - don't use optuna, too hard with non-sb3 model
+            - output to csv, analyse there
+            - or better plot that allows isolating individual traces
+                - https://matplotlib.org/stable/gallery/event_handling/legend_picking.html
     - run/fix tests
 - inline todos

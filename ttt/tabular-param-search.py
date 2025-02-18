@@ -69,6 +69,12 @@ for l, mne, mxe, ed, g, a in itertools.product(
         ep_callback=eval_callback)
 
 # todo: the resulting chart is too busy. write to csv and analyse there?
+# idea
+# do in parallel for funsies
+# plot:
+#   show/hide line in plot
+#   show sum(all eval rewards) in legend
+# output to csv anyway
 ep_nums = [x + eval_period for x in range(0, n_train_eps, eval_period)]
 for name, vals in data.items():
     plt.plot(ep_nums, vals, label=name)
