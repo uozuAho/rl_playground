@@ -1,5 +1,6 @@
 # todo
-- copy paste code from RLC, see if u can get it working with latest py
+- WIP: copy paste code from RLC, see if u can get it working with latest py
+    - passed first hurdle!
 - ABORT. figure out which python/tf/other deps are needed
 
 # reverse engineering which python/tf/other dep versions are needed
