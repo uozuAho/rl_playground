@@ -1,7 +1,10 @@
-# todo
-- WIP: copy paste code from RLC, see if u can get it working with latest py
-    - passed first hurdle!
-- ABORT. figure out which python/tf/other deps are needed
+# ABORT!
+
+Tried to run this: https://github.com/arjangroen/RLC
+
+Ran into python/tensorflow dependency hell.
+
+What i tried:
 
 # reverse engineering which python/tf/other dep versions are needed
 Note 1: Python versioning has sucked for ages, I guess it's not the author's fault
@@ -12,7 +15,7 @@ Note 2: TF makes breaking changes all the time? stop that?
 - how to tell which combination is needed for this repo: https://github.com/arjangroen/RLC
     - dunno. trial and error. This _is_ the author's fault
 
-## worflow
+## workflow
 ```sh
 rm -rf .venv/ .python-version pyproject.toml uv.lock README.md hello.py
 uv init -p <python version>
@@ -37,5 +40,10 @@ Idea: use latest python and libs, clone RLC repo, fix old api usages
 git clone git@github.com:arjangroen/RLC.git temp
 mv temp/RLC RLC
 rm -rf temp
-uv run demo
+uv add numpy pandas python-chess tensorflow
+uv run demo.py  # needs gpu
+
+uv add numpy pandas python-chess tensorflow-gpu?  # can't find compatible TF, piece of shit
 ```
+
+Dang.
