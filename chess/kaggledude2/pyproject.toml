@@ -1,0 +1,15 @@
+[project]
+name = "kaggledude2"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2.2.3",
+    "python-chess>=1.999",
+    "rlc",
+    "torch>=2.6.0",
+]
+
+[tool.uv.sources]
+rlc = { git = "https://github.com/arjangroen/RLC.git" }
