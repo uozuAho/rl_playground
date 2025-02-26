@@ -142,7 +142,7 @@ def run_trained_agent():
 
 # show_env_params()
 # run_env_demo()
-# train_agent(1000)
+train_agent(1000)
 eval_random_agent()
 eval_trained_agent()
 # run_trained_agent()
