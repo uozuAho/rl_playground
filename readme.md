@@ -37,4 +37,35 @@ destruction:
 - reorganise/rename dirs to make exmaples easier to find
     - tabular vs approx
     - proper alg names
-    - idea: env/alg.py
+    - idea: env/lib/alg.py
+        - lib: good, separate by deps
+- after:
+    - check all run as expected
+    - update docs
+
+spaceinvaders/
+    rlzoo/dqn.py
+blackjack/
+    sb3/ppo.py
+cartpole
+    torch/reinforce.py
+chess
+    kaggledude/moduleX
+    torch
+    others
+frozenlake
+    sb3/ppo.py
+    tabular/qlearn.py
+lunarlander
+    sb3/
+        ppo
+        optuna-a2c
+    torch
+ttt
+    sb3
+        dqn-optuna
+        dqn
+        mask-ppo
+    tabular
+        param-search
+        tabular.py
