@@ -30,3 +30,11 @@ destruction:
     - same as above, in C#
 - [react ai](https://github.com/uozuAho/react_ai)
     - not really sure what i was trying to do here. Use react???
+
+
+
+# todo
+- reorganise/rename dirs to make exmaples easier to find
+    - tabular vs approx
+    - proper alg names
+    - idea: env/alg.py
