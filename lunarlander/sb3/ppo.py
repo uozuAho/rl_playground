@@ -82,8 +82,8 @@ def run_trained_agent():
     env.close()
 
 
-show_env_params()
-# run_env_demo()
-# train_agent(1000)
-# eval_agent()
+# show_env_params()
+run_env_demo()
+train_agent(1000)
+eval_agent()
 # run_trained_agent()

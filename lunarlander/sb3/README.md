@@ -18,7 +18,6 @@ sudo apt install swig cmake python3-opengl
 # maybe install these if you're having uv install issues:
 # sudo apt install ffmpeg xvfb python3-dev libfreetype-dev
 uv sync
-
-# Comment in/out functions at the end of lunar.py, then:
-uv run lunar.py
+uv run ppo.py               # ppo algo
+uv run optuna-a2c.py        # use optuna to tune hyperparams
 ```
