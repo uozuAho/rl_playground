@@ -1,4 +1,5 @@
-""" From pytorch tute: https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
+""" Initial code from pytorch tute:
+https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
 """
 
 import gymnasium as gym
@@ -54,11 +55,12 @@ TAU = 0.005
 LR = 1e-4
 
 env = gym.make("CartPole-v1")
-device = torch.device(
-    "cuda" if torch.cuda.is_available() else
-    "mps" if torch.backends.mps.is_available() else
-    "cpu"
-)
+device = 'cpu'
+# device = torch.device(
+#     "cuda" if torch.cuda.is_available() else
+#     "mps" if torch.backends.mps.is_available() else
+#     "cpu"
+# )
 print(f'Using device: {device}')
 n_actions = env.action_space.n
 state, info = env.reset()
@@ -89,17 +91,10 @@ def select_action(state):
         return torch.tensor([[env.action_space.sample()]], device=device, dtype=torch.long)
 
 
-episode_durations = []
-
-
-def plot_durations(show_result=False):
+def plot_durations(episode_durations):
     plt.figure(1)
     durations_t = torch.tensor(episode_durations, dtype=torch.float)
-    if show_result:
-        plt.title('Result')
-    else:
-        plt.clf()
-        plt.title('Training...')
+    plt.title('Result')
     plt.xlabel('Episode')
     plt.ylabel('Duration')
     plt.plot(durations_t.numpy())
@@ -107,6 +102,7 @@ def plot_durations(show_result=False):
         means = durations_t.unfold(0, 100, 1).mean(1).view(-1)
         means = torch.cat((torch.zeros(99), means))
         plt.plot(means.numpy())
+    plt.show()
 
 
 def optimize_model():
@@ -157,6 +153,9 @@ def optimize_model():
 
 
 def train(num_episodes):
+    """ Returns list(episode duration) """
+    episode_durations = []
+
     for _ in range(num_episodes):
         state, _ = env.reset()
         state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
@@ -184,11 +183,12 @@ def train(num_episodes):
 
             if done:
                 episode_durations.append(t + 1)
-                plot_durations()
                 break
 
+    return episode_durations
 
-# train(20)
+
+# print('training...')
+# durations = train(20)
 # print('Complete')
-# plot_durations(show_result=True)
-# plt.show()
+# plot_durations(durations)
