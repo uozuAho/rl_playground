@@ -11,3 +11,7 @@ estimation.
 uv sync
 uv run reinforce.py
 ```
+
+# DQN todo
+- make sense of the code
+- label output plots better

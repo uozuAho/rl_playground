@@ -39,8 +39,6 @@ class DQN(nn.Module):
         self.layer2 = nn.Linear(128, 128)
         self.layer3 = nn.Linear(128, n_actions)
 
-    # Called with either one element to determine next action, or a batch
-    # during optimization
     def forward(self, x):
         x = F.relu(self.layer1(x))
         x = F.relu(self.layer2(x))
@@ -61,6 +59,7 @@ device = torch.device(
     "mps" if torch.backends.mps.is_available() else
     "cpu"
 )
+print(f'Using device: {device}')
 n_actions = env.action_space.n
 state, info = env.reset()
 n_observations = len(state)
@@ -81,10 +80,10 @@ def select_action(state):
     steps_done += 1
     if random.random() > eps_threshold:
         with torch.no_grad():
-            # t.max(1) will return the largest column value of each row.
-            # second column on max result is index of where max element was
-            # found, so we pick action with the larger expected reward.
-            # TODO: what???
+            # return the index of the max output value
+            # max: https://pytorch.org/docs/stable/generated/torch.max.html#torch.max
+            # view: https://pytorch.org/docs/stable/tensor_view.html#tensor-view-doc
+            # max(1).indices.view(1,1) = 1x1 view of the index of the max value in column 1
             return policy_net(state).max(1).indices.view(1, 1)
     else:
         return torch.tensor([[env.action_space.sample()]], device=device, dtype=torch.long)
@@ -104,19 +103,10 @@ def plot_durations(show_result=False):
     plt.xlabel('Episode')
     plt.ylabel('Duration')
     plt.plot(durations_t.numpy())
-    # Take 100 episode averages and plot them too
     if len(durations_t) >= 100:
         means = durations_t.unfold(0, 100, 1).mean(1).view(-1)
         means = torch.cat((torch.zeros(99), means))
         plt.plot(means.numpy())
-
-    # plt.pause(0.001)  # pause a bit so that plots are updated
-    # if is_ipython:
-    #     if not show_result:
-    #         display.display(plt.gcf())
-    #         display.clear_output(wait=True)
-    #     else:
-    #         display.display(plt.gcf())
 
 
 def optimize_model():
@@ -166,43 +156,39 @@ def optimize_model():
     optimizer.step()
 
 
-if torch.cuda.is_available() or torch.backends.mps.is_available():
-    num_episodes = 600
-else:
-    num_episodes = 50
+def train(num_episodes):
+    for _ in range(num_episodes):
+        state, _ = env.reset()
+        state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
+        for t in count():
+            action = select_action(state)
+            observation, reward, terminated, truncated, _ = env.step(action.item())
+            reward = torch.tensor([reward], device=device)
+            done = terminated or truncated
 
-for i_episode in range(num_episodes):
-    state, info = env.reset()
-    state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
-    for t in count():
-        action = select_action(state)
-        observation, reward, terminated, truncated, _ = env.step(action.item())
-        reward = torch.tensor([reward], device=device)
-        done = terminated or truncated
+            if terminated:
+                next_state = None
+            else:
+                next_state = torch.tensor(observation, dtype=torch.float32, device=device).unsqueeze(0)
 
-        if terminated:
-            next_state = None
-        else:
-            next_state = torch.tensor(observation, dtype=torch.float32, device=device).unsqueeze(0)
+            memory.push(state, action, next_state, reward)
+            state = next_state
 
-        memory.push(state, action, next_state, reward)
-        state = next_state
+            optimize_model()
 
-        optimize_model()
+            target_net_state_dict = target_net.state_dict()
+            policy_net_state_dict = policy_net.state_dict()
+            for key in policy_net_state_dict:
+                target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
+            target_net.load_state_dict(target_net_state_dict)
 
-        # Soft update of the target network's weights
-        # θ′ ← τ θ + (1 −τ )θ′
-        target_net_state_dict = target_net.state_dict()
-        policy_net_state_dict = policy_net.state_dict()
-        for key in policy_net_state_dict:
-            target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
-        target_net.load_state_dict(target_net_state_dict)
+            if done:
+                episode_durations.append(t + 1)
+                plot_durations()
+                break
 
-        if done:
-            episode_durations.append(t + 1)
-            plot_durations()
-            break
 
-print('Complete')
-plot_durations(show_result=True)
-plt.show()
+# train(20)
+# print('Complete')
+# plot_durations(show_result=True)
+# plt.show()
