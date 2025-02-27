@@ -1,10 +1,9 @@
-# Cartpole agent using reinforce algorithm
+# Cartpole
 
-From https://huggingface.co/learn/deep-rl-course/unit4/hands-on
+env: https://gymnasium.farama.org/environments/classic_control/cart_pole/
 
-Reinforce is a policy gradient algorithm, ie. it learns a policy function that
-outputs an action policy distribution, rather than a state-action value
-estimation.
+2 actions: left/right
+Aim is to keep the pole upright, and the cart away from the edges of the screen.
 
 # Quick start
 ```sh
@@ -13,6 +12,9 @@ uv run reinforce.py
 ```
 
 # DQN todo
-- make sense of the code
-- label output plots better
-- make a non-batch version
+- add evaluations before/after training
+- add visualisations before/after training
+- make simpler versions?
+    - no batching
+    - no double learning
+    - no gradient clipping?

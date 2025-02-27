@@ -1,3 +1,9 @@
+"""
+Reinforce is a policy gradient algorithm, ie. it learns a policy function that
+outputs an action policy distribution, rather than a state-action value
+estimation.
+"""
+
 import numpy as np
 
 from collections import deque

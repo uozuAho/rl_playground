@@ -1,5 +1,10 @@
 """ Initial code from pytorch tute:
 https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
+
+Features:
+- double learning: https://medium.com/@helena.godart/double-deep-q-networks-an-introductory-guide-9b0d88310197
+- minibatch with random sampling
+- gradient clipping: https://neptune.ai/blog/understanding-gradient-clipping-and-how-it-can-fix-exploding-gradients-problem
 """
 
 import gymnasium as gym
@@ -47,6 +52,7 @@ class DQN(nn.Module):
 
 
 BATCH_SIZE = 128
+# BATCH_SIZE = 4
 GAMMA = 0.99
 EPS_START = 0.9
 EPS_END = 0.05
@@ -62,10 +68,11 @@ device = 'cpu'
 #     "cpu"
 # )
 print(f'Using device: {device}')
-n_actions = env.action_space.n
+n_actions = env.action_space.n   # 2 actions: left, right
 state, info = env.reset()
 n_observations = len(state)
 
+# double learning: policy & target net
 policy_net = DQN(n_observations, n_actions).to(device)
 target_net = DQN(n_observations, n_actions).to(device)
 target_net.load_state_dict(policy_net.state_dict())
@@ -82,7 +89,10 @@ def select_action(state):
     steps_done += 1
     if random.random() > eps_threshold:
         with torch.no_grad():
-            # return the index of the max output value
+            # Return the index of the max output value.
+            # This will either be 0 or 1, since there are 2 neurons in the
+            # final layer. These correspond to the estimated action value for
+            # the given input state, ie. the output is [value(left), value(right)]
             # max: https://pytorch.org/docs/stable/generated/torch.max.html#torch.max
             # view: https://pytorch.org/docs/stable/tensor_view.html#tensor-view-doc
             # max(1).indices.view(1,1) = 1x1 view of the index of the max value in column 1
@@ -94,7 +104,7 @@ def select_action(state):
 def plot_durations(episode_durations):
     plt.figure(1)
     durations_t = torch.tensor(episode_durations, dtype=torch.float)
-    plt.title('Result')
+    plt.title('Episode duration (s) per training episode')
     plt.xlabel('Episode')
     plt.ylabel('Duration')
     plt.plot(durations_t.numpy())
@@ -109,54 +119,73 @@ def optimize_model():
     if len(memory) < BATCH_SIZE:
         return
     transitions = memory.sample(BATCH_SIZE)
-    # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
-    # detailed explanation). This converts batch-array of Transitions
-    # to Transition of batch-arrays.
+    # transpose list(Transition) to Transition(state=list, action=list, ...)
     batch = Transition(*zip(*transitions))
 
-    # Compute a mask of non-final states and concatenate the batch elements
-    # (a final state would've been the one after which simulation ended)
-    non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
-                                          batch.next_state)), device=device, dtype=torch.bool)
-    non_final_next_states = torch.cat([s for s in batch.next_state
-                                                if s is not None])
     state_batch = torch.cat(batch.state)
     action_batch = torch.cat(batch.action)
     reward_batch = torch.cat(batch.reward)
 
-    # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
-    # columns of actions taken. These are the actions which would've been taken
-    # for each batch state according to policy_net
+    # Compute batch Q(s_t, a)
+    #
+    # policy_net(states) = estimated action values for each given state
+    # policy_net(states) = [
+    #                       [value(left), value(right)],
+    #                       [value(left), value(right)],
+    #                       ...
+    #                      ]
+    #
+    # action_batch = action taken at each corresponding state, eg. [1, 0, 0, 1 , ...]
+    #
+    # tensor.gather selects the policy action value by the index in action_batch
+    # eg. for action values [1, 0] the output would be [value(right), value(left)]
     state_action_values = policy_net(state_batch).gather(1, action_batch)
 
-    # Compute V(s_{t+1}) for all next states.
-    # Expected values of actions for non_final_next_states are computed based
-    # on the "older" target_net; selecting their best reward with max(1).values
-    # This is merged based on the mask, such that we'll have either the expected
-    # state value or 0 in case the state was final.
+    # Compute batch V(s_{t+1})
+    #
+    # Only non-final states are used. V = 0 for final states.
+    #
+    # q-learning:      the .max(1).values selects the highest value action (this
+    #                  is what differentiates q-learning from sarsa)
+    # double learning: target_net is used to estimate the expected value
+    # no_grad:         this is not a learning step for target_net, no_grad
+    #                  instructs torch to not save the gradient info for the
+    #                  given input
+    non_final_mask = torch.tensor(list(s is not None for s in batch.next_state),
+                                  device=device, dtype=torch.bool)
+    non_final_next_states = torch.cat([s for s in batch.next_state
+                                                if s is not None])
     next_state_values = torch.zeros(BATCH_SIZE, device=device)
     with torch.no_grad():
         next_state_values[non_final_mask] = target_net(non_final_next_states).max(1).values
-    # Compute the expected Q values
+
     expected_state_action_values = (next_state_values * GAMMA) + reward_batch
 
     # Compute Huber loss
+    # loss function = difference between actual and expected output. In generic
+    # q learning, the loss is (reward + gamma * max_next_value - value)
     criterion = nn.SmoothL1Loss()
     loss = criterion(state_action_values, expected_state_action_values.unsqueeze(1))
 
     # Optimize the model
-    optimizer.zero_grad()
-    loss.backward()
+    optimizer.zero_grad()  # zero out accumulated gradients: https://stackoverflow.com/a/48009142
+    loss.backward()        # backpropagate loss (calculated gradients). This
+                           # works since state_action_values is a torch tensor
+                           # that came from the policy network, thus is has
+                           # access to gradient info and the network computation
+                           # graph
+
     # In-place gradient clipping
     torch.nn.utils.clip_grad_value_(policy_net.parameters(), 100)
-    optimizer.step()
+    optimizer.step()       # updates the policy network weights using gradients
 
 
 def train(num_episodes):
     """ Returns list(episode duration) """
     episode_durations = []
 
-    for _ in range(num_episodes):
+    for e in range(num_episodes):
+        print(f'episode {e}')
         state, _ = env.reset()
         state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
         for t in count():
@@ -175,6 +204,8 @@ def train(num_episodes):
 
             optimize_model()
 
+            # double learning: Soft update of the target network's weights
+            # θ′ ← τ θ + (1 −τ )θ′
             target_net_state_dict = target_net.state_dict()
             policy_net_state_dict = policy_net.state_dict()
             for key in policy_net_state_dict:
@@ -188,7 +219,7 @@ def train(num_episodes):
     return episode_durations
 
 
-# print('training...')
-# durations = train(20)
-# print('Complete')
-# plot_durations(durations)
+print('training...')
+durations = train(20)
+print('Complete')
+plot_durations(durations)
