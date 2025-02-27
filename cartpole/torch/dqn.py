@@ -51,8 +51,7 @@ class DQN(nn.Module):
         return self.layer3(x)
 
 
-BATCH_SIZE = 128
-# BATCH_SIZE = 4
+BATCH_SIZE = 64
 GAMMA = 0.99
 EPS_START = 0.9
 EPS_END = 0.05
@@ -82,12 +81,12 @@ memory = ReplayMemory(10000)
 steps_done = 0
 
 
-def select_action(state):
+def select_action(state, deterministic=False):
     global steps_done
     eps_threshold = EPS_END + (EPS_START - EPS_END) * \
         math.exp(-1. * steps_done / EPS_DECAY)
     steps_done += 1
-    if random.random() > eps_threshold:
+    if random.random() > eps_threshold or deterministic:
         with torch.no_grad():
             # Return the index of the max output value.
             # This will either be 0 or 1, since there are 2 neurons in the
@@ -104,7 +103,7 @@ def select_action(state):
 def plot_durations(episode_durations):
     plt.figure(1)
     durations_t = torch.tensor(episode_durations, dtype=torch.float)
-    plt.title('Episode duration (s) per training episode')
+    plt.title('Episode duration (s) vs training episode')
     plt.xlabel('Episode')
     plt.ylabel('Duration')
     plt.plot(durations_t.numpy())
@@ -184,8 +183,11 @@ def train(num_episodes):
     """ Returns list(episode duration) """
     episode_durations = []
 
+    print(f'training for {num_episodes} episodes...')
+
     for e in range(num_episodes):
-        print(f'episode {e}')
+        if e % 10 == 0:
+            print(f'episode {e}/{num_episodes}')
         state, _ = env.reset()
         state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
         for t in count():
@@ -219,7 +221,29 @@ def train(num_episodes):
     return episode_durations
 
 
-print('training...')
-durations = train(20)
-print('Complete')
+def evaluate(n_eps):
+    print('evaluating...')
+    episode_rewards = []
+    for episode in range(n_eps):
+        state, _ = env.reset()
+        done = False
+        total_rewards_ep = 0
+
+        for step in range(200):
+            state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
+            action = select_action(state, deterministic=True)
+            new_state, reward, term, trunc, info = env.step(action.item())
+            done = term or trunc
+            total_rewards_ep += reward
+            if done:
+                break
+            state = new_state
+        episode_rewards.append(total_rewards_ep)
+    mean_reward = sum(episode_rewards) / len(episode_rewards)
+
+    print(f'avg reward: {mean_reward}')
+
+evaluate(20)
+durations = train(256)
+evaluate(20)
 plot_durations(durations)

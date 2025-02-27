@@ -9,11 +9,10 @@ Aim is to keep the pole upright, and the cart away from the edges of the screen.
 ```sh
 uv sync
 uv run reinforce.py
+uv run dqn.py
 ```
 
 # DQN todo
-- add evaluations before/after training
-- add visualisations before/after training
 - make simpler versions?
     - no batching
     - no double learning
