@@ -85,11 +85,12 @@ def plot_durations(episode_durations):
 
 def optimize_model(transition: Transition):
     # Compute Q(s_t, a)
-    action_values = policy_net(transition.state)
-    action = transition.action.item()
-    state_action_value = action_values[:, action]
+    action_values = policy_net(transition.state)  # Q(s_t)
+    action = transition.action.item()             # a
+    state_action_value = action_values[:, action] # Q(s_t, a)
 
-    # Compute V(s_{t+1})
+    # Compute V(s_{t+1}) = reward + GAMMA(argmax_a(Q(s_t+1)))
+    # todo: this should be with no_grad:?
     next_state_value = torch.zeros(1) if transition.next_state is None else \
                        policy_net(transition.next_state).max(1).values
 
