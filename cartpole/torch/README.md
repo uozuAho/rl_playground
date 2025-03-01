@@ -10,10 +10,5 @@ Aim is to keep the pole upright, and the cart away from the edges of the screen.
 uv sync
 uv run reinforce.py
 uv run dqn.py
+uv run dqn-simple.py  # simplified version of dqn.py
 ```
-
-# DQN todo
-- make simpler versions?
-    - no batching
-    - no double learning
-    - no gradient clipping?

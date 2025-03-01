@@ -243,6 +243,7 @@ def evaluate(n_eps):
 
     print(f'avg reward: {mean_reward}')
 
+
 evaluate(20)
 durations = train(256)
 evaluate(20)
