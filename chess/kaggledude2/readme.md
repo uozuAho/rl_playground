@@ -3,9 +3,16 @@ with uv & torch, to keep track of dependencies and not have to use tensorflow.
 
 # todo
 - WIP: train linear network, simple
-    - no replay memory
-    - no gradient clipping
-    - no double learning
+    - todo:
+        - add e-greedy moves
+        - train, plot:
+            - reward over time
+            - loss over time
+        - does it improve at all?
+    - simple reqs:
+        - no replay memory
+        - no gradient clipping
+        - no double learning
 - inline todos
 - add above enhancements
 - try conv network
