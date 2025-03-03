@@ -165,7 +165,8 @@ def optimise_model(
 def train(
         model: LinearModel,
         n_episodes: int,
-        device: str
+        device: str,
+        n_episode_action_limit=25
         ):
     board = Board()
     optimiser = optim.SGD(model.parameters(), lr=1e-4)
@@ -179,7 +180,7 @@ def train(
         rewards = []
         board.reset()
         game_over = False
-        while not game_over:
+        while not game_over and len(rewards) < n_episode_action_limit:
             state = board.layer_board
             if np.random.uniform(0, 1) < eps:
                 action = board.get_random_action()
