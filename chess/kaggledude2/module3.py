@@ -7,6 +7,8 @@ Capture chess rules:
 - opponent is part of the environment and makes random moves
     - see https://github.com/arjangroen/RLC/blob/e54eb7380875f64fd06106c59aa376b426d9e5ca/RLC/capture_chess/environment.py#L85
 - rewards for capturing pieces
+    - max possible reward = 9 + 2*5 + 4*3 + 8*1 = 39
+    - no negative reward for losing pieces (?)
 - reward at end of episode = 0
 
 Code:
@@ -86,11 +88,7 @@ class LinearModel(nn.Module):
                  if x.from_square == move_from and x.to_square == move_to]
         if len(moves) == 0:
             # If all legal moves have negative action value, explore
-            try:
-                move = board.get_random_action()
-            except:
-                print("No legal moves available for agent")
-                print(board.board)
+            move = board.get_random_action()
             move_from = move.from_square
             move_to = move.to_square
         else:
@@ -172,9 +170,10 @@ def train(
         ):
     board = Board()
     optimiser = optim.SGD(model.parameters(), lr=1e-4)
-    eps = 0
+    episode = 0
     ep_losses = []
     ep_rewards = []
+    eps = 0.1  # todo: epsilon schedule
     for ep in range(n_episodes):
         print(f'{ep}/{n_episodes}')
         losses = []
@@ -183,11 +182,14 @@ def train(
         game_over = False
         while not game_over:
             state = board.layer_board
-            action = model.get_action(board)
+            if np.random.uniform(0, 1) < eps:
+                action = board.get_random_action()
+            else:
+                action = model.get_action(board)
             game_over, reward = board.step(action)
             next_state = board.layer_board
             rewards.append(reward)
-            eps += 1
+            episode += 1
 
             t = Transition(
                 state,
@@ -200,12 +202,13 @@ def train(
             losses.append(loss)
         ep_losses.append(sum(losses))
         ep_rewards.append(sum(rewards))
-    eps = list(range(n_episodes))
+    episode = list(range(n_episodes))
     plt.xlabel('episodes')
-    plt.plot(eps, ep_losses, label='loss')
-    plt.plot(eps, ep_rewards, label='reward')
+    plt.plot(episode, ep_losses, label='loss')
+    plt.plot(episode, ep_rewards, label='reward')
     plt.legend()
     plt.show()
+
 
 device = torch.device(
     "cuda" if torch.cuda.is_available() else
@@ -217,4 +220,4 @@ print(f'Using device: {device}')
 board = Board()
 model = LinearModel(device).to(device)
 # play_game(model, board)
-train(model, 10, device)
+train(model, 50, device)

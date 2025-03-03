@@ -4,12 +4,12 @@ with uv & torch, to keep track of dependencies and not have to use tensorflow.
 # todo
 - WIP: train linear network, simple
     - todo:
-        - add e-greedy moves
         - train longer. does it improve at all?
     - simple reqs:
         - no replay memory: compare cpu/gpu perf
         - no gradient clipping
         - no double learning
+        - no epsilon schedule
 - inline todos
 - add above enhancements
 - try conv network
