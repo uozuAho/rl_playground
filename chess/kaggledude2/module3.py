@@ -43,6 +43,7 @@ network_udpate: https://github.com/arjangroen/RLC/blob/e54eb7380875f64fd06106c59
 
 from collections import deque
 from dataclasses import dataclass
+import typing as t
 import random
 import chess
 import numpy as np
@@ -65,8 +66,8 @@ class ReplayMemory(object):
     def __init__(self, capacity):
         self.memory = deque([], maxlen=capacity)
 
-    def push(self, *args):
-        self.memory.append(Transition(*args))
+    def push(self, transition: Transition):
+        self.memory.append(transition)
 
     def sample(self, batch_size):
         return random.sample(self.memory, batch_size)
@@ -78,7 +79,7 @@ class ReplayMemory(object):
 class LinearModel(nn.Module):
     def __init__(self, device):
         super(LinearModel, self).__init__()
-        self.flatten = nn.Flatten(0)
+        self.flatten = nn.Flatten()
         # 8*8*8 = 8 layers of 8x8 boards, one layer per piece type
         # 64*64 = move piece from X (64 options) to Y (64 options)
         # eg output indexes:
@@ -88,7 +89,7 @@ class LinearModel(nn.Module):
         # 4094: move 63 to 62
         # 4095: move 63 to 63
         self.stack = nn.Sequential(
-            nn.Linear(8*8*8, 64*64, dtype=torch.double)
+            nn.Linear(8*8*8, 64*64, dtype=torch.float64)
         )
         self.device = device
 
@@ -98,7 +99,7 @@ class LinearModel(nn.Module):
         return x
 
     def get_action(self, board: Board) -> chess.Move:
-        nn_input = torch.from_numpy(board.layer_board).to(self.device)
+        nn_input = torch.from_numpy(board.layer_board).unsqueeze(0).to(self.device)
         with torch.no_grad():
             nn_output = self(nn_input)
         action_values = torch.reshape(nn_output, (64, 64))
@@ -149,23 +150,32 @@ def is_endstate(layer_board: np.ndarray):
 
 def optimise_model(
         model: LinearModel,
-        transition: Transition,
+        transitions: t.List[Transition],
         optimiser: optim.Optimizer,
         device: str,
         gamma=0.99):
-    """ Update model weights. Returns loss """
-    qs = model(torch.from_numpy(transition.state).to(device))
-    move_from, move_to = transition.move
-    move_idx = move_from * 64 + move_to
-    qsa = qs[move_idx]
+    """ Update model weights using a batch of transitions. Returns loss """
 
-    max_qnext = torch.zeros(1)
-    if not is_endstate(transition.next_state):
+    batch_size = len(transitions)
+    states = torch.stack([torch.from_numpy(t.state) for t in transitions]).to(device)
+    moves = [(t.move[0] * 64 + t.move[1]) for t in transitions]
+    moves = torch.tensor(moves, dtype=torch.long, device=device)
+    rewards = torch.tensor([t.reward for t in transitions], dtype=torch.float64, device=device)
+    next_states = torch.stack([torch.from_numpy(t.next_state) for t in transitions]).to(device)
+
+    qs = model(states)
+    qsa = qs.gather(1, moves.unsqueeze(1)).squeeze(1)
+
+    non_final_mask = [not is_endstate(t.next_state) for t in transitions]
+    non_final_mask = torch.tensor(non_final_mask, dtype=torch.bool, device=device)
+    non_final_next_states = next_states[non_final_mask]
+    max_qnext = torch.zeros(batch_size, dtype=torch.float64, device=device)
+
+    if len(non_final_next_states) > 0:
         with torch.no_grad():
-            next_state = torch.from_numpy(transition.next_state).to(device)
-            max_qnext = model(next_state).max()
+            max_qnext[non_final_mask] = model(non_final_next_states).max(1)[0]
 
-    exp_qsa = transition.reward + gamma * max_qnext
+    exp_qsa = rewards + gamma * max_qnext
 
     criterion = nn.MSELoss()
     loss = criterion(qsa, exp_qsa)
@@ -181,7 +191,8 @@ def train(
         model: LinearModel,
         n_episodes: int,
         device: str,
-        n_episode_action_limit=25
+        n_episode_action_limit=25,
+        batch_size=32,
         ):
     board = Board()
     optimiser = optim.SGD(model.parameters(), lr=1e-4)
@@ -189,6 +200,7 @@ def train(
     ep_losses = []
     ep_rewards = []
     eps = 0.1  # todo: epsilon schedule
+    replay_mem = ReplayMemory(1000)
     for ep in range(n_episodes):
         print(f'{ep}/{n_episodes}')
         losses = []
@@ -209,15 +221,18 @@ def train(
             rewards.append(reward)
             episode += 1
 
-            t = Transition(
+            replay_mem.push(Transition(
                 state,
                 (action.from_square, action.to_square),
                 next_state,
                 reward
-            )
+            ))
 
-            loss = optimise_model(model, t, optimiser, device)
-            losses.append(loss)
+            if len(replay_mem) >= batch_size:
+                loss = optimise_model(
+                    model,
+                    replay_mem.sample(batch_size), optimiser, device)
+                losses.append(loss)
         ep_losses.append(sum(losses))
         ep_rewards.append(sum(rewards))
     episode = list(range(n_episodes))
@@ -233,9 +248,10 @@ device = torch.device(
     "mps" if torch.backends.mps.is_available() else
     "cpu"
 )
+# device = 'cpu'
 print(f'Using device: {device}')
 # show_board_model_shapes_types()
 board = Board()
 model = LinearModel(device).to(device)
 # play_game(model, board)
-train(model, 5000, device)
+train(model, 10, device, batch_size=64)
