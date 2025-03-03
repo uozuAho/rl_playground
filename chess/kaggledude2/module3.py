@@ -52,7 +52,7 @@ from RLC.capture_chess.environment import Board
 
 
 class LinearModel(nn.Module):
-    def __init__(self):
+    def __init__(self, device):
         super(LinearModel, self).__init__()
         self.flatten = nn.Flatten(0)
         # 8*8*8 = 8 layers of 8x8 boards, one layer per piece type
@@ -66,6 +66,7 @@ class LinearModel(nn.Module):
         self.stack = nn.Sequential(
             nn.Linear(8*8*8, 64*64, dtype=torch.double)
         )
+        self.device = device
 
     def forward(self, x: torch.Tensor):
         x = self.flatten(x)
@@ -73,11 +74,11 @@ class LinearModel(nn.Module):
         return x
 
     def get_action(self, board: Board) -> chess.Move:
-        nn_input = torch.from_numpy(board.layer_board)
+        nn_input = torch.from_numpy(board.layer_board).to(self.device)
         with torch.no_grad():
             nn_output = self(nn_input)
         action_values = torch.reshape(nn_output, (64, 64))
-        legal_mask = torch.from_numpy(board.project_legal_moves())
+        legal_mask = torch.from_numpy(board.project_legal_moves()).to(self.device)
         action_values = torch.multiply(action_values, legal_mask)
         move_from = torch.argmax(action_values) // 64
         move_to = torch.argmax(action_values) % 64
@@ -96,28 +97,6 @@ class LinearModel(nn.Module):
             # If there are multiple max-moves, pick a random one
             move = random.choice(moves)
         return move
-
-
-# train loop from torch tute:
-# def train_loop(model, loss_fn, optimizer, batch_size, device):
-#     # Set the model to training mode - important for batch normalization and
-#     # dropout layers Unnecessary in this situation but added for best practices
-#     model.train()
-#     for batch, (X, y) in enumerate(dataloader):
-#         X = X.to(device)
-#         y = y.to(device)
-#         # Compute prediction and loss
-#         pred = model(X)
-#         loss = loss_fn(pred, y)
-
-#         # Backpropagation
-#         loss.backward()
-#         optimizer.step()
-#         optimizer.zero_grad()
-
-#         if batch % 100 == 0:
-#             loss, current = loss.item(), batch * batch_size + len(X)
-#             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 
 
 def play_game(model: LinearModel, board: Board):
@@ -160,9 +139,10 @@ def optimise_model(
         model: LinearModel,
         transition: Transition,
         optimiser: optim.Optimizer,
+        device: str,
         gamma=0.99):
     """ Update model weights. Returns loss """
-    qs = model(torch.from_numpy(transition.state))
+    qs = model(torch.from_numpy(transition.state).to(device))
     move_from, move_to = transition.move
     move_idx = move_from * 64 + move_to
     qsa = qs[move_idx]
@@ -170,7 +150,8 @@ def optimise_model(
     max_qnext = torch.zeros(1)
     if not is_endstate(transition.next_state):
         with torch.no_grad():
-            max_qnext = model(torch.from_numpy(transition.next_state)).max()
+            next_state = torch.from_numpy(transition.next_state).to(device)
+            max_qnext = model(next_state).max()
 
     exp_qsa = transition.reward + gamma * max_qnext
 
@@ -184,7 +165,11 @@ def optimise_model(
     return loss.item()
 
 
-def train(model: LinearModel, n_episodes: int):
+def train(
+        model: LinearModel,
+        n_episodes: int,
+        device: str
+        ):
     board = Board()
     optimiser = optim.SGD(model.parameters(), lr=1e-4)
     eps = 0
@@ -211,7 +196,7 @@ def train(model: LinearModel, n_episodes: int):
                 reward
             )
 
-            loss = optimise_model(model, t, optimiser)
+            loss = optimise_model(model, t, optimiser, device)
             losses.append(loss)
         ep_losses.append(sum(losses))
         ep_rewards.append(sum(rewards))
@@ -222,9 +207,14 @@ def train(model: LinearModel, n_episodes: int):
     plt.legend()
     plt.show()
 
-
+device = torch.device(
+    "cuda" if torch.cuda.is_available() else
+    "mps" if torch.backends.mps.is_available() else
+    "cpu"
+)
+print(f'Using device: {device}')
 # show_board_model_shapes_types()
 board = Board()
-model = LinearModel()
+model = LinearModel(device).to(device)
 # play_game(model, board)
-train(model, 10)
+train(model, 10, device)
