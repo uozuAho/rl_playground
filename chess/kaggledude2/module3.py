@@ -41,6 +41,7 @@ network_udpate: https://github.com/arjangroen/RLC/blob/e54eb7380875f64fd06106c59
     - update the model
 """
 
+from collections import deque
 from dataclasses import dataclass
 import random
 import chess
@@ -50,6 +51,28 @@ import torch.nn as nn
 import torch.optim as optim
 import matplotlib.pyplot as plt
 from RLC.capture_chess.environment import Board
+
+
+@dataclass
+class Transition:
+    state: np.ndarray
+    move: tuple[int, int]  # move from, to
+    next_state: np.ndarray
+    reward: float
+
+
+class ReplayMemory(object):
+    def __init__(self, capacity):
+        self.memory = deque([], maxlen=capacity)
+
+    def push(self, *args):
+        self.memory.append(Transition(*args))
+
+    def sample(self, batch_size):
+        return random.sample(self.memory, batch_size)
+
+    def __len__(self):
+        return len(self.memory)
 
 
 class LinearModel(nn.Module):
@@ -118,14 +141,6 @@ def show_board_model_shapes_types():
     print(nn.Flatten(0)(torch.from_numpy(board.layer_board)).shape)
     action = model.get_action(board)
     print(action)
-
-
-@dataclass
-class Transition:
-    state: np.ndarray
-    move: tuple[int, int]  # move from, to
-    next_state: np.ndarray
-    reward: float
 
 
 def is_endstate(layer_board: np.ndarray):
@@ -223,4 +238,4 @@ print(f'Using device: {device}')
 board = Board()
 model = LinearModel(device).to(device)
 # play_game(model, board)
-train(model, 50, device)
+train(model, 5000, device)
