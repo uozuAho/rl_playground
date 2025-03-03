@@ -47,6 +47,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import matplotlib.pyplot as plt
 from RLC.capture_chess.environment import Board
 
 
@@ -84,7 +85,11 @@ class LinearModel(nn.Module):
                  if x.from_square == move_from and x.to_square == move_to]
         if len(moves) == 0:
             # If all legal moves have negative action value, explore
-            move = board.get_random_action()
+            try:
+                move = board.get_random_action()
+            except:
+                print("No legal moves available for agent")
+                print(board.board)
             move_from = move.from_square
             move_to = move.to_square
         else:
@@ -156,6 +161,7 @@ def optimise_model(
         transition: Transition,
         optimiser: optim.Optimizer,
         gamma=0.99):
+    """ Update model weights. Returns loss """
     qs = model(torch.from_numpy(transition.state))
     move_from, move_to = transition.move
     move_idx = move_from * 64 + move_to
@@ -175,18 +181,28 @@ def optimise_model(
     loss.backward()
     optimiser.step()
 
+    return loss.item()
+
 
 def train(model: LinearModel, n_episodes: int):
     board = Board()
     optimiser = optim.SGD(model.parameters(), lr=1e-4)
+    eps = 0
+    ep_losses = []
+    ep_rewards = []
     for ep in range(n_episodes):
-        print(ep)
+        print(f'{ep}/{n_episodes}')
+        losses = []
+        rewards = []
+        board.reset()
         game_over = False
         while not game_over:
             state = board.layer_board
             action = model.get_action(board)
             game_over, reward = board.step(action)
             next_state = board.layer_board
+            rewards.append(reward)
+            eps += 1
 
             t = Transition(
                 state,
@@ -195,11 +211,20 @@ def train(model: LinearModel, n_episodes: int):
                 reward
             )
 
-            optimise_model(model, t, optimiser)
+            loss = optimise_model(model, t, optimiser)
+            losses.append(loss)
+        ep_losses.append(sum(losses))
+        ep_rewards.append(sum(rewards))
+    eps = list(range(n_episodes))
+    plt.xlabel('episodes')
+    plt.plot(eps, ep_losses, label='loss')
+    plt.plot(eps, ep_rewards, label='reward')
+    plt.legend()
+    plt.show()
 
 
 # show_board_model_shapes_types()
 board = Board()
 model = LinearModel()
 # play_game(model, board)
-train(model, 2)
+train(model, 10)

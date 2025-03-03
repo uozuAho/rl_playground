@@ -4,11 +4,9 @@ with uv & torch, to keep track of dependencies and not have to use tensorflow.
 # todo
 - WIP: train linear network, simple
     - todo:
+        - try gpu: faster?
+        - train longer. does it improve at all?
         - add e-greedy moves
-        - train, plot:
-            - reward over time
-            - loss over time
-        - does it improve at all?
     - simple reqs:
         - no replay memory
         - no gradient clipping

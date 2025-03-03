@@ -90,7 +90,7 @@ def optimize_model(transition: Transition):
     state_action_value = action_values[:, action] # Q(s_t, a)
 
     # Compute V(s_{t+1}) = reward + GAMMA(argmax_a(Q(s_t+1)))
-    # todo: this should be with no_grad:?
+    # todo: this should be with torch.no_grad:?
     next_state_value = torch.zeros(1) if transition.next_state is None else \
                        policy_net(transition.next_state).max(1).values
 
