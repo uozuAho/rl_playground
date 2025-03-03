@@ -19,6 +19,9 @@ def play_random_game():
         actions.append(action)
         # print(f'action: {action}')
         done, reward = board.step(action)
+        # hack pawn promotion reward
+        if reward % 2 == 0:  # reward should only be 1,3,5,9
+            reward = 0
         total_reward += reward
         if reward > 0:
             f = boards[-1].piece_at(action.from_square)

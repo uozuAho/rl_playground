@@ -7,7 +7,6 @@ Capture chess rules:
 - opponent is part of the environment and makes random moves
     - see https://github.com/arjangroen/RLC/blob/e54eb7380875f64fd06106c59aa376b426d9e5ca/RLC/capture_chess/environment.py#L85
 - rewards for capturing pieces
-    - max possible reward = 9 + 2*5 + 4*3 + 8*1 = 39
     - no negative reward for losing pieces
 - reward at end of episode = 0
 
@@ -187,6 +186,9 @@ def train(
             else:
                 action = model.get_action(board)
             game_over, reward = board.step(action)
+            # hack pawn promotion reward (don't want reward for pawn promotion)
+            if reward % 2 == 0:  # reward should only be 1,3,5,9
+                reward = 0
             next_state = board.layer_board
             rewards.append(reward)
             episode += 1
