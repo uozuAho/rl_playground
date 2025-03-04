@@ -152,6 +152,7 @@ def is_endstate(layer_board: np.ndarray):
 
 def optimise_net(
         policy_net: LinearFC,
+        target_net: LinearFC,
         transitions: t.List[Transition],
         optimiser: optim.Optimizer,
         device: str,
@@ -175,7 +176,7 @@ def optimise_net(
 
     if len(non_final_next_states) > 0:
         with torch.no_grad():
-            max_qnext[non_final_mask] = policy_net(non_final_next_states).max(1)[0]
+            max_qnext[non_final_mask] = target_net(non_final_next_states).max(1)[0]
 
     exp_qsa = rewards + gamma * max_qnext
 
@@ -191,12 +192,28 @@ def optimise_net(
     return loss.item()
 
 
+def update_target(policy_net: LinearFC, target_net: LinearFC, tau=1.0):
+    """ (Soft) Update the target network. Tau = hardness. If Tau = 1.0, it's a
+        hard update, ie the target net is set to equal the policy net.
+    """
+    target_net_state_dict = target_net.state_dict()
+    policy_net_state_dict = policy_net.state_dict()
+    for key in policy_net_state_dict:
+        target_net_state_dict[key] = \
+            policy_net_state_dict[key]*tau + \
+            target_net_state_dict[key]*(1-tau)
+    target_net.load_state_dict(target_net_state_dict)
+
+
 def train(
         policy_net: LinearFC,
+        target_net: LinearFC,
         n_episodes: int,
         device: str,
         n_episode_action_limit=25,
         batch_size=32,
+        target_net_update_eps=10,
+        target_net_update_tau=1.0
         ):
     board = Board()
     optimiser = optim.SGD(policy_net.parameters(), lr=1e-4)
@@ -207,6 +224,8 @@ def train(
     replay_mem = ReplayMemory(1000)
     for ep in range(n_episodes):
         print(f'{ep}/{n_episodes}')
+        if ep % target_net_update_eps == 0:
+            update_target(policy_net, target_net, target_net_update_tau)
         losses = []
         rewards = []
         board.reset()
@@ -235,7 +254,10 @@ def train(
             if len(replay_mem) >= batch_size:
                 loss = optimise_net(
                     policy_net,
-                    replay_mem.sample(batch_size), optimiser, device)
+                    target_net,
+                    replay_mem.sample(batch_size),
+                    optimiser,
+                    device)
                 losses.append(loss)
         ep_losses.append(sum(losses))
         ep_rewards.append(sum(rewards))
@@ -256,6 +278,13 @@ device = torch.device(
 print(f'Using device: {device}')
 # show_board_model_shapes_types()
 board = Board()
-net = LinearFC(device).to(device)
+policy_net = LinearFC(device).to(device)
+target_net = LinearFC(device).to(device)
 # play_game(net, board)
-train(net, 10, device, batch_size=64)
+train(
+    policy_net,
+    target_net,
+    n_episodes=30,
+    device=device,
+    batch_size=64
+)

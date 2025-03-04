@@ -5,7 +5,7 @@ with uv & torch, to keep track of dependencies and not have to use tensorflow.
 - WIP: add:
     - DONE: replay memory
     - DONE: gradient clipping
-    - double learning
+    - DONE: double learning
     - epsilon schedule
 - inline todos
 - does loss/avg reward change with training?
