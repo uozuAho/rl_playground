@@ -79,7 +79,7 @@ class ReplayMemory(object):
 
 class LinearFC(nn.Module):
     """ Fully connected linear/sequential NN """
-    def __init__(self, device):
+    def __init__(self):
         super(LinearFC, self).__init__()
         self.flatten = nn.Flatten()
         # 8*8*8 = 8 layers of 8x8 boards, one layer per piece type
@@ -93,33 +93,60 @@ class LinearFC(nn.Module):
         self.stack = nn.Sequential(
             nn.Linear(8*8*8, 64*64, dtype=torch.float64)
         )
-        self.device = device
 
     def forward(self, x: torch.Tensor):
         x = self.flatten(x)
         x = self.stack(x)
         return x
 
-    def get_action(self, board: Board) -> chess.Move:
-        nn_input = torch.from_numpy(board.layer_board).unsqueeze(0).to(self.device)
-        with torch.no_grad():
-            nn_output = self(nn_input)
-        action_values = torch.reshape(nn_output, (64, 64))
-        legal_mask = torch.from_numpy(board.project_legal_moves()).to(self.device)
-        action_values = torch.multiply(action_values, legal_mask)
-        move_from = torch.argmax(action_values) // 64
-        move_to = torch.argmax(action_values) % 64
-        moves = [x for x in board.board.generate_legal_moves()
-                 if x.from_square == move_from and x.to_square == move_to]
-        if len(moves) == 0:
-            # If all legal moves have negative action value, explore
-            move = board.get_random_action()
-            move_from = move.from_square
-            move_to = move.to_square
-        else:
-            # If there are multiple max-moves, pick a random one
-            move = random.choice(moves)
-        return move
+
+class ConvNet(nn.Module):
+    """ Dunno if this is correct, I just got chat gpt to convert from TF to torch:
+        https://github.com/arjangroen/RLC/blob/e54eb7380875f64fd06106c59aa376b426d9e5ca/RLC/capture_chess/agent.py#L73
+
+        This trains much quicker than the liner FC net, as the conv layers reduce
+        dimensionality by 8 (I think)
+    """
+    def __init__(self):
+        super(ConvNet, self).__init__()
+
+        # 1x1 conv layers used to blend input layers
+        self.conv1 = nn.Conv2d(in_channels=8, out_channels=1, kernel_size=1, dtype=torch.float64)
+        self.conv2 = nn.Conv2d(in_channels=8, out_channels=1, kernel_size=1, dtype=torch.float64)
+
+    def forward(self, x):
+        x1 = self.conv1(x)
+        x2 = self.conv2(x)
+        x1_flat = x1.view(x1.size(0), 64, 1)
+        x2_flat = x2.view(x2.size(0), 1, 64)
+        output = torch.bmm(x1_flat, x2_flat)
+        output = output.view(output.size(0), -1)
+        return output
+
+
+def get_nn_move(net: nn.Module, board: Board, device) -> chess.Move:
+    """ Assumes a net with a 1x4096 (64x64) output, which represents a
+        move from (64) -> to (64)
+    """
+    nn_input = torch.from_numpy(board.layer_board).unsqueeze(0).to(device)
+    with torch.no_grad():
+        nn_output = net(nn_input)
+    action_values = torch.reshape(nn_output, (64, 64))
+    legal_mask = torch.from_numpy(board.project_legal_moves()).to(device)
+    action_values = torch.multiply(action_values, legal_mask)
+    move_from = torch.argmax(action_values) // 64
+    move_to = torch.argmax(action_values) % 64
+    moves = [x for x in board.board.generate_legal_moves()
+                if x.from_square == move_from and x.to_square == move_to]
+    if len(moves) == 0:
+        # If all legal moves have negative action value, explore
+        move = board.get_random_action()
+        move_from = move.from_square
+        move_to = move.to_square
+    else:
+        # If there are multiple max-moves, pick a random one
+        move = random.choice(moves)
+    return move
 
 
 def play_game(net: LinearFC, board: Board):
@@ -127,7 +154,7 @@ def play_game(net: LinearFC, board: Board):
     i = 0
     while not done:
         with torch.no_grad:
-            action = net.get_action(board)
+            action = get_nn_move(net, board, 'cpu')
         done, reward = board.step(action)
         i += 1
         if i > 200:
@@ -144,7 +171,7 @@ def show_board_net_shapes_types():
     print(board.layer_board.shape)
     print(torch.from_numpy(board.layer_board).shape)
     print(nn.Flatten(0)(torch.from_numpy(board.layer_board)).shape)
-    action = net.get_action(board)
+    action = get_nn_move(net, board, 'cpu')
     print(action)
 
 
@@ -241,7 +268,7 @@ def train(
             if np.random.uniform(0, 1) < eps:
                 action = board.get_random_action()
             else:
-                action = policy_net.get_action(board)
+                action = get_nn_move(policy_net, board, device)
             game_over, reward = board.step(action)
             # hack pawn promotion reward (don't want reward for pawn promotion)
             if reward % 2 == 0:  # reward should only be 1,3,5,9
@@ -284,13 +311,15 @@ device = torch.device(
 print(f'Using device: {device}')
 # show_board_model_shapes_types()
 board = Board()
-policy_net = LinearFC(device).to(device)
-target_net = LinearFC(device).to(device)
+# policy_net = LinearFC().to(device)
+# target_net = LinearFC().to(device)
+policy_net = ConvNet().to(device)
+target_net = ConvNet().to(device)
 # play_game(net, board)
 train(
     policy_net,
     target_net,
-    n_episodes=30,
+    n_episodes=5000,
     device=device,
     batch_size=64
 )
