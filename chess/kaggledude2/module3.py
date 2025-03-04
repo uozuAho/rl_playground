@@ -43,6 +43,7 @@ network_udpate: https://github.com/arjangroen/RLC/blob/e54eb7380875f64fd06106c59
 
 from collections import deque
 from dataclasses import dataclass
+import math
 import typing as t
 import random
 import chess
@@ -125,7 +126,8 @@ def play_game(net: LinearFC, board: Board):
     done = False
     i = 0
     while not done:
-        action = net.get_action(board)  # todo: need with torch.no_grad()?
+        with torch.no_grad:
+            action = net.get_action(board)
         done, reward = board.step(action)
         i += 1
         if i > 200:
@@ -205,6 +207,10 @@ def update_target(policy_net: LinearFC, target_net: LinearFC, tau=1.0):
     target_net.load_state_dict(target_net_state_dict)
 
 
+def epsilon(eps_start, eps_end, n_total_ep, ep):
+    return eps_end + (eps_start - eps_end) * math.exp(-6. * ep / n_total_ep)
+
+
 def train(
         policy_net: LinearFC,
         target_net: LinearFC,
@@ -220,7 +226,6 @@ def train(
     episode = 0
     ep_losses = []
     ep_rewards = []
-    eps = 0.1  # todo: epsilon schedule
     replay_mem = ReplayMemory(1000)
     for ep in range(n_episodes):
         print(f'{ep}/{n_episodes}')
@@ -230,6 +235,7 @@ def train(
         rewards = []
         board.reset()
         game_over = False
+        eps = epsilon(.99, .01, n_episodes, ep)
         while not game_over and len(rewards) < n_episode_action_limit:
             state = board.layer_board
             if np.random.uniform(0, 1) < eps:

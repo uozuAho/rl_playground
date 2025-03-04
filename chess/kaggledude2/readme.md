@@ -2,12 +2,6 @@ Attempting this: https://github.com/arjangroen/RLC , but redoing everything
 with uv & torch, to keep track of dependencies and not have to use tensorflow.
 
 # todo
-- WIP: add:
-    - DONE: replay memory
-    - DONE: gradient clipping
-    - DONE: double learning
-    - epsilon schedule
-- inline todos
 - does loss/avg reward change with training?
     - try conv network first
     - do reward/loss values over time make sense?
