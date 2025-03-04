@@ -182,6 +182,8 @@ def optimise_model(
 
     optimiser.zero_grad()
     loss.backward()
+    # gradient clip/limit
+    torch.nn.utils.clip_grad_value_(model.parameters(), 100)
     optimiser.step()
 
     return loss.item()
