@@ -1,6 +1,9 @@
 """
 Training on capture chess from https://www.kaggle.com/code/arjanso/reinforcement-learning-chess-3-q-networks
 
+Linear & Convolution nets are implemented. Conv is faster as it reduces the
+input layer dimensionality.
+
 Capture chess rules:
 - max 25 moves
 - agent plays white
