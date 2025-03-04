@@ -76,9 +76,10 @@ class ReplayMemory(object):
         return len(self.memory)
 
 
-class LinearModel(nn.Module):
+class LinearFC(nn.Module):
+    """ Fully connected linear/sequential NN """
     def __init__(self, device):
-        super(LinearModel, self).__init__()
+        super(LinearFC, self).__init__()
         self.flatten = nn.Flatten()
         # 8*8*8 = 8 layers of 8x8 boards, one layer per piece type
         # 64*64 = move piece from X (64 options) to Y (64 options)
@@ -120,11 +121,11 @@ class LinearModel(nn.Module):
         return move
 
 
-def play_game(model: LinearModel, board: Board):
+def play_game(net: LinearFC, board: Board):
     done = False
     i = 0
     while not done:
-        action = model.get_action(board)  # todo: need with torch.no_grad()?
+        action = net.get_action(board)  # todo: need with torch.no_grad()?
         done, reward = board.step(action)
         i += 1
         if i > 200:
@@ -132,15 +133,16 @@ def play_game(model: LinearModel, board: Board):
     print("done")
 
 
-def show_board_model_shapes_types():
+def show_board_net_shapes_types():
     board = Board()
+    net = LinearFC('cpu')
     print(board.board)
     # each piece type is on a different layer
     print(board.layer_board[0,::-1,:].astype(int))
     print(board.layer_board.shape)
     print(torch.from_numpy(board.layer_board).shape)
     print(nn.Flatten(0)(torch.from_numpy(board.layer_board)).shape)
-    action = model.get_action(board)
+    action = net.get_action(board)
     print(action)
 
 
@@ -148,13 +150,13 @@ def is_endstate(layer_board: np.ndarray):
     return np.array_equal(layer_board, layer_board * 0)
 
 
-def optimise_model(
-        model: LinearModel,
+def optimise_net(
+        policy_net: LinearFC,
         transitions: t.List[Transition],
         optimiser: optim.Optimizer,
         device: str,
         gamma=0.99):
-    """ Update model weights using a batch of transitions. Returns loss """
+    """ Update NN weights using a batch of transitions. Returns loss """
 
     batch_size = len(transitions)
     states = torch.stack([torch.from_numpy(t.state) for t in transitions]).to(device)
@@ -163,7 +165,7 @@ def optimise_model(
     rewards = torch.tensor([t.reward for t in transitions], dtype=torch.float64, device=device)
     next_states = torch.stack([torch.from_numpy(t.next_state) for t in transitions]).to(device)
 
-    qs = model(states)
+    qs = policy_net(states)
     qsa = qs.gather(1, moves.unsqueeze(1)).squeeze(1)
 
     non_final_mask = [not is_endstate(t.next_state) for t in transitions]
@@ -173,7 +175,7 @@ def optimise_model(
 
     if len(non_final_next_states) > 0:
         with torch.no_grad():
-            max_qnext[non_final_mask] = model(non_final_next_states).max(1)[0]
+            max_qnext[non_final_mask] = policy_net(non_final_next_states).max(1)[0]
 
     exp_qsa = rewards + gamma * max_qnext
 
@@ -183,21 +185,21 @@ def optimise_model(
     optimiser.zero_grad()
     loss.backward()
     # gradient clip/limit
-    torch.nn.utils.clip_grad_value_(model.parameters(), 100)
+    torch.nn.utils.clip_grad_value_(policy_net.parameters(), 100)
     optimiser.step()
 
     return loss.item()
 
 
 def train(
-        model: LinearModel,
+        policy_net: LinearFC,
         n_episodes: int,
         device: str,
         n_episode_action_limit=25,
         batch_size=32,
         ):
     board = Board()
-    optimiser = optim.SGD(model.parameters(), lr=1e-4)
+    optimiser = optim.SGD(policy_net.parameters(), lr=1e-4)
     episode = 0
     ep_losses = []
     ep_rewards = []
@@ -214,7 +216,7 @@ def train(
             if np.random.uniform(0, 1) < eps:
                 action = board.get_random_action()
             else:
-                action = model.get_action(board)
+                action = policy_net.get_action(board)
             game_over, reward = board.step(action)
             # hack pawn promotion reward (don't want reward for pawn promotion)
             if reward % 2 == 0:  # reward should only be 1,3,5,9
@@ -231,8 +233,8 @@ def train(
             ))
 
             if len(replay_mem) >= batch_size:
-                loss = optimise_model(
-                    model,
+                loss = optimise_net(
+                    policy_net,
                     replay_mem.sample(batch_size), optimiser, device)
                 losses.append(loss)
         ep_losses.append(sum(losses))
@@ -254,6 +256,6 @@ device = torch.device(
 print(f'Using device: {device}')
 # show_board_model_shapes_types()
 board = Board()
-model = LinearModel(device).to(device)
-# play_game(model, board)
-train(model, 10, device, batch_size=64)
+net = LinearFC(device).to(device)
+# play_game(net, board)
+train(net, 10, device, batch_size=64)
