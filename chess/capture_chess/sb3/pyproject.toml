@@ -1,0 +1,15 @@
+[project]
+name = "sb3"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "gymnasium>=1.0.0",
+    "python-chess>=1.999",
+    "rlc",
+    "stable-baselines3>=2.5.0",
+]
+
+[tool.uv.sources]
+rlc = { git = "https://github.com/arjangroen/RLC.git" }
