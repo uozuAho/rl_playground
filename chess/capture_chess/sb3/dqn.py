@@ -3,11 +3,11 @@ import random
 from stable_baselines3 import DQN
 from stable_baselines3.common.env_util import make_vec_env
 
-from ccenv import CaptureChess
+import ccenv
 
 
 def make_env():
-    return CaptureChess()
+    return ccenv.CaptureChess(illegal_action_behaviour=ccenv.ILLEGAL_ACTION_NEG_REWARD)
 
 
 def train(name, steps):
@@ -35,16 +35,25 @@ def train(name, steps):
 
 
 class Agent(ABC):
-    def get_action(self, env: CaptureChess):
+    def get_action(self, env: ccenv.CaptureChess):
         raise NotImplementedError()
 
 
 class RandomAgent(Agent):
-    def get_action(self, env: CaptureChess):
+    def get_action(self, env: ccenv.CaptureChess):
         return random.choice(list(env.legal_actions()))
 
 
-def play_game(agent: Agent, env: CaptureChess, interactive=False):
+class TrainedAgent(Agent):
+    def __init__(self, model: DQN):
+        self._model = model
+
+    def get_action(self, env):
+        nn_out, _ = model.predict(env.current_obs(), deterministic=True)
+        return nn_out.argmax()
+
+
+def play_game(agent: Agent, env: ccenv.CaptureChess, interactive=False):
     done = False
     total_reward = 0
     turn = 0
@@ -60,4 +69,7 @@ def play_game(agent: Agent, env: CaptureChess, interactive=False):
     return total_reward
 
 
-play_game(RandomAgent(), CaptureChess(), interactive=True)
+model = train("dqn-mlp", 1000000)
+agent = TrainedAgent(model)
+# play_game(RandomAgent(), CaptureChess(), interactive=True)
+play_game(agent, make_env(), interactive=True)
