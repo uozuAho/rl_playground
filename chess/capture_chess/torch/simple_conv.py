@@ -322,7 +322,7 @@ target_net = ConvNet().to(device)
 train(
     policy_net,
     target_net,
-    n_episodes=5000,
+    n_episodes=10,
     device=device,
     batch_size=64
 )

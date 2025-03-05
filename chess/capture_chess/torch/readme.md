@@ -1,16 +1,24 @@
 Attempting this: https://github.com/arjangroen/RLC , but redoing everything
 with uv & torch, to keep track of dependencies and not have to use tensorflow.
 
+I couldn't get the original code working as I couldn't find a compatible
+combination of python + tensorflow + other dependencies.
+
 # quick start
 ```sh
 uv sync
-uv run capture-chess.py  # read the script, alter params as u like
+uv run simple_conv.py  # read the script, alter params as u like
 ```
 
 # todo
-- do [policy gradients](https://www.kaggle.com/code/arjanso/reinforcement-learning-chess-4-policy-gradients)
+- train with sb3
+    - try optuna
 - do [mcts](https://www.kaggle.com/code/arjanso/reinforcement-learning-chess-5-tree-search)
+    - full chess
+    - bigger net
+    - tree search for planning
 - maybe
+    - do [policy gradients](https://www.kaggle.com/code/arjanso/reinforcement-learning-chess-4-policy-gradients)
     - save trained model
     - watch a game played by the trained/untrained agent
     - try low gamma. kaggle dude uses 0.1
@@ -29,5 +37,4 @@ uv run capture-chess.py  # read the script, alter params as u like
     - https://pytorch.org/tutorials/recipes/recipes/tuning_guide.html
     - compare cpu/gpu
     - float32/16 instead of 64?
-- (maybe) try optuna (use sb3?)
 - (maybe) try reinforce/policy gradient alg
