@@ -10,8 +10,9 @@ ILLEGAL_ACTION_NEG_REWARD_GAME_OVER = 2
 
 
 class IllegalActionError(Exception):
-    def __init__(self, move: chess.Move):
+    def __init__(self, board: Board, move: chess.Move):
         super().__init__()
+        self.board = board
         self.move = move
 
 
@@ -33,7 +34,7 @@ class CaptureChess(gym.Env):
         move = chess.Move(from_square, to_square)
         if not self._board.board.is_legal(move):
             if self.illegal_action_behaviour == ILLEGAL_ACTION_THROW:
-                raise IllegalActionError(move)
+                raise IllegalActionError(self._board, move)
             if self.illegal_action_behaviour == ILLEGAL_ACTION_NEG_REWARD:
                 return self._board.layer_board, -100, False, False, {}
             if self.illegal_action_behaviour == ILLEGAL_ACTION_NEG_REWARD_GAME_OVER:
@@ -54,3 +55,6 @@ class CaptureChess(gym.Env):
 
     def current_obs(self):
         return self._board.layer_board
+
+    def action_masks(self):
+        return self._board.project_legal_moves().reshape(4096)

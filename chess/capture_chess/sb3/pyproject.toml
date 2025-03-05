@@ -8,6 +8,7 @@ dependencies = [
     "gymnasium>=1.0.0",
     "python-chess>=1.999",
     "rlc",
+    "sb3-contrib>=2.5.0",
     "stable-baselines3>=2.5.0",
 ]
 

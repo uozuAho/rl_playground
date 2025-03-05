@@ -592,6 +592,7 @@ dependencies = [
     { name = "gymnasium" },
     { name = "python-chess" },
     { name = "rlc" },
+    { name = "sb3-contrib" },
     { name = "stable-baselines3" },
 ]
 
@@ -600,7 +601,20 @@ requires-dist = [
     { name = "gymnasium", specifier = ">=1.0.0" },
     { name = "python-chess", specifier = ">=1.999" },
     { name = "rlc", git = "https://github.com/arjangroen/RLC.git" },
+    { name = "sb3-contrib", specifier = ">=2.5.0" },
     { name = "stable-baselines3", specifier = ">=2.5.0" },
+]
+
+[[package]]
+name = "sb3-contrib"
+version = "2.5.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "stable-baselines3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0d/5a/c423fc86143671a5997b89a7894e8a2e30b6a9e31d09f714e8534d76ebef/sb3_contrib-2.5.0.tar.gz", hash = "sha256:ea57c47695ad3bebaff016dbb8047b5aab0836e000b353912a692bbe910388d0", size = 89529 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6c/66/ace57e7f773c1a34d6bed1e0d8ab0b29e0089e6be9c33b528afd2300bbeb/sb3_contrib-2.5.0-py3-none-any.whl", hash = "sha256:ec52c3b7562e902183b6030c4554c22953c8654fe5980202759238abadc886fe", size = 92764 },
 ]
 
 [[package]]
