@@ -21,15 +21,19 @@ class CaptureChess(gym.Env):
     def __init__(
             self,
             illegal_action_behaviour,
+            n_action_limit=25,
             allow_pawn_promotion=False):
         self._board = Board()
         self.action_space = spaces.Discrete(4096)
         self.observation_space = spaces.Box(low=-1, high=1, shape=(8,8,8))
         self.illegal_action_behaviour = illegal_action_behaviour
+        self.n_action_limit = n_action_limit
         self.allow_pawn_promotion = allow_pawn_promotion
+        self.n_actions = 0
 
     def reset(self, **kwargs):
         self._board.reset()
+        self.n_actions = 0
         return self._board.layer_board, {}
 
     def step(self, action: int):
@@ -43,6 +47,8 @@ class CaptureChess(gym.Env):
                 return self._board.layer_board, -100, False, False, {}
             if self.illegal_action_behaviour == ILLEGAL_ACTION_NEG_REWARD_GAME_OVER:
                 return self._board.layer_board, -100, True, False, {}
+        self.n_actions += 1
+        truncated = False
         done, reward = self._board.step(move)
         # hack fix pawn promotion reward
         # reward should only be 1,3,5,9
@@ -52,9 +58,10 @@ class CaptureChess(gym.Env):
         # This fixes when only pawn promotions are legal
         if len(list(self.legal_actions())) == 0:
             done = True
-        if done:
-            print(f'Game over. moves: {len(self._board.board.move_stack)}')
-        return self._board.layer_board, reward, done, False, {}
+        if self.n_actions >= self.n_action_limit:
+            truncated = True
+            reward = 0
+        return self._board.layer_board, reward, done, truncated, { "value": self._board.get_material_value()}
 
     def render(self):
         print(self._board.board)

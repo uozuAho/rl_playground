@@ -11,7 +11,7 @@ def make_env():
 
 
 def train(name, steps):
-    env = make_vec_env(lambda: make_env(), n_envs=16)
+    env = make_vec_env(lambda: make_env(), n_envs=1)
 
     model = MaskablePPO(
         policy='MlpPolicy',
@@ -21,7 +21,8 @@ def train(name, steps):
         env = env,
         verbose=1
     )
-    model.learn(total_timesteps=steps, log_interval=steps//30)
+    model.learn(total_timesteps=steps, log_interval=1)
+    model.save(name)
     return model
 
 
@@ -40,8 +41,11 @@ class TrainedAgent(Agent):
         self._model = model
 
     def get_action(self, env):
-        nn_out, _ = model.predict(env.current_obs(), deterministic=True)
-        return nn_out.argmax()
+        action, _ = self._model.predict(
+            env.current_obs(),
+            action_masks=env.action_masks(),
+            deterministic=True)
+        return action.item()
 
 
 def play_game(agent: Agent, env: ccenv.CaptureChess, interactive=False):
@@ -51,19 +55,21 @@ def play_game(agent: Agent, env: ccenv.CaptureChess, interactive=False):
     while not done:
         turn += 1
         action = agent.get_action(env)
-        obs, reward, term, trunc, _ = env.step(action)
+        obs, reward, term, trunc, info = env.step(action)
         done = term or trunc
         total_reward += reward
         if interactive:
             env.render()
+            print(f'value: {info["value"]}')
             input(f"turn {turn}. press a key...")
     return total_reward
 
 
 try:
-    model = train("maskppo", 1)
+    model = train("maskppo", 100_000)
     agent = TrainedAgent(model)
-    # play_game(agent, make_env(), interactive=True)
+    # play_game(RandomAgent(), make_env(), interactive=True)
+    play_game(agent, make_env(), interactive=True)
 except ccenv.IllegalActionError as e:
     print("Illegal move attempted")
     print(e.move)
