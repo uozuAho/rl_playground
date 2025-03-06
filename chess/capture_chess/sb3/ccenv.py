@@ -18,11 +18,15 @@ class IllegalActionError(Exception):
 
 class CaptureChess(gym.Env):
     """ Gym wrapper around capture chess environment """
-    def __init__(self, illegal_action_behaviour):
+    def __init__(
+            self,
+            illegal_action_behaviour,
+            allow_pawn_promotion=False):
         self._board = Board()
         self.action_space = spaces.Discrete(4096)
         self.observation_space = spaces.Box(low=-1, high=1, shape=(8,8,8))
         self.illegal_action_behaviour = illegal_action_behaviour
+        self.allow_pawn_promotion = allow_pawn_promotion
 
     def reset(self, **kwargs):
         self._board.reset()
@@ -44,6 +48,12 @@ class CaptureChess(gym.Env):
         # reward should only be 1,3,5,9
         if reward % 2 == 0:
             reward = 0
+        # hack: if there are no legal actions, the game is over
+        # This fixes when only pawn promotions are legal
+        if len(list(self.legal_actions())) == 0:
+            done = True
+        if done:
+            print(f'Game over. moves: {len(self._board.board.move_stack)}')
         return self._board.layer_board, reward, done, False, {}
 
     def render(self):
@@ -51,10 +61,17 @@ class CaptureChess(gym.Env):
 
     def legal_actions(self):
         for move in self._board.board.generate_legal_moves():
-            yield move.from_square * 64 + move.to_square
+            # 64x64 output doesn't support pawn promotions, just remove them
+            if self.allow_pawn_promotion or not move.promotion:
+                yield move.from_square * 64 + move.to_square
 
     def current_obs(self):
         return self._board.layer_board
 
     def action_masks(self):
-        return self._board.project_legal_moves().reshape(4096)
+        mask = self._board.project_legal_moves().reshape(4096)
+        # 64x64 output doesn't support pawn promotions, just remove them
+        for m in self._board.board.generate_legal_moves():
+            if not self.allow_pawn_promotion and m.promotion:
+                mask[m.from_square * 64 + m.to_square] = 0
+        return mask

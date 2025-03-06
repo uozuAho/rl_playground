@@ -61,7 +61,7 @@ def play_game(agent: Agent, env: ccenv.CaptureChess, interactive=False):
 
 
 try:
-    model = train("maskppo", 100)
+    model = train("maskppo", 1)
     agent = TrainedAgent(model)
     # play_game(agent, make_env(), interactive=True)
 except ccenv.IllegalActionError as e:
