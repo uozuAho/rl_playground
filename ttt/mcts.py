@@ -1,10 +1,7 @@
 """ Attempt to demonstrate MCTS with tic tac toe
 
-    Todo:
-    - each step: options:
-        - show action visit counts
-        - show action values
-        - show action uct
+Todo
+- configurable agents: mcts vs random/mcts/perfect. Show win rates
 """
 
 
@@ -16,6 +13,7 @@ import ttt.env
 from ttt.env import TicTacToeEnv
 
 
+type Player = t.Literal['O', 'X']
 type GameState = t.Literal['O', 'X', 'draw', 'in_progress']
 
 
@@ -31,9 +29,17 @@ class MCTSNode:
     def __init__(self, state: TicTacToeEnv, parent):
         self.state: TicTacToeEnv = state
         self.parent: MCTSNode = parent
-        self.children: t.Dict[int, TicTacToeEnv] = {}  # action, state
+        self.children: t.Dict[int, MCTSNode] = {}  # action, node
         self.visits = 0
         self.wins = 0
+
+    def __str__(self):
+        board_str = ''.join(ttt.env.tomark(x) for x in self.state.board)
+        board_str = f'{board_str[:3]}|{board_str[3:6]}|{board_str[6:]}'
+        return f'vis: {self.visits:3} wins: {self.wins:3} ucb {self.ucb1():0.3f} board: {board_str}'
+
+    def __repr__(self):
+        return str(self)
 
     def select(self):
         # tree policy: greedy best
@@ -54,15 +60,15 @@ class MCTSNode:
             sim_state.step(move)
         return gamestate(sim_state)
 
-    def backpropagate(self, result: GameState):
+    def backpropagate(self, player: Player, result: GameState):
         assert result != 'in_progress'
-        if result == self.state.current_player:
+        if result == player:
             self.wins += 1
         elif result != 'draw':
             self.wins -= 1
         self.visits += 1
         if self.parent:
-            self.parent.backpropagate(result)
+            self.parent.backpropagate(player, result)
 
     def ucb1(self):
         if self.visits == 0:
@@ -70,7 +76,7 @@ class MCTSNode:
         return self.wins / self.visits + math.sqrt(2 * math.log(self.parent.visits) / self.visits)
 
 
-def mcts_decision(state, simulations=1000):
+def build_mcts_tree(state: TicTacToeEnv, simulations: int):
     root = MCTSNode(state, parent=None)
     for _ in range(simulations):
         node = root
@@ -84,18 +90,16 @@ def mcts_decision(state, simulations=1000):
 
         result = node.simulate()    # 3. simulate from the given child to the
                                     #    end of the game
-        node.backpropagate(result)  # 4. propagate game result to all nodes that
-                                    #    led to the result
 
+        # 4. propagate game result to all nodes that led to the result
+        node.backpropagate(state.current_player, result)
+    return root
+
+
+def mcts_decision(state: TicTacToeEnv, simulations=1000):
+    root = build_mcts_tree(state, simulations)
     best_move = max(root.children, key=lambda move: root.children[move].visits)
     return best_move
-
-
-def get_user_input():
-    print("Select an action:")
-    print("1: show board")
-    print("2: play best MCTS move")
-    return input()
 
 
 game = TicTacToeEnv()
@@ -110,10 +114,5 @@ while not done:
     print(f"Player {game.current_player} moved to {move}")
     game.render()
     user_done = False
-    while not user_done:
-        _in = get_user_input()
-        if _in == '1': game.render()
-        elif _in == '2': user_done = True
-
 
 print(f"Winner: {gamestate(game)}")
