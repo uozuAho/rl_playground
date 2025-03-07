@@ -107,6 +107,11 @@ class TicTacToeEnv(gym.Env):
         c.on_invalid_action = self.on_invalid_action
         return c
 
+    @property
+    def current_player(self):
+        """ Alias for next_mark """
+        return self.next_mark
+
     def get_status(self):
         """ Returns one of
 
@@ -119,7 +124,8 @@ class TicTacToeEnv(gym.Env):
 
     def step(self, action):
         """ Make a move, then if there's an opponent, make their move.
-            Returns the result of the opponent's move.
+            Returns:
+            state, reward, game_over?, truncated?, info
         """
         if not self.opponent:
             return self._step(action)
