@@ -15,6 +15,7 @@ import json
 import random
 import numpy as np
 
+from ttt.agents.agent import TttAgent
 from ttt.env import TicTacToeEnv
 
 
@@ -40,7 +41,7 @@ class Qtable:
         return ''.join(str(x) for x in env.board)
 
 
-class SarsaAgent:
+class SarsaAgent(TttAgent):
     def __init__(
             self,
             q_table: Qtable | None = None,

@@ -1,8 +1,9 @@
+from ttt.agents.agent import TttAgent
 import ttt.env
 from ttt.env import TicTacToeEnv
 
 
-class PerfectAgent:
+class PerfectAgent(TttAgent):
     """ Never loses. Assumes X goes first. """
     def __init__(self, mark):
         assert mark in ('X', 'O')

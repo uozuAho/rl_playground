@@ -2,6 +2,7 @@ import json
 import random
 import numpy as np
 
+from ttt.agents.agent import TttAgent
 from ttt.env import TicTacToeEnv
 
 
@@ -27,7 +28,7 @@ class Qtable:
         return ''.join(str(x) for x in env.board)
 
 
-class QlearnAgent:
+class QlearnAgent(TttAgent):
     """
     Tabular q-learning agent. Stores a state-action q table. Trains against
     itself (ie don't supply an opponent).
