@@ -5,6 +5,7 @@ from ttt.env import TicTacToeEnv
 class PerfectAgent:
     """ Never loses. Assumes X goes first. """
     def __init__(self, mark):
+        assert mark in ('X', 'O')
         self.mark = mark
 
     def get_action(self, env: TicTacToeEnv):

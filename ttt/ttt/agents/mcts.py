@@ -1,16 +1,18 @@
-""" Attempt to demonstrate MCTS with tic tac toe
-
-Todo
-- configurable agents: mcts vs random/mcts/perfect. Show win rates
-"""
-
-
 import math
 import random
 import typing as t
+from ttt.agents.agent import TttAgent
 
 import ttt.env
 from ttt.env import TicTacToeEnv
+
+
+class MctsAgent(TttAgent):
+    def __init__(self, n_sims: int):
+        self.n_sims = n_sims
+
+    def get_action(self, env: TicTacToeEnv):
+        return mcts_decision(env, self.n_sims)
 
 
 type Player = t.Literal['O', 'X']
@@ -96,23 +98,7 @@ def build_mcts_tree(state: TicTacToeEnv, simulations: int):
     return root
 
 
-def mcts_decision(state: TicTacToeEnv, simulations=1000):
-    root = build_mcts_tree(state, simulations)
+def mcts_decision(state: TicTacToeEnv, n_simulations: int):
+    root = build_mcts_tree(state, n_simulations)
     best_move = max(root.children, key=lambda move: root.children[move].visits)
     return best_move
-
-
-game = TicTacToeEnv()
-done = False
-
-while not done:
-    if game.current_player == 'X':
-        move = mcts_decision(game, simulations=100)
-    else:
-        move = random.choice(list(game.valid_actions()))
-    _, _, done, _, _ = game.step(move)
-    print(f"Player {game.current_player} moved to {move}")
-    game.render()
-    user_done = False
-
-print(f"Winner: {gamestate(game)}")
