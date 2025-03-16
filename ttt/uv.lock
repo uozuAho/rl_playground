@@ -1005,6 +1005,7 @@ dependencies = [
     { name = "sb3-contrib" },
     { name = "scikit-learn" },
     { name = "stable-baselines3" },
+    { name = "torch" },
 ]
 
 [package.metadata]
@@ -1018,6 +1019,7 @@ requires-dist = [
     { name = "sb3-contrib", specifier = ">=2.5.0" },
     { name = "scikit-learn", specifier = ">=1.6.1" },
     { name = "stable-baselines3", specifier = ">=2.5.0" },
+    { name = "torch", specifier = ">=2.6.0" },
 ]
 
 [[package]]

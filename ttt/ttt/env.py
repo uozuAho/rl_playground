@@ -1,9 +1,11 @@
 # Originally copied from https://github.com/haje01/gym-tictactoe/blob/master/gym_tictactoe/env.py
 # Modified until I could get it working with stable baselines
 
+import typing as t
 import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
+
 
 NUM_LOC = 9
 IN_PROGRESS_REWARD = 0
@@ -108,7 +110,7 @@ class TicTacToeEnv(gym.Env):
         return c
 
     @property
-    def current_player(self):
+    def current_player(self) -> t.Literal['X', 'O']:
         """ Alias for next_mark """
         return self.next_mark
 

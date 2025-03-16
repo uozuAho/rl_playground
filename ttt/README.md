@@ -28,7 +28,7 @@ uv run optuna-dashboard sqlite:///dqn-ttt.db  # see hyperparam report
     - learning starts: best 1500-4000, worst > 4k
     - (sort of) batch size: higher = slightly better. best 150-250
 - top 3 param sets, all got 1.0 eval score:
-    - 1
+    - 1 - gets to >90% win rate vs random after about 6k-10k episodes
         - gamma 0.9848576847592656
         - net_arch 32_32
         - act_fn relu
@@ -61,13 +61,3 @@ uv run optuna-dashboard sqlite:///dqn-ttt.db  # see hyperparam report
         - tgt_update_int 1627
         - eps_init 0.6919016329828642
         - eps_final 0.07907417425388644
-
-# todo
-- optimise training: aim for highest average return with lowest training
-    - WIP: tabular param search
-        - don't use optuna, too hard with non-sb3 model
-            - output to csv, analyse there
-            - or better plot that allows isolating individual traces
-                - https://matplotlib.org/stable/gallery/event_handling/legend_picking.html
-    - run/fix tests
-- inline todos
