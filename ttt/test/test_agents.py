@@ -1,5 +1,7 @@
 from ttt.agents.qlearn import QlearnAgent
 from ttt.agents.sarsa import SarsaAgent
+from ttt.agents.tab_greedy_v import GreedyVAgent
+import ttt.agents.tab_greedy_v
 import ttt.env
 from ttt.env import TicTacToeEnv
 from ttt.agents.random import RandomAgent
@@ -60,3 +62,12 @@ def test_qlearn_train_and_play():
             action = agent.get_action(env)
             obs, reward, term, trunc, info = env.step(action)
             done = term or trunc
+
+
+def test_greedy_v_is_greedy():
+    qtable = {
+        '...|.x.|...': 0.9,
+    }
+    agent = GreedyVAgent(ttt.agents.tab_greedy_v.Qtable(qtable))
+    env = TicTacToeEnv()
+    assert agent.get_action(env) == 4

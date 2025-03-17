@@ -3,6 +3,7 @@ Trying to figure out how best to train tabular agents.
 """
 
 import time
+from ttt.agents.tab_greedy_v import GreedyVAgent
 import ttt.env
 from ttt.env import TicTacToeEnv
 from ttt.agents.perfect import PerfectAgent
@@ -14,7 +15,7 @@ import matplotlib.pyplot as plt
 
 def my_eval(a, opponent, num_games=20):
     env = TicTacToeEnv(
-        opponent=opponent,
+        opponent=opponent or RandomAgent(),
         on_invalid_action=ttt.env.INVALID_ACTION_GAME_OVER if a.allow_invalid_actions else ttt.env.INVALID_ACTION_THROW
     )
     wins = 0
@@ -89,13 +90,18 @@ def train_eval(agent: SarsaAgent | QlearnAgent, opponent, total_eps, eval_interv
 #     [('random', RandomAgent()), ('perfect', PerfectAgent('O'))],
 #     num_games=50
 # )
-sen, sr, se = train_eval(SarsaAgent(allow_invalid_actions=True), RandomAgent(), total_eps=10000, eval_interval=1000)
-qen, qr, qe = train_eval(QlearnAgent(allow_invalid_actions=True), RandomAgent(), total_eps=10000, eval_interval=1000)
+# sen, sr, se = train_eval(SarsaAgent(allow_invalid_actions=True), RandomAgent(), total_eps=10000, eval_interval=1000)
+# qen, qr, qe = train_eval(QlearnAgent(allow_invalid_actions=True), RandomAgent(), total_eps=10000, eval_interval=1000)
+# agent = GreedyVAgent(allow_invalid_actions=False)
+# qen, qr, qe = train_eval(agent, opponent=None, total_eps=10000, eval_interval=1000)
+# agent.save('asdf.json')
+agent = GreedyVAgent.load('asdf.json')
+my_eval(agent, RandomAgent())
 # train_eval(SarsaAgent(), PerfectAgent('O'), total_eps=10000, eval_interval=1000)
-plt.plot(sen, sr, label='sarsa avg return')
-plt.plot(sen, se, label='sarsa epsilon')
-plt.plot(qen, qr, label='qlearn avg return')
-plt.plot(qen, qe, label='qlearn epsilon')
-plt.legend()
-plt.xlabel('episodes')
-plt.show()
+# plt.plot(sen, sr, label='sarsa avg return')
+# plt.plot(sen, se, label='sarsa epsilon')
+# plt.plot(qen, qr, label='qlearn avg return')
+# plt.plot(qen, qe, label='qlearn epsilon')
+# plt.legend()
+# plt.xlabel('episodes')
+# plt.show()

@@ -93,6 +93,10 @@ class TicTacToeEnv(gym.Env):
         self.on_invalid_action = on_invalid_action
         self.reset()
 
+    def __str__(self):
+        b = ''.join(tomark(x) for x in self.board)
+        return f'{b[:3]}|{b[3:6]}|{b[6:]}'
+
     def reset(self, **kwargs):
         self.board = [0] * NUM_LOC
         self.next_mark = 'X'  # X always goes first
