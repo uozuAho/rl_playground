@@ -94,6 +94,9 @@ class GreedyVAgent(TttAgent):
 
                 state = next_state.copy()
 
+                if done:
+                    self._q_table.set_value(envstate(state), reward)
+
             if ep_callback:
                 ep_callback(episode, epsilon)
 
