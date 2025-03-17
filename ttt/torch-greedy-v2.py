@@ -10,6 +10,7 @@ import typing as t
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.nn.functional as F
 
 from ttt.agents.agent import TttAgent
 from ttt.agents.compare import play_and_report
@@ -49,17 +50,18 @@ class LinearFC(nn.Module):
     """ Fully connected linear/sequential NN """
     def __init__(self):
         super(LinearFC, self).__init__()
-        self.stack = nn.Sequential(
-            nn.Linear(9, 32, dtype=torch.float32),
-            nn.Linear(32, 1, dtype=torch.float32)
-        )
+        self.l1 = nn.Linear(9, 32, dtype=torch.float32)
+        self.l2 = nn.Linear(32, 32, dtype=torch.float32)
+        self.l3 = nn.Linear(32, 1, dtype=torch.float32)
 
     def forward(self, x: torch.Tensor):
-        x = self.stack(x)
+        x = F.relu(self.l1(x))
+        x = F.relu(self.l2(x))
+        x = F.relu(self.l3(x))
         return x
 
 
-class GreedyMcAgent(TttAgent):
+class GreedyTdAgent(TttAgent):
     def __init__(self, nn: LinearFC, device: str):
         self.nn = nn
         self.device = device
@@ -78,6 +80,15 @@ class GreedyMcAgent(TttAgent):
 
     def state_val(self, env: TicTacToeEnv, learn=False):
         return self._nn_out(env.board, learn)
+
+    def action_vals(self, env: TicTacToeEnv):
+        """ For debugging """
+        vals = {}
+        for a in env.valid_actions():
+            temp = env.copy()
+            temp.step(a)
+            vals[str(temp)] = self.state_val(temp, learn=False).item()
+        return vals
 
     def _nn_out(self, state: BoardState, learn=False) -> float:
         state_t = torch.tensor(state, dtype=torch.float32, device=self.device)
@@ -118,9 +129,9 @@ def optimise_net(
     with torch.no_grad():
         # todo: double learning: use target net here
         q_next[non_final_mask] = value_net(non_final_next_states).squeeze(1)
-    q_next = rewards + gamma * q_next
+    q_next = (rewards + gamma * q_next).unsqueeze(1)
 
-    q = value_net(states).squeeze(1)
+    q = value_net(states)
 
     optimiser.zero_grad()
     criterion = nn.MSELoss()
@@ -129,7 +140,7 @@ def optimise_net(
     optimiser.step()
 
 
-def play_game(agent_x: GreedyMcAgent, opponent_o: TttAgent):
+def play_game(agent_x: GreedyTdAgent, opponent_o: TttAgent):
     env = TicTacToeEnv()
     assert env.my_mark == 'X'
     done = False
@@ -144,7 +155,7 @@ def play_game(agent_x: GreedyMcAgent, opponent_o: TttAgent):
 
 
 def train(
-        agent_x: GreedyMcAgent,
+        agent_x: GreedyTdAgent,
         opponent_o: TttAgent,
         n_episodes: int,
         device: str,
@@ -161,9 +172,61 @@ def train(
             optimise_net(agent_x.nn, buffer.sample(batch_size), optimiser, device)
     print('training done')
 
+def eval_agent(agent: GreedyTdAgent, opponent: TttAgent):
+    play_and_report(agent, "greedyTd", opponent, "rando?", 100)
 
-def eval_agent(agent: GreedyMcAgent, opponent: TttAgent):
-    play_and_report(agent, "mcts", opponent, "rando?", 100)
+
+def demo_nn_learn():
+    """ I'm struggling to understand why the greedy agent isn't learning.
+        This works: Learning random output values for random inputs with LinearFC
+    """
+    net = LinearFC()
+    def randstate():
+        return [random.randint(0, 2) for _ in range(9)]
+    states = [randstate() for _ in range(10)]
+    vals = [random.random() for _ in range(10)]
+    states_t = [torch.tensor(x, dtype=torch.float32) for x in states]
+    vals_t = [torch.tensor(x) for x in vals]
+    optimiser = optim.SGD(net.parameters(), lr=.01)
+    for i in range(1000):
+        losses = []
+        for j in range(len(states)):
+            idx = i % len(states)
+            input = states_t[idx]
+            exp_out = vals_t[idx]
+            nn_out = net(input)
+
+            optimiser.zero_grad()
+            criterion = nn.MSELoss()
+            loss = criterion(nn_out, exp_out)
+            loss.backward()
+            optimiser.step()
+            losses.append(loss.item())
+        avg_loss = sum(losses) / len(losses)
+        a = avg_loss
+
+
+def demo_nn_learn_batch():
+    """ Same as above, but learn/output in batches"""
+    net = LinearFC()
+    def randstate():
+        return [random.randint(0, 2) for _ in range(9)]
+    states = [randstate() for _ in range(10)]
+    vals = [random.random() for _ in range(10)]
+    states_t = torch.stack([torch.tensor(x, dtype=torch.float32) for x in states])
+    vals_t = torch.tensor(vals).unsqueeze(1)
+    optimiser = optim.SGD(net.parameters(), lr=.01)
+    for i in range(1000):
+        input = states_t
+        exp_out = vals_t
+        nn_out = net(input)
+
+        optimiser.zero_grad()
+        criterion = nn.MSELoss()
+        loss = criterion(nn_out, exp_out)
+        loss.backward()
+        optimiser.step()
+        print(loss.item())
 
 
 device = torch.device(
@@ -173,11 +236,15 @@ device = torch.device(
 )
 device = 'cpu'
 print(f'using device {device}')
+
+# demo_nn_learn()
+# demo_nn_learn_batch()
+
 value_net = LinearFC().to(device)
-agent = GreedyMcAgent(value_net, device)
+agent = GreedyTdAgent(value_net, device)
 opponent = RandomAgent()
 eval_agent(agent, opponent)
 print("PRESS CTRL-C TO STOP!")
 for _ in range(1000):
-    train(agent, opponent, 1000, device, batch_size=4)
+    train(agent, opponent, 1000, device, batch_size=64)
     eval_agent(agent, opponent)
