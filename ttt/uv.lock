@@ -1001,11 +1001,15 @@ dependencies = [
     { name = "optuna" },
     { name = "optuna-dashboard" },
     { name = "plotly" },
-    { name = "pytest" },
     { name = "sb3-contrib" },
     { name = "scikit-learn" },
     { name = "stable-baselines3" },
     { name = "torch" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
 ]
 
 [package.metadata]
@@ -1015,12 +1019,14 @@ requires-dist = [
     { name = "optuna", specifier = ">=4.2.1" },
     { name = "optuna-dashboard", specifier = ">=0.17.0" },
     { name = "plotly", specifier = ">=6.0.0" },
-    { name = "pytest", specifier = ">=8.3.4" },
     { name = "sb3-contrib", specifier = ">=2.5.0" },
     { name = "scikit-learn", specifier = ">=1.6.1" },
     { name = "stable-baselines3", specifier = ">=2.5.0" },
     { name = "torch", specifier = ">=2.6.0" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pytest", specifier = ">=8.3.4" }]
 
 [[package]]
 name = "typing-extensions"

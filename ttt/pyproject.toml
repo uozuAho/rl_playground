@@ -10,9 +10,13 @@ dependencies = [
     "optuna-dashboard>=0.17.0",
     "optuna>=4.2.1",
     "plotly>=6.0.0",
-    "pytest>=8.3.4",
     "sb3-contrib>=2.5.0",
     "scikit-learn>=1.6.1",
     "stable-baselines3>=2.5.0",
     "torch>=2.6.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.4",
 ]

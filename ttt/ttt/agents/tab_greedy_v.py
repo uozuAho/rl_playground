@@ -1,6 +1,7 @@
 import json
 import random
 import numpy as np
+import typing as t
 
 from ttt.agents.agent import TttAgent
 from ttt.env import TicTacToeEnv
@@ -68,8 +69,14 @@ class GreedyVAgent(TttAgent):
             eps_decay_rate=0.0005, # rate at which exploration drops off
             learning_rate=0.5,
             gamma=0.95,            # discount rate (discount past rewards)
-            ep_callback=None
+            ep_callback: t.Optional[t.Callable[[int, float], None]]=None
             ):
+        """
+            Parameters:
+            - ep_callback: func(episode_num, current_epsilon) -> None. Called
+              at the end of every episode.
+        """
+        assert env.opponent is None  # expects no opponent, trains against random moves
         for episode in range(n_training_episodes):
             epsilon = min_epsilon + (
                 (max_epsilon - min_epsilon) *
