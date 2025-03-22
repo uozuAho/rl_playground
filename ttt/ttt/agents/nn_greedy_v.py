@@ -62,13 +62,14 @@ class NnGreedyVAgent(TttAgent):
     def state_val(self, env: TicTacToeEnv):
         return self._nn_out(env.board)
 
-    def action_vals(self, env: TicTacToeEnv):
+    def action_values(self, board_str: str):
         """ For debugging """
         vals = {}
+        env = TicTacToeEnv.from_str(board_str)
         for a in env.valid_actions():
             temp = env.copy()
             temp.step(a)
-            vals[str(temp)] = self.state_val(temp, learn=False).item()
+            vals[a] = self.state_val(temp).item()
         return vals
 
     def _nn_out(self, state: BoardState) -> float:
@@ -81,23 +82,24 @@ class NnGreedyVAgent(TttAgent):
             n_training_episodes,
             min_epsilon=0.001,
             max_epsilon=1.0,
-            learning_rate=1e-4,
+            learning_rate=1e-3,
             gamma=0.95,
-            batch_size=64,
+            batch_size=10,
             n_ep_update_interval=10,
             ep_callback: t.Optional[t.Callable[[int, float], None]]=None
             ):
         print(f"training for {n_training_episodes} episodes...")
         buffer = ReplayBuffer(1000)
         optimiser = optim.SGD(self.nn.parameters(), lr=learning_rate)
+        e = epsilon.exp_decay_gen(max_epsilon, min_epsilon, n_training_episodes)
         for i in range(n_training_episodes):
             env.reset()
-            e = epsilon.exp_decay_gen(max_epsilon, min_epsilon, n_training_episodes)
             done = False
+            eps = e.__next__()
             while not done:
                 state = env.board[:]
                 if env.current_player == 'X':
-                    action = self._e_greedy_action(env, e.__next__())
+                    action = self._e_greedy_action(env, eps)
                 else:
                     action = random.choice(list(env.valid_actions()))
                 _, reward, done, _, _ = env.step(action)
@@ -156,6 +158,8 @@ def optimise_net(
 
     Q(s) <- Q(s) + lr*(R + gamma * Q(s_t+1) - Q(s))
     """
+    board_strs = [''.join(str(x) for x in s.state) for s in batch]
+
     states = torch.stack([torch.tensor(b.state, dtype=torch.float32) for b in batch]).to(device)
     rewards = torch.tensor([b.reward for b in batch], device=device)
     non_final_mask = torch.tensor([not b.is_end for b in batch], device=device)

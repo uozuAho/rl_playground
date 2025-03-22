@@ -49,8 +49,9 @@ class GreedyVAgent(TttAgent):
     def get_action(self, env: TicTacToeEnv):
         return greedy_policy(env, self._q_table)
 
-    def action_values(self, env: TicTacToeEnv):
+    def action_values(self, board_str: str):
         """ For debugging """
+        env = TicTacToeEnv.from_str(board_str)
         values = {}
         for a in env.valid_actions():
             tempenv = env.copy()
@@ -95,8 +96,8 @@ class GreedyVAgent(TttAgent):
                 done = terminated or truncated
 
                 q = self._q_table.value(envstate(state))
-                q_next = self._q_table.value(envstate(next_state))
-                q = q + learning_rate * (reward + gamma * q_next - q) # todo: should q_next be 0 if it's an endstate?
+                q_next = 0 if done else self._q_table.value(envstate(next_state))
+                q = q + learning_rate * (reward + gamma * q_next - q)
                 self._q_table.set_value(envstate(state), q)
 
                 state = next_state.copy()

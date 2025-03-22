@@ -33,7 +33,10 @@ def tomark(code):
 
 
 def tocode(mark):
-    return O_CODE if mark == 'O' else X_CODE
+    if mark == 'O': return O_CODE
+    if mark == 'X': return X_CODE
+    if mark == ' ': return EMPTY_CODE
+    raise Exception(f"Invalid mark: '{mark}'")
 
 
 def next_mark(mark):
@@ -92,6 +95,20 @@ class TicTacToeEnv(gym.Env):
         self.opponent = opponent
         self.on_invalid_action = on_invalid_action
         self.reset()
+
+    @staticmethod
+    def from_str(board_str: str):
+        board_str = board_str.replace('|', '')
+        assert len(board_str) == 9
+        assert board_str.upper().count('X') >= board_str.upper().count('O')
+        env = TicTacToeEnv()
+        env.board = [tocode(c.upper()) for c in board_str]
+        if board_str.upper().count('X') > board_str.upper().count('O'):
+            env.next_mark = 'O'
+        status = check_game_status(env.board)
+        if status >= 0:
+            env.is_game_over = True
+        return env
 
     def __str__(self):
         b = ''.join(tomark(x) for x in self.board)
