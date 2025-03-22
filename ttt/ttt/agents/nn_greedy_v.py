@@ -139,9 +139,9 @@ class LinearFC(nn.Module):
         self.l3 = nn.Linear(32, 1, dtype=torch.float32)
 
     def forward(self, x: torch.Tensor):
-        x = F.relu(self.l1(x))
-        x = F.relu(self.l2(x))
-        x = F.relu(self.l3(x))
+        x = self.l1(x)
+        x = self.l2(x)
+        x = self.l3(x)
         return x
 
 
@@ -174,7 +174,7 @@ def optimise_net(
     q = value_net(states)
 
     optimiser.zero_grad()
-    criterion = nn.MSELoss()
+    criterion = nn.SmoothL1Loss()
     loss = criterion(q, q_next)
     loss.backward()
     optimiser.step()

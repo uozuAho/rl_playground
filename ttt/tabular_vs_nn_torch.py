@@ -32,6 +32,7 @@ def eval_callback(agent, ep_num, epsilon):
 #     ep_callback=lambda ep, eps: eval_callback(tab_agent, ep, eps))
 
 # tab_agent.save('tabular-greedy-v.json')
+tab_agent = GreedyVAgent.load('tabular-greedy-v.json')
 
 
 
