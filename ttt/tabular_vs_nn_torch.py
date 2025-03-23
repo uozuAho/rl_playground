@@ -46,9 +46,13 @@ print(f'using device {device}')
 nn_agent = NnGreedyVAgent(device)
 nn_agent.train(
     env,
-    n_training_episodes=5000,
+    n_training_episodes=12000,
     min_epsilon=0.01,
     max_epsilon=0.7,
+    learning_rate=1e-3,
+    n_ep_update_interval=2,
+    batch_size=16,
+    replay_buffer_size=32,
     ep_callback=lambda ep, eps: eval_callback(nn_agent, ep, eps))
 
 

@@ -32,7 +32,7 @@ class GameStep:
 
 class NnGreedyVAgent(TttAgent):
     """
-    NN greedy value learning agent.
+    NN greedy value learning agent. Doesn't improve with training. Dunno why.
     """
     def __init__(self, device):
         self.nn = LinearFC()
@@ -43,7 +43,7 @@ class NnGreedyVAgent(TttAgent):
 
     def _greedy_action(self, env: TicTacToeEnv):
         max_move = None
-        max_val = -999
+        max_val = -9999999999999999
         for m in env.valid_actions():
             temp_env = env.copy()
             temp_env.step(m)
@@ -85,12 +85,13 @@ class NnGreedyVAgent(TttAgent):
             learning_rate=1e-3,
             gamma=0.95,
             batch_size=10,
+            replay_buffer_size=32,
             n_ep_update_interval=10,
             ep_callback: t.Optional[t.Callable[[int, float], None]]=None
             ):
         print(f"training for {n_training_episodes} episodes...")
-        buffer = ReplayBuffer(1000)
-        optimiser = optim.SGD(self.nn.parameters(), lr=learning_rate)
+        buffer = ReplayBuffer(replay_buffer_size)
+        optimiser = optim.Adam(self.nn.parameters(), lr=learning_rate)
         e = epsilon.exp_decay_gen(max_epsilon, min_epsilon, n_training_episodes)
         for i in range(n_training_episodes):
             env.reset()
@@ -136,12 +137,14 @@ class LinearFC(nn.Module):
         super(LinearFC, self).__init__()
         self.l1 = nn.Linear(9, 32, dtype=torch.float32)
         self.l2 = nn.Linear(32, 32, dtype=torch.float32)
-        self.l3 = nn.Linear(32, 1, dtype=torch.float32)
+        self.l3 = nn.Linear(32, 32, dtype=torch.float32)
+        self.l4 = nn.Linear(32, 1, dtype=torch.float32)
 
     def forward(self, x: torch.Tensor):
         x = self.l1(x)
         x = self.l2(x)
         x = self.l3(x)
+        x = self.l4(x)
         return x
 
 
@@ -158,8 +161,6 @@ def optimise_net(
 
     Q(s) <- Q(s) + lr*(R + gamma * Q(s_t+1) - Q(s))
     """
-    board_strs = [''.join(str(x) for x in s.state) for s in batch]
-
     states = torch.stack([torch.tensor(b.state, dtype=torch.float32) for b in batch]).to(device)
     rewards = torch.tensor([b.reward for b in batch], device=device)
     non_final_mask = torch.tensor([not b.is_end for b in batch], device=device)
@@ -167,7 +168,6 @@ def optimise_net(
         [torch.tensor(b.next_state, dtype=torch.float32) for b in batch if not b.is_end]).to(device)
     q_next = torch.zeros(len(batch), device=device)
     with torch.no_grad():
-        # todo: double learning: use target net here
         q_next[non_final_mask] = value_net(non_final_next_states).squeeze(1)
     q_next = (rewards + gamma * q_next).unsqueeze(1)
 
@@ -177,4 +177,6 @@ def optimise_net(
     criterion = nn.SmoothL1Loss()
     loss = criterion(q, q_next)
     loss.backward()
+    torch.nn.utils.clip_grad_norm_(value_net.parameters(), max_norm=1.0)
+
     optimiser.step()
