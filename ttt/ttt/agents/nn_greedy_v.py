@@ -6,12 +6,8 @@ import typing as t
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.nn.functional as F
 
 from ttt.agents.agent import TttAgent
-from ttt.agents.compare import play_and_report
-from ttt.agents.random import RandomAgent
-import ttt.env
 from ttt.env import TicTacToeEnv
 
 import utils.epsilon as epsilon
@@ -137,14 +133,12 @@ class LinearFC(nn.Module):
         super(LinearFC, self).__init__()
         self.l1 = nn.Linear(9, 32, dtype=torch.float32)
         self.l2 = nn.Linear(32, 32, dtype=torch.float32)
-        self.l3 = nn.Linear(32, 32, dtype=torch.float32)
-        self.l4 = nn.Linear(32, 1, dtype=torch.float32)
+        self.l3 = nn.Linear(32, 1, dtype=torch.float32)
 
     def forward(self, x: torch.Tensor):
         x = self.l1(x)
         x = self.l2(x)
         x = self.l3(x)
-        x = self.l4(x)
         return x
 
 
@@ -178,5 +172,19 @@ def optimise_net(
     loss = criterion(q, q_next)
     loss.backward()
     torch.nn.utils.clip_grad_norm_(value_net.parameters(), max_norm=1.0)
-
     optimiser.step()
+
+    # learn final values
+    if any(b.is_end for b in batch):
+        final_states = torch.stack(
+            [torch.tensor(b.next_state, dtype=torch.float32) for b in batch if b.is_end]).to(device)
+        rewards = torch.tensor([b.reward for b in batch if b.is_end], device=device).unsqueeze(1)
+
+        q = value_net(final_states)
+
+        optimiser.zero_grad()
+        criterion = nn.SmoothL1Loss()
+        loss = criterion(q, rewards)
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(value_net.parameters(), max_norm=1.0)
+        optimiser.step()

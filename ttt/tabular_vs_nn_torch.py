@@ -13,12 +13,14 @@ from ttt.agents.tab_greedy_v import GreedyVAgent
 from ttt.env import TicTacToeEnv
 
 
+env = TicTacToeEnv(on_invalid_action=(ttt.env.INVALID_ACTION_THROW))
+
+
+# ------------------------------------------------------------------------------
+# train tabular agent
+
 tab_agent = GreedyVAgent(allow_invalid_actions=False)
-env = TicTacToeEnv(
-    on_invalid_action=(ttt.env.INVALID_ACTION_GAME_OVER
-                       if tab_agent.allow_invalid_actions
-                       else ttt.env.INVALID_ACTION_THROW)
-)
+
 
 def eval_callback(agent, ep_num, epsilon):
     if ep_num > 10 and ep_num % 1000 == 0:
@@ -35,6 +37,8 @@ def eval_callback(agent, ep_num, epsilon):
 tab_agent = GreedyVAgent.load('tabular-greedy-v.json')
 
 
+# ------------------------------------------------------------------------------
+# Train nn agent by playing vs random agent
 
 device = torch.device(
     "cuda" if torch.cuda.is_available() else
@@ -49,7 +53,8 @@ nn_agent.train(
     n_training_episodes=12000,
     min_epsilon=0.01,
     max_epsilon=0.7,
-    learning_rate=1e-3,
+    learning_rate=1e-4,
+    gamma=0.9,
     n_ep_update_interval=2,
     batch_size=16,
     replay_buffer_size=32,
@@ -75,3 +80,8 @@ print('tab')
 print_action_values(tab_agent, 'xx |oo |   ')
 print('nn')
 print_action_values(nn_agent, 'xx |oo |   ')
+print('board: "x  |oo |x  "')
+print('tab')
+print_action_values(tab_agent, 'x  |oo |x  ')
+print('nn')
+print_action_values(nn_agent, 'x  |oo |x  ')
