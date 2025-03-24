@@ -11,9 +11,10 @@ import torch.optim as optim
 from ttt.agents.tab_greedy_v import GreedyVAgent
 
 
-class LinearFC(nn.Module):
+class Simple(nn.Module):
+    """ Can't learn more than about 10 state values with accuracy """
     def __init__(self):
-        super(LinearFC, self).__init__()
+        super(Simple, self).__init__()
         self.l1 = nn.Linear(9, 32, dtype=torch.float32)
         self.l2 = nn.Linear(32, 32, dtype=torch.float32)
         self.l3 = nn.Linear(32, 1, dtype=torch.float32)
@@ -25,14 +26,45 @@ class LinearFC(nn.Module):
         return x
 
 
-def state2tensor(state_str: str):
+class SimpleConv(nn.Module):
+    # Based on https://github.com/arjangroen/RLC/blob/e54eb7380875f64fd06106c59aa376b426d9e5ca/RLC/real_chess/agent.py#L122C5-L133C29
+    # loss: avg: 0.081, max: 0.645
+    def __init__(self):
+        super(SimpleConv, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=8, kernel_size=3, padding=0)
+        self.activation = nn.Sigmoid()
+        self.flatten = nn.Flatten()
+        self.fc1 = nn.Linear(8, 10)
+        self.fc2 = nn.Linear(10, 1)
+
+    def forward(self, state_str: str):
+        x = self._state2input(state_str)
+        x = self.activation(self.conv1(x))
+        x = self.flatten(x)
+        x = self.activation(self.fc1(x))
+        x = self.fc2(x)
+        return x
+
+    def _state2input(self, state_str: str):
+        nums = state2nums(state_str)
+        i = torch.tensor(nums, dtype=torch.float32).reshape((3,3))
+        i = i.unsqueeze(0) # channels = 1
+        i = i.unsqueeze(0) # batch of 1
+        return i
+
+
+def state2nums(state_str: str):
     state_str = state_str.replace('|', '')
     assert len(state_str) == 9
-    nums = [2 if c == 'x' else 1 if c == 'o' else 0 for c in state_str]
+    return [2 if c == 'x' else 1 if c == 'o' else 0 for c in state_str]
+
+
+def state2tensor1d(state_str: str):
+    nums = state2nums(state_str)
     return torch.tensor(nums, dtype=torch.float32)
 
 
-net = LinearFC()
+net = SimpleConv()
 optimiser = optim.Adam(net.parameters(), lr=1e-4)
 tab_agent = GreedyVAgent.load('tabular-greedy-v.json')
 q_table = tab_agent._q_table
@@ -43,8 +75,7 @@ for i in range(99999999999999999):
     random.shuffle(all_vals)
     losses = []
     for state, value in all_vals:
-        input = state2tensor(state)
-        q_est = net(input)
+        q_est = net(state)
         q_actual = torch.tensor([value])
 
         optimiser.zero_grad()
