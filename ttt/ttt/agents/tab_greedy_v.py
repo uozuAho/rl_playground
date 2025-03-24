@@ -21,6 +21,10 @@ class Qtable:
     def set_value(self, state: str, value: float):
         self._table[state] = value
 
+    def values(self) -> t.Iterable[t.Tuple[str, float]]:
+        for state, val in self._table.items():
+            yield state, val
+
     def save(self, path):
         with open(path, 'w') as ofile:
             ofile.write(json.dumps(self._table, indent=2))
