@@ -4,6 +4,7 @@
 
 import random
 import time
+import typing as t
 
 import torch
 import torch.nn as nn
@@ -86,7 +87,7 @@ class SimpleConv(nn.Module):
 
 class MidConv(nn.Module):
     # Does better! Was still learning when I stopped it:
-    # loss: avg: 0.015, max: 0.237
+    # loss: avg: 0.016, max: 0.032 after 1 minute, batch size 50
     def __init__(self, device):
         super(MidConv, self).__init__()
         self.device = device
@@ -97,8 +98,7 @@ class MidConv(nn.Module):
         self.fc2 = nn.Linear(32, 8)
         self.fc3 = nn.Linear(8, 1)
 
-    def forward(self, state: str):
-        x = self._state2input(state)
+    def forward(self, x):
         x = torch.relu(self.conv1(x))
         x = torch.relu(self.conv2(x))
         x = self.flatten(x)
@@ -107,9 +107,12 @@ class MidConv(nn.Module):
         x = self.fc3(x)
         return x
 
-    def learn_single(self, state: str, value: float):
-        q_est = net(state)
-        q_actual = torch.tensor([value], device=self.device).unsqueeze(0)
+    def learn_batch(self, batch: t.List[t.Tuple[str, float]]):
+        states = [b[0] for b in batch]
+        vals = [b[1] for b in batch]
+        state_batch = self._states2batch(states)
+        q_est = net(state_batch)
+        q_actual = torch.tensor(vals, dtype=torch.float32).unsqueeze(0).t().to(device)
 
         optimiser.zero_grad()
         criterion = nn.SmoothL1Loss()
@@ -126,11 +129,24 @@ class MidConv(nn.Module):
         i = i.unsqueeze(0) # batch of 1
         return i
 
+    def _states2batch(self, states: t.List[str]):
+        nums = [state2nums(s) for s in states]
+        # unsqueeze -> 1 channel for conv2d
+        ts = [torch.tensor(n, dtype=torch.float32).reshape((3, 3)).unsqueeze(0) for n in nums]
+        batch = torch.stack(ts).to(self.device)
+        return batch
+
+
 
 def state2nums(state_str: str):
     state_str = state_str.replace('|', '')
     assert len(state_str) == 9
     return [2 if c == 'x' else 1 if c == 'o' else 0 for c in state_str]
+
+
+def batches(lst, size):
+    for i in range(0, len(lst), size):
+        yield lst[i:i + size]
 
 
 device = torch.device(
@@ -147,14 +163,24 @@ tab_agent = GreedyVAgent.load('tabular-greedy-v.json')
 q_table = tab_agent._q_table
 all_vals = list(q_table.values())
 
+start = time.time()
 t_prev = time.time()
 for i in range(99999999999999999):
     random.shuffle(all_vals)
     losses = []
-    for state, value in all_vals:
-        loss = net.learn_single(state, value)
+
+    # update net for every state,value:
+    # for state, value in all_vals:
+    #     loss = net.learn_single(state, value)
+    #     losses.append(loss)
+
+    # update net in batches
+    for batch in batches(all_vals, 50):
+        loss = net.learn_batch(batch)
         losses.append(loss)
-    t = time.time() - t_prev
+
+    tt = time.time() - start
+    tn = time.time() - t_prev
     t_prev = time.time()
     avg_loss = sum(losses)/len(losses)
-    print(f'{t:.2f}: loss: avg: {avg_loss:.3f}, max: {max(losses):.3f}')
+    print(f'{tt:3.1f} ({tn:.2f}): loss: avg: {avg_loss:.3f}, max: {max(losses):.3f}')
