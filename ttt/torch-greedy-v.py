@@ -15,25 +15,22 @@ import typing as t
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.nn.functional as F
 
 from ttt.agents.agent import TttAgent
 from ttt.agents.compare import play_and_report
-from ttt.agents.random import RandomAgent
-import ttt.env
-from ttt.env import TicTacToeEnv
+from ttt.agents.random import RandomAgent2
+import ttt.env2 as ttt
 import utils.epsilon as epsilon
 
 
 type Player = t.Literal['O', 'X']
 type GameStatus = t.Literal['O', 'X', 'draw', 'in_progress']
-type BoardState = list[int]
 
 
 @dataclass
 class GameStep:
-    state: BoardState
-    next_state: BoardState
+    state: ttt.Board
+    next_state: ttt.Board
     reward: int
     is_end: bool
 
@@ -117,7 +114,7 @@ class ConvNet(nn.Module):
             torch.nn.utils.clip_grad_norm_(value_net.parameters(), max_norm=1.0)
             self.optimiser.step()
 
-    def state2input(self, state: BoardState):
+    def state2input(self, state: ttt.Board):
         # reshape board list to 2d, add channels for conv2d
         return torch.tensor(state, dtype=torch.float32).reshape((3,3)).unsqueeze(0)
 
@@ -127,24 +124,15 @@ class GreedyTdAgent(TttAgent):
         self.nn = nn
         self.device = device
 
-    def get_action(self, env: TicTacToeEnv, epsilon=0.0):
+    def get_action(self, env: ttt.Env, epsilon=0.0):
         if random.random() < epsilon:
             return random.choice(list(env.valid_actions()))
-        max_move = None
-        max_val = -999
-        for m in env.valid_actions():
-            temp_env = env.copy()
-            temp_env.step(m)
-            val = self._nn_out(temp_env.board)
-            if val > max_val:
-                max_move = m
-                max_val = val
-        return max_move
+        return self._greedy_action(env)
 
-    def state_val(self, env: TicTacToeEnv):
+    def state_val(self, env: ttt.Env):
         return self._nn_out(env.board)
 
-    def action_vals(self, env: TicTacToeEnv):
+    def action_vals(self, env: ttt.Env):
         """ For debugging """
         vals = {}
         for a in env.valid_actions():
@@ -153,14 +141,29 @@ class GreedyTdAgent(TttAgent):
             vals[str(temp)] = self.state_val(temp, learn=False).item()
         return vals
 
-    def _nn_out(self, state: BoardState) -> float:
+    def _greedy_action(self, env: ttt.Env):
+        max_move = None
+        max_val = -999999999
+        # cheating here for perf
+        temp_board = env.board[:]
+        for i in range(len(temp_board)):
+            if temp_board[i] == ttt.EMPTY:
+                temp_board[i] = ttt.X
+                val = self._nn_out(temp_board)
+                if val > max_val:
+                    max_move = i
+                    max_val = val
+                temp_board[i] = ttt.EMPTY
+        return max_move
+
+    def _nn_out(self, state: ttt.Board) -> float:
         # unsqueeze to batch of 1
         state_t = self.nn.state2input(state).unsqueeze(0).to(self.device)
         with torch.no_grad():
             return self.nn(state_t)
 
 
-def gamestatus(env: TicTacToeEnv) -> GameStatus:
+def gamestatus(env: ttt.Env) -> GameStatus:
     state = env.get_status()
     if state == ttt.env.O_WIN: return 'O'
     if state == ttt.env.X_WIN: return 'X'
@@ -169,12 +172,11 @@ def gamestatus(env: TicTacToeEnv) -> GameStatus:
 
 
 def play_game(agent_x: GreedyTdAgent, opponent_o: TttAgent, epsilon: float):
-    env = TicTacToeEnv()
-    assert env.my_mark == 'X'
+    env = ttt.Env()
     done = False
     while not done:
         state = env.board[:]
-        if env.current_player == 'X':
+        if env.current_player == ttt.X:
             action = agent_x.get_action(env, epsilon)
         else:
             action = opponent_o.get_action(env)
@@ -219,7 +221,7 @@ print(f'using device {device}')
 
 value_net = ConvNet(lr=1e-4, gamma=0.9, device=device).to(device)
 agent = GreedyTdAgent(value_net, device)
-opponent = RandomAgent()
+opponent = RandomAgent2()
 n_train_eps = 10000
 start = time.time()
 prev = time.time()
