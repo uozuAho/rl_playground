@@ -14,6 +14,7 @@ from ttt.agents.compare import play_and_report
 from ttt.agents.random import RandomAgent
 import ttt.env
 from ttt.env import TicTacToeEnv
+import utils.epsilon as epsilon
 
 
 type Player = t.Literal['O', 'X']
@@ -104,7 +105,9 @@ class GreedyTdAgent(TttAgent):
         self.nn = nn
         self.device = device
 
-    def get_action(self, env: TicTacToeEnv):
+    def get_action(self, env: TicTacToeEnv, epsilon=0.0):
+        if random.random() < epsilon:
+            return random.choice(list(env.valid_actions()))
         max_move = None
         max_val = -999
         for m in env.valid_actions():
@@ -143,14 +146,14 @@ def gamestatus(env: TicTacToeEnv) -> GameStatus:
     return 'in_progress'
 
 
-def play_game(agent_x: GreedyTdAgent, opponent_o: TttAgent):
+def play_game(agent_x: GreedyTdAgent, opponent_o: TttAgent, epsilon: float):
     env = TicTacToeEnv()
     assert env.my_mark == 'X'
     done = False
     while not done:
         state = env.board[:]
         if env.current_player == 'X':
-            action = agent_x.get_action(env)
+            action = agent_x.get_action(env, epsilon)
         else:
             action = opponent_o.get_action(env)
         _, reward, done, _, _ = env.step(action)
@@ -161,6 +164,7 @@ def train(
         agent_x: GreedyTdAgent,
         opponent_o: TttAgent,
         n_episodes: int,
+        epsilon: t.Iterator[float],
         buffer_size = 64,
         batch_size = 64,
         n_ep_update_interval = 5,
@@ -168,7 +172,8 @@ def train(
     print(f"training for {n_episodes} episodes...")
     buffer = ReplayBuffer(buffer_size)
     for i in range(n_episodes):
-        for step in play_game(agent_x, opponent_o):
+        eps = epsilon.__next__()
+        for step in play_game(agent_x, opponent_o, eps):
             buffer.add(step)
         if len(buffer) > batch_size and i % n_ep_update_interval == 0:
             agent_x.nn.learn_batch(buffer.sample(batch_size))
@@ -197,11 +202,13 @@ prev = time.time()
 for _ in range(1000):
     print(f'{time.time() - start:3.1f}s ({time.time() - prev:.2f}s)')
     prev = time.time()
+    eps = epsilon.exp_decay_gen(0.3, 0.001, 1000)
     train(
         agent,
         opponent,
         n_episodes=1000,
         buffer_size=32,
         batch_size=16,
-        n_ep_update_interval=4)
+        n_ep_update_interval=4,
+        epsilon=eps)
     eval_agent(agent, opponent)
