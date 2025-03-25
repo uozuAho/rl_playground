@@ -29,3 +29,8 @@ def test_fuzz():
             i += 1
             if not done:
                 assert reward == 0
+        s = ttt.status(env.board)
+        assert s != 0
+        if s == ttt.O: assert reward == -1
+        elif s == ttt.X: assert reward == 1
+        else: assert reward == 0
