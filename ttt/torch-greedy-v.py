@@ -1,3 +1,11 @@
+""" Greedy v learner. Learns board values then plays greedily on moves that
+    result in the highest board value.
+
+    Todo later
+    - add double learning
+    - perf (maybe) learn final board values as part of the main batch
+"""
+
 from collections import deque
 from dataclasses import dataclass
 import random
@@ -223,8 +231,6 @@ def eval_callback(ep_num):
         print(f'{time.time() - start:3.1f}s ({time.time() - prev:.2f}s)')
         eval_agent(agent, opponent)
         prev = time.time()
-
-print("PRESS CTRL-C TO STOP!")
 
 train(
     agent,
