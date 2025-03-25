@@ -62,6 +62,16 @@ class ConvNet(nn.Module):
         self.gamma = gamma
         self.optimiser = optim.Adam(self.parameters(), lr=lr)
 
+    def save(self, path: str):
+        torch.save(self.state_dict(), path)
+
+    @staticmethod
+    def load(path: str, device: str):
+        # dummy values for gamma and LR - assume model is trained
+        m = ConvNet(0.9, 1e-4, device)
+        m.load_state_dict(torch.load(path, weights_only=True))
+        return m
+
     def forward(self, x):
         x = torch.relu(self.conv1(x))
         x = torch.relu(self.conv2(x))
@@ -145,6 +155,7 @@ class GreedyTdAgent(TttAgent):
         max_move = None
         max_val = -999999999
         # cheating here for perf
+        # todo: could do better by sending all states as batch to nn
         temp_board = env.board[:]
         for i in range(len(temp_board)):
             if temp_board[i] == ttt.EMPTY:
@@ -234,13 +245,19 @@ def eval_callback(ep_num):
         eval_agent(agent, opponent)
         prev = time.time()
 
-train(
-    agent,
-    opponent,
-    n_episodes=n_train_eps,
-    buffer_size=32,
-    batch_size=16,
-    n_ep_update_interval=4,
-    epsilon=epsilon.exp_decay_gen(0.5, 0.001, n_train_eps),
-    callback=eval_callback
-)
+# train(
+#     agent,
+#     opponent,
+#     n_episodes=n_train_eps,
+#     buffer_size=32,
+#     batch_size=16,
+#     n_ep_update_interval=4,
+#     epsilon=epsilon.exp_decay_gen(0.5, 0.001, n_train_eps),
+#     callback=eval_callback
+# )
+
+path = "conv-greedy-v.pth"
+value_net.save(path)
+vnet2 = ConvNet.load(path, device)
+agent2 = GreedyTdAgent(vnet2, device)
+eval_agent(agent2, opponent)

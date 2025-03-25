@@ -3,3 +3,4 @@ sarsa_*.json
 *trials.csv
 *.sqlite3
 *.db
+*.pth
