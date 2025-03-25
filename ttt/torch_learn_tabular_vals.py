@@ -9,6 +9,7 @@ import typing as t
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torchinfo
 
 from ttt.agents.tab_greedy_v import GreedyVAgent
 
@@ -157,30 +158,34 @@ device = torch.device(
 # device = 'cpu'
 print(f'using device {device}')
 
+batch_size = 50
 net = MidConv(device).to(device)
-optimiser = optim.Adam(net.parameters(), lr=1e-4)
-tab_agent = GreedyVAgent.load('tabular-greedy-v.json')
-q_table = tab_agent._q_table
-all_vals = list(q_table.values())
+torchinfo.summary(net, input_size=(batch_size, 1, 3, 3))
+# todo: feed optimiser to model
+# optimiser = optim.Adam(net.parameters(), lr=1e-4)
+# tab_agent = GreedyVAgent.load('tabular-greedy-v.json')
+# q_table = tab_agent._q_table
+# all_vals = list(q_table.values())
 
-start = time.time()
-t_prev = time.time()
-for i in range(99999999999999999):
-    random.shuffle(all_vals)
-    losses = []
+# start = time.time()
+# t_prev = time.time()
+# for i in range(99999999999999999):
+#     random.shuffle(all_vals)
+#     losses = []
 
-    # update net for every state,value:
-    # for state, value in all_vals:
-    #     loss = net.learn_single(state, value)
-    #     losses.append(loss)
+#     # todo: support learn_batch in all models
+#     # update net for every state,value:
+#     # for state, value in all_vals:
+#     #     loss = net.learn_single(state, value)
+#     #     losses.append(loss)
 
-    # update net in batches
-    for batch in batches(all_vals, 50):
-        loss = net.learn_batch(batch)
-        losses.append(loss)
+#     # update net in batches
+#     for batch in batches(all_vals, batch_size):
+#         loss = net.learn_batch(batch)
+#         losses.append(loss)
 
-    tt = time.time() - start
-    tn = time.time() - t_prev
-    t_prev = time.time()
-    avg_loss = sum(losses)/len(losses)
-    print(f'{tt:3.1f} ({tn:.2f}): loss: avg: {avg_loss:.3f}, max: {max(losses):.3f}')
+#     tt = time.time() - start
+#     tn = time.time() - t_prev
+#     t_prev = time.time()
+#     avg_loss = sum(losses)/len(losses)
+#     print(f'{tt:3.1f} ({tn:.2f}): loss: avg: {avg_loss:.3f}, max: {max(losses):.3f}')
