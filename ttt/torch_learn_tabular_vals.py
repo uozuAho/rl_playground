@@ -1,5 +1,9 @@
-""" Grasping at straws here. My NN greedy V agent isn't learning, dunno why.
-    Can I make an NN approximate the tabular agent's table?
+""" Grasping at straws here. My NN greedy V agent isn't learning, dunno why. Can
+    I make an NN approximate the tabular agent's table?
+
+    Yes. MidConv does better than the simple models. Dunno why such a complex
+    module is needed when the sb3 dqn model can get good results with a fully
+    connected 9-32-32-9 policy network.
 """
 
 import random

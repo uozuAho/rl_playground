@@ -2,8 +2,7 @@
     Plays a full game, then updates its model from the whole episode.
     Greedily plays the move that results in the best value estimate.
 
-    Slow, and seems to be broken somewhere. Doesn't improve against a
-    random opponent after 20k episodes.
+    Very slow. Doesn't improve, probably because the NN arch is too simple.
 """
 
 from dataclasses import dataclass
@@ -145,7 +144,7 @@ device = torch.device(
     "mps" if torch.backends.mps.is_available() else
     "cpu"
 )
-# device = 'cpu'
+device = 'cpu'
 print(f'using device {device}')
 value_net = LinearFC().to(device)
 agent = GreedyMcAgent(value_net, device)

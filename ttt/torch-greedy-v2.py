@@ -1,4 +1,4 @@
-""" Same as greed-v, but adds a replay buffer and TD learning from replay
+""" Same as greedy-v, but adds a replay buffer and TD learning from replay
     samples. Also broken. Doesn't learn/improve.
 """
 
@@ -172,61 +172,9 @@ def train(
             optimise_net(agent_x.nn, buffer.sample(batch_size), optimiser, device)
     print('training done')
 
+
 def eval_agent(agent: GreedyTdAgent, opponent: TttAgent):
     play_and_report(agent, "greedyTd", opponent, "rando?", 100)
-
-
-def demo_nn_learn():
-    """ I'm struggling to understand why the greedy agent isn't learning.
-        This works: Learning random output values for random inputs with LinearFC
-    """
-    net = LinearFC()
-    def randstate():
-        return [random.randint(0, 2) for _ in range(9)]
-    states = [randstate() for _ in range(10)]
-    vals = [random.random() for _ in range(10)]
-    states_t = [torch.tensor(x, dtype=torch.float32) for x in states]
-    vals_t = [torch.tensor(x) for x in vals]
-    optimiser = optim.SGD(net.parameters(), lr=.01)
-    for i in range(1000):
-        losses = []
-        for j in range(len(states)):
-            idx = i % len(states)
-            input = states_t[idx]
-            exp_out = vals_t[idx]
-            nn_out = net(input)
-
-            optimiser.zero_grad()
-            criterion = nn.MSELoss()
-            loss = criterion(nn_out, exp_out)
-            loss.backward()
-            optimiser.step()
-            losses.append(loss.item())
-        avg_loss = sum(losses) / len(losses)
-        a = avg_loss
-
-
-def demo_nn_learn_batch():
-    """ Same as above, but learn/output in batches"""
-    net = LinearFC()
-    def randstate():
-        return [random.randint(0, 2) for _ in range(9)]
-    states = [randstate() for _ in range(10)]
-    vals = [random.random() for _ in range(10)]
-    states_t = torch.stack([torch.tensor(x, dtype=torch.float32) for x in states])
-    vals_t = torch.tensor(vals).unsqueeze(1)
-    optimiser = optim.SGD(net.parameters(), lr=.01)
-    for i in range(1000):
-        input = states_t
-        exp_out = vals_t
-        nn_out = net(input)
-
-        optimiser.zero_grad()
-        criterion = nn.MSELoss()
-        loss = criterion(nn_out, exp_out)
-        loss.backward()
-        optimiser.step()
-        print(loss.item())
 
 
 device = torch.device(
@@ -236,9 +184,6 @@ device = torch.device(
 )
 device = 'cpu'
 print(f'using device {device}')
-
-# demo_nn_learn()
-# demo_nn_learn_batch()
 
 value_net = LinearFC().to(device)
 agent = GreedyTdAgent(value_net, device)
