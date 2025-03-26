@@ -16,7 +16,7 @@ def test_fuzz():
             for a in va:
                 assert env.board[a] == ttt.EMPTY
             action = random.choice(va)
-            obs, reward, terminated, truncated, info = env.step(action)
+            obs, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
             assert obs == env.board
             numx = sum(1 if c == ttt.X else 0 for c in env.board)

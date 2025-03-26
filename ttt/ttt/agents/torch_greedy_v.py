@@ -9,7 +9,6 @@
 from collections import deque
 from dataclasses import dataclass
 import random
-import time
 import typing as t
 
 import torch
@@ -17,10 +16,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from ttt.agents.agent import TttAgent
-from ttt.agents.compare import play_and_report
-from ttt.agents.random import RandomAgent2
 import ttt.env2 as ttt
-import utils.epsilon as epsilon
 
 
 type Player = t.Literal['O', 'X']
@@ -141,6 +137,9 @@ class GreedyTdAgent(TttAgent):
     def state_val(self, env: ttt.Env):
         return self._nn_out(env.board)
 
+    def board_val(self, board: ttt.Board):
+        return self._nn_out(board)
+
     def train(
             self,
             opponent: TttAgent,
@@ -192,7 +191,7 @@ class GreedyTdAgent(TttAgent):
         # unsqueeze to batch of 1
         state_t = self.nn.state2input(state).unsqueeze(0).to(self.device)
         with torch.no_grad():
-            return self.nn(state_t)
+            return self.nn(state_t).item()
 
 
 def gamestatus(env: ttt.Env) -> GameStatus:

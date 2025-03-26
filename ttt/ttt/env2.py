@@ -12,6 +12,8 @@ X = 1
 O = -1
 DRAW = 2
 IN_PROGRESS = 3
+type Action = int
+type Player = t.Literal[-1, 1]
 type Status = t.Literal[-1, 1, 2, 3]
 type Board = list[int]
 
@@ -25,14 +27,18 @@ class Env:
         self.current_player = X
         self.board = [EMPTY] * 9
 
-    def valid_actions(self):
-        for i in range(9):
-            if self.board[i] == EMPTY:
-                yield i
+    def copy(self):
+        env = Env()
+        env.board = self.board[:]
+        env.current_player = self.current_player
+        return env
 
-    def step(self, action):
-        self.board[action] = self.current_player
-        self.current_player = X if self.current_player == O else O
+    def valid_actions(self):
+        yield from valid_actions(self.board)
+
+    def step(self, action) -> tuple[Board, int, bool, bool, dict]:
+        do_action(self.current_player, action, self.board)
+        self.current_player = other_player(self.current_player)
         s = status(self.board)
         reward = -1 if s == O else 1 if s == X else 0
         done = s != IN_PROGRESS
@@ -59,3 +65,16 @@ def status(board) -> Status:
         return IN_PROGRESS
     return DRAW
 
+
+def valid_actions(board: Board):
+    for i in range(9):
+        if board[i] == EMPTY:
+            yield i
+
+
+def do_action(player: Player, action: Action, board: Board):
+    board[action] = player
+
+
+def other_player(player: Player):
+    return X if player == O else O
