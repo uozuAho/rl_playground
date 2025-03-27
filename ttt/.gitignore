@@ -5,3 +5,4 @@
 *.pth
 bot-showdown.txt
 *.json
+trained_models/*

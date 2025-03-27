@@ -1,4 +1,6 @@
-""" My NN greedy V agent wasn't learning, couldn't figure out why. Can I make an
+""" Keep this, as it may be handy to build better NN architectures later.
+
+    My NN greedy V agent wasn't learning, couldn't figure out why. Can I make an
     NN approximate the tabular agent's table?
 
     Yes. MidConv does better than the simple models. Dunno why such a complex

@@ -7,6 +7,7 @@ todo
 """
 
 import os
+from pathlib import Path
 from ttt.agents.compare import play_and_report
 from ttt.agents.mcts import MctsAgent
 from ttt.agents.perfect import PerfectAgent
@@ -16,6 +17,8 @@ from ttt.agents.tab_greedy_v import GreedyVAgent
 from ttt.env import TicTacToeEnv
 
 
+TRAINED_MODEL_DIR = 'trained_models'
+Path(TRAINED_MODEL_DIR).mkdir(exist_ok=True)
 DO_TRAINING = True
 LOAD_SAVED = True
 
@@ -36,14 +39,15 @@ agents = [
 
 if DO_TRAINING:
     sb3dqn = 'sb3dqn-rng-100'
-    if LOAD_SAVED and os.path.exists(f'{sb3dqn}.zip'):
+    sb3dqn_path = Path(TRAINED_MODEL_DIR, f'{sb3dqn}.zip')
+    if LOAD_SAVED and os.path.exists(sb3dqn_path):
         agent = Sb3DqnAgent.from_name(sb3dqn)
     else:
-        agent = Sb3DqnAgent.train_new(opponent=RandomAgent(), steps=100, save_as=sb3dqn)
+        agent = Sb3DqnAgent.train_new(opponent=RandomAgent(), steps=100, save_as=sb3dqn_path)
     agents.append((agent, sb3dqn))
 
     gv = 'tab-greedy-v-rng'
-    gv_path = f'{gv}.json'
+    gv_path = Path(TRAINED_MODEL_DIR, f'{gv}.json')
     if LOAD_SAVED and os.path.exists(gv_path):
         agent = GreedyVAgent.load(gv_path)
     else:
