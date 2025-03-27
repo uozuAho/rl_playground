@@ -15,7 +15,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from ttt.agents.agent import TttAgent
+from ttt.agents.agent import TttAgent2
 import ttt.env2 as ttt
 
 
@@ -115,7 +115,7 @@ class ConvNet(nn.Module):
         return torch.tensor(state, dtype=torch.float32).reshape((3,3)).unsqueeze(0)
 
 
-class GreedyTdAgent(TttAgent):
+class GreedyTdAgent(TttAgent2):
     def __init__(self, device: str):
         self.nn = ConvNet(lr=1e-4, gamma=0.9, device=device).to(device)
         self.device = device
@@ -142,7 +142,7 @@ class GreedyTdAgent(TttAgent):
 
     def train(
             self,
-            opponent: TttAgent,
+            opponent: TttAgent2,
             n_episodes: int,
             epsilon: t.Iterator[float],
             buffer_size = 64,
@@ -168,12 +168,12 @@ class GreedyTdAgent(TttAgent):
         for a in env.valid_actions():
             temp = env.copy()
             temp.step(a)
-            vals[str(temp)] = self.state_val(temp, learn=False).item()
+            vals[str(temp)] = self.state_val(temp).item()
         return vals
 
     def _greedy_action(self, env: ttt.Env):
         max_move = None
-        max_val = -999999999
+        max_val = -999999999.0
         # cheating here for perf
         # todo: could do better by sending all states as batch to nn
         temp_board = env.board[:]
@@ -194,15 +194,7 @@ class GreedyTdAgent(TttAgent):
             return self.nn(state_t).item()
 
 
-def gamestatus(env: ttt.Env) -> GameStatus:
-    state = env.get_status()
-    if state == ttt.env.O_WIN: return 'O'
-    if state == ttt.env.X_WIN: return 'X'
-    if state == ttt.env.DRAW: return 'draw'
-    return 'in_progress'
-
-
-def play_game(agent_x: GreedyTdAgent, opponent_o: TttAgent, epsilon: float):
+def play_game(agent_x: GreedyTdAgent, opponent_o: TttAgent2, epsilon: float):
     env = ttt.Env()
     done = False
     while not done:
