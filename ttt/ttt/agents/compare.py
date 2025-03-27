@@ -53,7 +53,7 @@ def play_and_report(
     opc = 100 * o / n_games
     dpc = 100 * d / n_games
     msg = (f'{label_x:<8} (x) vs {label_o:<8} (o). {n_games} games in {end-start:.1f}s. ' +
-          f'x wins: {x:>3} ({xpc:.1f}%), o wins: {o:>3} ({opc:.1f}%). draws: {d:>3} ({dpc:.1f}%)')
+          f'x wins: {x:>3} ({xpc:>5.1f}%), o wins: {o:>3} ({opc:>5.1f}%). draws: {d:>3} ({dpc:>5.1f}%)')
     if not quiet:
         print(msg)
     return msg
