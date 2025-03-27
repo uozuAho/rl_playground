@@ -4,13 +4,17 @@ from ttt.agents.compare import play_and_report
 from ttt.agents.mcts import MctsAgent
 from ttt.agents.perfect import PerfectAgent
 from ttt.agents.random import RandomAgent
+from ttt.agents.sb3_dqn import Sb3DqnAgent
+
+
+DO_TRAINING = True
 
 
 agents = [
     (RandomAgent(), "random"),
     (MctsAgent(n_sims=1), "mcts1"),
-    (MctsAgent(n_sims=5), "mcts5"),
-    (MctsAgent(n_sims=10), "mcts10"),
+    # (MctsAgent(n_sims=5), "mcts5"),
+    # (MctsAgent(n_sims=10), "mcts10"),
     (PerfectAgent(), "perfect"),
 
     # too slow
@@ -18,6 +22,10 @@ agents = [
     # (MctsAgent(n_sims=100), "mcts100"),
     # (MctsAgent(n_sims=200), "mcts200"),
 ]
+
+
+if DO_TRAINING:
+    agents.append((Sb3DqnAgent.train_new(opponent=RandomAgent(), steps=100000), 'sb3dqn-rng-100'))
 
 
 for a1, l1 in agents:
