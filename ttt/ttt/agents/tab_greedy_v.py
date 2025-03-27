@@ -30,7 +30,7 @@ class Qtable:
             ofile.write(json.dumps(self._table, indent=2))
 
 
-class GreedyVAgent(TttAgent):
+class TabGreedyVAgent(TttAgent):
     """
     Tabular greedy value learning agent. Stores a state q table. Trains against
     itself (ie don't supply an opponent).
@@ -46,7 +46,7 @@ class GreedyVAgent(TttAgent):
     def load(path):
         with open(path) as infile:
             data = json.loads(infile.read())
-        agent = GreedyVAgent()
+        agent = TabGreedyVAgent()
         agent._q_table = Qtable(data)
         return agent
 

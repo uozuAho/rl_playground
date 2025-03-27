@@ -13,7 +13,7 @@ from ttt.agents.mcts import MctsAgent
 from ttt.agents.perfect import PerfectAgent
 from ttt.agents.random import RandomAgent
 from ttt.agents.sb3_dqn import Sb3DqnAgent
-from ttt.agents.tab_greedy_v import GreedyVAgent
+from ttt.agents.tab_greedy_v import TabGreedyVAgent
 from ttt.env import TicTacToeEnv
 
 
@@ -41,7 +41,7 @@ if DO_TRAINING:
     sb3dqn = 'sb3dqn-rng-100'
     sb3dqn_path = Path(TRAINED_MODEL_DIR, f'{sb3dqn}.zip')
     if LOAD_SAVED and os.path.exists(sb3dqn_path):
-        agent = Sb3DqnAgent.from_name(sb3dqn)
+        agent = Sb3DqnAgent.load(sb3dqn_path)
     else:
         agent = Sb3DqnAgent.train_new(opponent=RandomAgent(), steps=100, save_as=sb3dqn_path)
     agents.append((agent, sb3dqn))
@@ -49,9 +49,9 @@ if DO_TRAINING:
     gv = 'tab-greedy-v-rng'
     gv_path = Path(TRAINED_MODEL_DIR, f'{gv}.json')
     if LOAD_SAVED and os.path.exists(gv_path):
-        agent = GreedyVAgent.load(gv_path)
+        agent = TabGreedyVAgent.load(gv_path)
     else:
-        agent = GreedyVAgent()
+        agent = TabGreedyVAgent()
         agent.train(TicTacToeEnv(), 100)
         agent.save(gv_path)
     agents.append((agent, gv))

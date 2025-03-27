@@ -6,7 +6,7 @@ import random
 import typing as t
 import torch
 from ttt.agents.random import RandomAgent2
-from ttt.agents.torch_greedy_v import GreedyTdAgent
+from ttt.agents.torch_nn_greedy_v import NnGreedyVAgent
 import ttt.env2 as ttt
 
 
@@ -103,7 +103,7 @@ device = 'cpu'
 print(f'using device {device}')
 
 path = "conv-greedy-v.pth"
-agent = GreedyTdAgent.load(path, device)
+agent = NnGreedyVAgent.load(path, device)
 env = ttt.Env()
 mcts_decision(env, 1000, agent.board_val)
 

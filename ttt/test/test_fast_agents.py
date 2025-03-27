@@ -1,6 +1,6 @@
 from ttt.agents.qlearn import QlearnAgent
 from ttt.agents.sarsa import SarsaAgent
-from ttt.agents.tab_greedy_v import GreedyVAgent
+from ttt.agents.tab_greedy_v import TabGreedyVAgent
 import ttt.agents.tab_greedy_v
 import ttt.env
 from ttt.env import TicTacToeEnv
@@ -68,6 +68,6 @@ def test_greedy_v_is_greedy():
     qtable = {
         '...|.x.|...': 0.9,
     }
-    agent = GreedyVAgent(ttt.agents.tab_greedy_v.Qtable(qtable))
+    agent = TabGreedyVAgent(ttt.agents.tab_greedy_v.Qtable(qtable))
     env = TicTacToeEnv()
     assert agent.get_action(env) == 4

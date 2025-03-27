@@ -2,7 +2,7 @@ import time
 from ttt.agents.agent import TttAgent2
 from ttt.agents.compare import play_and_report2
 from ttt.agents.random import RandomAgent2
-from ttt.agents.torch_greedy_v import GreedyTdAgent
+from ttt.agents.torch_nn_greedy_v import NnGreedyVAgent
 from utils import epsilon
 from utils.torch_device import find_device
 
@@ -12,12 +12,12 @@ N_TRAIN_EPS = 100  # for quick testing
 
 
 device = find_device()
-agent = GreedyTdAgent(device)
+agent = NnGreedyVAgent(device)
 start = time.time()
 prev = time.time()
 
 
-def eval_agent(agent: GreedyTdAgent, opponent: TttAgent2):
+def eval_agent(agent: NnGreedyVAgent, opponent: TttAgent2):
     play_and_report2(agent, "greedyTd", opponent, "rando?", 100)
 
 
@@ -42,5 +42,5 @@ agent.train(
 
 path = "conv-greedy-v.pth"
 agent.save(path)
-agent2 = GreedyTdAgent.load(path, device)
+agent2 = NnGreedyVAgent.load(path, device)
 eval_agent(agent2, RandomAgent2())

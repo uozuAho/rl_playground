@@ -3,7 +3,7 @@ Trying to figure out how best to train tabular agents.
 """
 
 import time
-from ttt.agents.tab_greedy_v import GreedyVAgent
+from ttt.agents.tab_greedy_v import TabGreedyVAgent
 import ttt.env
 from ttt.env import TicTacToeEnv
 from ttt.agents.random import RandomAgent
@@ -44,7 +44,7 @@ def eval_vs_opponents(agents, opponents, num_games):
             my_eval(a, o, num_games)
 
 
-def train_eval(agent: SarsaAgent | QlearnAgent | GreedyVAgent, opponent, total_eps, eval_interval):
+def train_eval(agent: SarsaAgent | QlearnAgent | TabGreedyVAgent, opponent, total_eps, eval_interval):
     ep_nums = []
     epsilons = []
     returns = []
@@ -90,7 +90,7 @@ def train_eval(agent: SarsaAgent | QlearnAgent | GreedyVAgent, opponent, total_e
 # )
 # sen, sr, se = train_eval(SarsaAgent(allow_invalid_actions=True), RandomAgent(), total_eps=10000, eval_interval=1000)
 # qen, qr, qe = train_eval(QlearnAgent(allow_invalid_actions=True), RandomAgent(), total_eps=10000, eval_interval=1000)
-agent = GreedyVAgent(allow_invalid_actions=False)
+agent = TabGreedyVAgent(allow_invalid_actions=False)
 qen, qr, qe = train_eval(agent, opponent=None, total_eps=10000, eval_interval=1000)
 # agent.save('asdf.json')
 # agent = GreedyVAgent.load('asdf.json')

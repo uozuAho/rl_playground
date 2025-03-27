@@ -115,7 +115,7 @@ class ConvNet(nn.Module):
         return torch.tensor(state, dtype=torch.float32).reshape((3,3)).unsqueeze(0)
 
 
-class GreedyTdAgent(TttAgent2):
+class NnGreedyVAgent(TttAgent2):
     def __init__(self, device: str):
         self.nn = ConvNet(lr=1e-4, gamma=0.9, device=device).to(device)
         self.device = device
@@ -130,7 +130,7 @@ class GreedyTdAgent(TttAgent2):
 
     @staticmethod
     def load(path: str, device: str):
-        agent = GreedyTdAgent(device)
+        agent = NnGreedyVAgent(device)
         agent.nn.load_state_dict(torch.load(path, weights_only=True))
         return agent
 
@@ -194,7 +194,7 @@ class GreedyTdAgent(TttAgent2):
             return self.nn(state_t).item()
 
 
-def play_game(agent_x: GreedyTdAgent, opponent_o: TttAgent2, epsilon: float):
+def play_game(agent_x: NnGreedyVAgent, opponent_o: TttAgent2, epsilon: float):
     env = ttt.Env()
     done = False
     while not done:

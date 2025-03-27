@@ -18,8 +18,8 @@ class Sb3DqnAgent(TttAgent):
         self._model = model
 
     @staticmethod
-    def from_name(name):
-        model = DQN.load(name)
+    def load(name_or_path):
+        model = DQN.load(name_or_path)
         return Sb3DqnAgent(model)
 
     @staticmethod

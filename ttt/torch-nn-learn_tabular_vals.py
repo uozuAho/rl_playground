@@ -17,7 +17,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torchinfo
 
-from ttt.agents.tab_greedy_v import GreedyVAgent
+from ttt.agents.tab_greedy_v import TabGreedyVAgent
 
 
 class Simple(nn.Module):
@@ -170,7 +170,7 @@ print(f'using device {device}')
 batch_size = 50
 net = MidConv(device).to(device)
 torchinfo.summary(net, input_size=(batch_size, 1, 3, 3))
-tab_agent = GreedyVAgent.load('tabular-greedy-v.json')
+tab_agent = TabGreedyVAgent.load('tabular-greedy-v.json')
 q_table = tab_agent._q_table
 all_vals = list(q_table.values())
 
