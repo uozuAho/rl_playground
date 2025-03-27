@@ -61,9 +61,12 @@ if DO_TRAINING:
 
     ngv = 'nn-greedy-v-rng'
     ngv_path = Path(TRAINED_MODEL_DIR, f'{ngv}.pth')
-    agent = NnGreedyVAgent(device)
-    agent.train(RandomAgent2(), 100)
-    agent.save(ngv_path)
+    if LOAD_SAVED and os.path.exists(ngv_path):
+        agent = NnGreedyVAgent.load(ngv_path, device)
+    else:
+        agent = NnGreedyVAgent(device)
+        agent.train(RandomAgent2(), 100)
+        agent.save(ngv_path)
     agents.append((agent, ngv))
 
 

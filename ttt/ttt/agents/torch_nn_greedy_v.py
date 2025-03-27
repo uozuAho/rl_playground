@@ -8,6 +8,7 @@
 
 from collections import deque
 from dataclasses import dataclass
+from pathlib import Path
 import random
 import typing as t
 
@@ -131,7 +132,7 @@ class NnGreedyVAgent(TttAgent2):
         torch.save(self.nn.state_dict(), path)
 
     @staticmethod
-    def load(path: str, device: str):
+    def load(path: Path | str, device: str):
         agent = NnGreedyVAgent(device)
         agent.nn.load_state_dict(torch.load(path, weights_only=True))
         return agent
