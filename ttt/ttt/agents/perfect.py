@@ -4,13 +4,8 @@ from ttt.env import TicTacToeEnv
 
 
 class PerfectAgent(TttAgent):
-    """ Never loses. Assumes X goes first. """
-    def __init__(self, mark):
-        assert mark in ('X', 'O')
-        self.mark = mark
-
     def get_action(self, env: TicTacToeEnv):
-        return find_best_move(env, self.mark)
+        return find_best_move(env, env.current_player)
 
 
 def player_won(env, player):

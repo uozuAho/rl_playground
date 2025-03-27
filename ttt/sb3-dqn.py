@@ -112,10 +112,10 @@ def eval_trained_ppo_agents(names):
         print(f"'{name}' vs random:")
         my_eval(agent, RandomAgent())
         print(f"'{name}' vs perfect:")
-        my_eval(agent, PerfectAgent('O'))
+        my_eval(agent, PerfectAgent())
 
 
 agent = train('dqn-mlp-vs-rng', opponent=RandomAgent(), steps=100)
-train('dqn-mlp-vs-perfect', opponent=PerfectAgent('O'), steps=100)
+train('dqn-mlp-vs-perfect', opponent=PerfectAgent(), steps=100)
 eval_trained_ppo_agents(['dqn-mlp-vs-rng', 'dqn-mlp-vs-perfect'])
 my_eval(agent, RandomAgent())

@@ -4,3 +4,4 @@ sarsa_*.json
 *.sqlite3
 *.db
 *.pth
+bot-showdown.txt

@@ -100,7 +100,7 @@ def eval_trained_ppo_agents(names):
         print(f"'{name}' vs random:")
         my_eval(TrainedAgent(name), RandomAgent())
         print(f"'{name}' vs perfect:")
-        my_eval(TrainedAgent(name), PerfectAgent('O'))
+        my_eval(TrainedAgent(name), PerfectAgent())
 
 
 def run_trained_ppo_agent(name):
@@ -121,7 +121,7 @@ def run_trained_ppo_agent(name):
 # show_env_params()
 # run_env_demo()
 train_ppo_agent('ppo-mlp-vs-rng', opponent=RandomAgent(), steps=100000)
-# train_ppo_agent('ppo-mlp-vs-perfect', opponent=PerfectAgent('O'), steps=100000)
+# train_ppo_agent('ppo-mlp-vs-perfect', opponent=PerfectAgent(), steps=100000)
 # eval_hard_coded_agents()
 # run_trained_ppo_agent()
 eval_trained_ppo_agents(['ppo-mlp-vs-rng'])

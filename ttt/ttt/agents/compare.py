@@ -1,3 +1,4 @@
+import time
 from collections import Counter
 import typing as t
 
@@ -42,13 +43,20 @@ def play_and_report(
         label_x: str,
         agent_o: TttAgent,
         label_o: str,
-        n_games: int):
+        n_games: int,
+        quiet: bool = False):
     """ Plays N games and prints the results """
+    start = time.time()
     x, o, d = play_games(agent_x, agent_o, n_games)
+    end = time.time()
     xpc = 100 * x / n_games
     opc = 100 * o / n_games
-    print(f'{label_x} (x) vs {label_o} (o). {n_games} games. ' +
-          f'x wins: {x} ({xpc:.1f}%), o wins: {o} ({opc:.1f}%). draws: {d}')
+    dpc = 100 * d / n_games
+    msg = (f'{label_x:<8} (x) vs {label_o:<8} (o). {n_games} games in {end-start:.1f}s. ' +
+          f'x wins: {x:>3} ({xpc:.1f}%), o wins: {o:>3} ({opc:.1f}%). draws: {d:>3} ({dpc:.1f}%)')
+    if not quiet:
+        print(msg)
+    return msg
 
 
 def play_game2(agent_x: TttAgent2, agent_o: TttAgent2) -> Result:

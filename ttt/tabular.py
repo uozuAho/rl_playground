@@ -80,12 +80,12 @@ def train_eval(agent: SarsaAgent | QlearnAgent | GreedyVAgent, opponent, total_e
 
 
 # rng = train_sarsa_agent(SarsaAgent(), RandomAgent(), n_train_eps=1000)
-# perf = train_sarsa_agent(SarsaAgent(), PerfectAgent('O'), n_train_eps=1000)
+# perf = train_sarsa_agent(SarsaAgent(), PerfectAgent(), n_train_eps=1000)
 # rper = train_sarsa_agent(SarsaAgent(), RandomAgent(), n_train_eps=500)
-# rper = train_sarsa_agent(rper, PerfectAgent('O'), n_train_eps=500)
+# rper = train_sarsa_agent(rper, PerfectAgent(), n_train_eps=500)
 # eval_vs_opponents(
 #     [('rngo', rng), ('perfo', perf), ('rng then perf', rper)],
-#     [('random', RandomAgent()), ('perfect', PerfectAgent('O'))],
+#     [('random', RandomAgent()), ('perfect', PerfectAgent())],
 #     num_games=50
 # )
 # sen, sr, se = train_eval(SarsaAgent(allow_invalid_actions=True), RandomAgent(), total_eps=10000, eval_interval=1000)
@@ -95,7 +95,7 @@ qen, qr, qe = train_eval(agent, opponent=None, total_eps=10000, eval_interval=10
 # agent.save('asdf.json')
 # agent = GreedyVAgent.load('asdf.json')
 # my_eval(agent, RandomAgent())
-# train_eval(SarsaAgent(), PerfectAgent('O'), total_eps=10000, eval_interval=1000)
+# train_eval(SarsaAgent(), PerfectAgent(), total_eps=10000, eval_interval=1000)
 # plt.plot(sen, sr, label='sarsa avg return')
 # plt.plot(sen, se, label='sarsa epsilon')
 # plt.plot(qen, qr, label='qlearn avg return')
