@@ -1,4 +1,10 @@
-""" Bot fight! """
+""" Bot fight!
+
+todo
+- add all bots
+- support short/long training (short for testing)
+- support loading saved models
+"""
 
 from ttt.agents.compare import play_and_report
 from ttt.agents.mcts import MctsAgent
@@ -25,7 +31,7 @@ agents = [
 
 
 if DO_TRAINING:
-    agents.append((Sb3DqnAgent.train_new(opponent=RandomAgent(), steps=100000), 'sb3dqn-rng-100'))
+    agents.append((Sb3DqnAgent.train_new(opponent=RandomAgent(), steps=100), 'sb3dqn-rng-100'))
 
 
 for a1, l1 in agents:
