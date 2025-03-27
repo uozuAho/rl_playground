@@ -11,16 +11,19 @@ from pathlib import Path
 from ttt.agents.compare import play_and_report
 from ttt.agents.mcts import MctsAgent
 from ttt.agents.perfect import PerfectAgent
-from ttt.agents.random import RandomAgent
+from ttt.agents.random import RandomAgent, RandomAgent2
 from ttt.agents.sb3_dqn import Sb3DqnAgent
 from ttt.agents.tab_greedy_v import TabGreedyVAgent
+from ttt.agents.torch_nn_greedy_v import NnGreedyVAgent
 from ttt.env import TicTacToeEnv
+from utils.torch_device import find_device
 
 
 TRAINED_MODEL_DIR = 'trained_models'
 Path(TRAINED_MODEL_DIR).mkdir(exist_ok=True)
 DO_TRAINING = True
 LOAD_SAVED = True
+device = find_device()
 
 
 agents = [
@@ -55,6 +58,13 @@ if DO_TRAINING:
         agent.train(TicTacToeEnv(), 100)
         agent.save(gv_path)
     agents.append((agent, gv))
+
+    ngv = 'nn-greedy-v-rng'
+    ngv_path = Path(TRAINED_MODEL_DIR, f'{ngv}.pth')
+    agent = NnGreedyVAgent(device)
+    agent.train(RandomAgent2(), 100)
+    agent.save(ngv_path)
+    agents.append((agent, ngv))
 
 
 for a1, l1 in agents:

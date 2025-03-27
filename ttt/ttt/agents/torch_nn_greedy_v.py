@@ -17,10 +17,12 @@ import torch.optim as optim
 
 from ttt.agents.agent import TttAgent2
 import ttt.env2 as ttt
+import utils.epsilon
 
 
 type Player = t.Literal['O', 'X']
 type GameStatus = t.Literal['O', 'X', 'draw', 'in_progress']
+
 
 
 @dataclass
@@ -144,7 +146,7 @@ class NnGreedyVAgent(TttAgent2):
             self,
             opponent: TttAgent2,
             n_episodes: int,
-            epsilon: t.Iterator[float],
+            epsilon: t.Optional[t.Iterator[float]] = None,
             buffer_size = 64,
             batch_size = 64,
             n_ep_update_interval = 5,
@@ -152,6 +154,7 @@ class NnGreedyVAgent(TttAgent2):
             ):
         print(f"training for {n_episodes} episodes...")
         buffer = ReplayBuffer(buffer_size)
+        epsilon = epsilon or utils.epsilon.exp_decay_gen(0.5, 0.01, n_episodes)
         for i in range(n_episodes):
             eps = epsilon.__next__()
             for step in play_game(self, opponent, eps):
