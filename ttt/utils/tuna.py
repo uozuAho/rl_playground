@@ -1,6 +1,8 @@
 import gymnasium as gym
+import typing as t
 
 from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.vec_env import VecEnv
 from stable_baselines3.common.callbacks import EvalCallback
 
 import optuna
@@ -12,7 +14,7 @@ import torch as th
 class TrialEvalCallback(EvalCallback):
     def __init__(
         self,
-        eval_env: gym.Env,
+        eval_env: t.Union[gym.Env, VecEnv],
         trial: optuna.Trial,
         n_eval_episodes: int = 5,
         eval_freq: int = 10000,
