@@ -6,14 +6,18 @@ todo
 - support loading saved models
 """
 
+import os
 from ttt.agents.compare import play_and_report
 from ttt.agents.mcts import MctsAgent
 from ttt.agents.perfect import PerfectAgent
 from ttt.agents.random import RandomAgent
 from ttt.agents.sb3_dqn import Sb3DqnAgent
+from ttt.agents.tab_greedy_v import GreedyVAgent
+from ttt.env import TicTacToeEnv
 
 
 DO_TRAINING = True
+LOAD_SAVED = True
 
 
 agents = [
@@ -31,7 +35,22 @@ agents = [
 
 
 if DO_TRAINING:
-    agents.append((Sb3DqnAgent.train_new(opponent=RandomAgent(), steps=100), 'sb3dqn-rng-100'))
+    sb3dqn = 'sb3dqn-rng-100'
+    if LOAD_SAVED and os.path.exists(f'{sb3dqn}.zip'):
+        agent = Sb3DqnAgent.from_name(sb3dqn)
+    else:
+        agent = Sb3DqnAgent.train_new(opponent=RandomAgent(), steps=100, save_as=sb3dqn)
+    agents.append((agent, sb3dqn))
+
+    gv = 'tab-greedy-v-rng'
+    gv_path = f'{gv}.json'
+    if LOAD_SAVED and os.path.exists(gv_path):
+        agent = GreedyVAgent.load(gv_path)
+    else:
+        agent = GreedyVAgent()
+        agent.train(TicTacToeEnv(), 100)
+        agent.save(gv_path)
+    agents.append((agent, gv))
 
 
 for a1, l1 in agents:

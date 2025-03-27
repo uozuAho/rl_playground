@@ -10,11 +10,12 @@ Install uv
 uv sync
 uv run pytest
 uv rur tabular.py  # tabular agents
-uv run sb3-dqn.py      # dqn agent. Doesn't do as well as tabular vs random, doesn't
-                   # train properly against perfect - always loses
 uv run sb3-ppo.py      # ppo agent .. doesn't learn properly, avg return -1 (always loses)
 uv run sb3-mask_ppo.py # maskable ppo agent (don't do invalid actions)
                    # doesn't do any better than a random agent
+
+uv run bot-showdown.py  # all vs all bot fight
+
 uv run sb3-dqn-tuna.py # find good hyperparams
 uv run optuna-dashboard sqlite:///dqn-ttt.db  # see hyperparam report
 ```

@@ -1,7 +1,7 @@
 *.zip
-sarsa_*.json
 *trials.csv
 *.sqlite3
 *.db
 *.pth
 bot-showdown.txt
+*.json

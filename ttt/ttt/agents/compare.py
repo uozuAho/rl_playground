@@ -62,7 +62,7 @@ def play_and_report(
     xipc = 100 * results['X-illegal'] / n_games
     oipc = 100 * results['O-illegal'] / n_games
 
-    msg = (f'{label_x:<15} (x) vs {label_o:<15} (o). {n_games} games in {end-start:.1f}s. ' +
+    msg = (f'{label_x:<16} (x) vs {label_o:<16} (o). {n_games} games in {end-start:.1f}s. ' +
           f'x wins: {x:>3} ({xpc:>5.1f}%), o wins: {o:>3} ({opc:>5.1f}%), draws: {d:>3} ({dpc:>5.1f}%), ' +
           f'x illegal: {xi:>3} ({xipc:>5.1f}%), o illegal: {oi:>3} ({oipc:>5.1f}%)')
     if not quiet:
