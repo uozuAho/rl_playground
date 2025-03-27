@@ -6,11 +6,9 @@ import time
 from ttt.agents.tab_greedy_v import GreedyVAgent
 import ttt.env
 from ttt.env import TicTacToeEnv
-from ttt.agents.perfect import PerfectAgent
 from ttt.agents.random import RandomAgent
 from ttt.agents.sarsa import SarsaAgent
 from ttt.agents.qlearn import QlearnAgent
-import matplotlib.pyplot as plt
 
 
 def my_eval(a, opponent, num_games=20):
@@ -46,7 +44,7 @@ def eval_vs_opponents(agents, opponents, num_games):
             my_eval(a, o, num_games)
 
 
-def train_eval(agent: SarsaAgent | QlearnAgent, opponent, total_eps, eval_interval):
+def train_eval(agent: SarsaAgent | QlearnAgent | GreedyVAgent, opponent, total_eps, eval_interval):
     ep_nums = []
     epsilons = []
     returns = []

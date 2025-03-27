@@ -30,8 +30,8 @@ def play_game(agent_x: TttAgent, agent_o: TttAgent) -> Result:
 
 def play_games(agent_x: TttAgent, agent_o: TttAgent, n_games: int) -> t.Tuple[int, int, int]:
     """ Returns counts: x wins, o wins, draws """
-    ctr = Counter()
-    for i in range(n_games):
+    ctr: Counter[Result] = Counter()
+    for _ in range(n_games):
         winner = play_game(agent_x, agent_o)
         ctr[winner] += 1
     return ctr['X'], ctr['O'], ctr['draw']

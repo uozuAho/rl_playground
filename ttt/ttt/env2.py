@@ -42,7 +42,7 @@ class Env:
         s = status(self.board)
         reward = -1 if s == O else 1 if s == X else 0
         done = s != IN_PROGRESS
-        return self.board, reward, done, False, None
+        return self.board, reward, done, False, {}
 
 
 _winning_combinations = [
@@ -60,10 +60,11 @@ def winner(board: Board):
 
 def status(board) -> Status:
     w = winner(board)
-    if w is not None: return w
+    if w is not None:
+        return t.cast(Status, w)
     if any(x == EMPTY for x in board):
-        return IN_PROGRESS
-    return DRAW
+        return t.cast(Status, IN_PROGRESS)
+    return t.cast(Status, DRAW)
 
 
 def valid_actions(board: Board):
