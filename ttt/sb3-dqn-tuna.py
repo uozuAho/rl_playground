@@ -1,3 +1,4 @@
+import os
 import optuna
 import ttt.env
 from stable_baselines3 import DQN
@@ -24,10 +25,8 @@ def sample_params(trial: optuna.Trial):
     gamma = 1.0 - trial.suggest_float("gamma", 0.0001, 0.1, log=True)
     # Display true values (optuna reports the suggested value)
     trial.set_user_attr("gamma_", gamma)
-    net_arch = trial.suggest_categorical("net_arch", net_arches.keys())
-    net_arch = net_arches[net_arch]
-    activation_fn = trial.suggest_categorical("act_fn", ['tanh', 'relu'])
-    activation_fn = {"tanh": nn.Tanh, "relu": nn.ReLU}[activation_fn]
+    net_arch = net_arches[trial.suggest_categorical("net_arch", list(net_arches.keys()))]
+    activation_fn = {"tanh": nn.Tanh, "relu": nn.ReLU}[trial.suggest_categorical("act_fn", ['tanh', 'relu'])]
 
     return {
         "env": make_env(),
@@ -47,11 +46,18 @@ def sample_params(trial: optuna.Trial):
     }
 
 
+study_name = 'dqn-ttt'
+if os.path.exists(f"{study_name}.db"):
+    os.remove(f"{study_name}.db")
+
+train_steps = 50000
+# train_steps = 100  # for quick testing
+
 tuna.run_trials(
-    'dqn-ttt',
+    study_name,
     mkmodel=lambda kw: DQN(**kw),
     mkenv=make_env,
-    train_steps=50000,
+    train_steps=train_steps,
     sample_fn=sample_params,
     n_max_trials=100
 )
