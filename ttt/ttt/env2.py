@@ -9,7 +9,7 @@ import typing as t
 
 EMPTY = 0
 X = 1
-O = -1
+O = -1  # noqa: E741
 DRAW = 2
 IN_PROGRESS = 3
 type Action = int

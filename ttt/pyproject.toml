@@ -23,3 +23,7 @@ dev = [
     "pytest>=8.3.4",
     "ruff>=0.11.2",
 ]
+
+[tool.ruff.lint]
+ignore = ["E701"]  # multiple statements per line
+

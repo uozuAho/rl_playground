@@ -53,10 +53,10 @@ def eval_callback(ep_num, epsilon):
         print(avg_reward)
 
 
-for l, mne, mxe, ed, g, a in itertools.product(
+for lr, mne, mxe, ed, g, a in itertools.product(
     learning_rates, min_eps, max_eps, eps_decays, gammas, agents):
     current_agent = SarsaAgent(allow_invalid_actions=True) if a == 'sarsa' else QlearnAgent(allow_invalid_actions=True)
-    current_name = a + ',' + ','.join(f'{x:0.3f}' for x in [l,mne,mxe,ed,g])
+    current_name = a + ',' + ','.join(f'{x:0.3f}' for x in [lr,mne,mxe,ed,g])
     currently_training = current_name
     print(f'training {current_name} for {n_train_eps} eps...')
     current_agent.train(

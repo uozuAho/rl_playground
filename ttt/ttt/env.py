@@ -55,17 +55,17 @@ def check_game_status(board):
             0: draw game,
             1 or 2 for finished game(winner mark code).
     """
-    for t in [O_CODE, X_CODE]:
+    for code in [O_CODE, X_CODE]:
         for j in range(0, 9, 3):
-            if [t] * 3 == [board[i] for i in range(j, j+3)]:
-                return t
+            if [code] * 3 == [board[i] for i in range(j, j+3)]:
+                return code
         for j in range(0, 3):
-            if board[j] == t and board[j+3] == t and board[j+6] == t:
-                return t
-        if board[0] == t and board[4] == t and board[8] == t:
-            return t
-        if board[2] == t and board[4] == t and board[6] == t:
-            return t
+            if board[j] == code and board[j+3] == code and board[j+6] == code:
+                return code
+        if board[0] == code and board[4] == code and board[8] == code:
+            return code
+        if board[2] == code and board[4] == code and board[6] == code:
+            return code
 
     for i in range(9):
         if board[i] == 0:
