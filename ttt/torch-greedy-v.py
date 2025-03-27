@@ -1,14 +1,14 @@
 import time
-from ttt.agents.agent import TttAgent
-from ttt.agents.compare import play_and_report
+from ttt.agents.agent import TttAgent2
+from ttt.agents.compare import play_and_report2
 from ttt.agents.random import RandomAgent2
 from ttt.agents.torch_greedy_v import GreedyTdAgent
 from utils import epsilon
 from utils.torch_device import find_device
 
 
-N_TRAIN_EPS = 10000
-# N_TRAIN_EPS = 100  # for quick testing
+# N_TRAIN_EPS = 10000
+N_TRAIN_EPS = 100  # for quick testing
 
 
 device = find_device()
@@ -17,8 +17,8 @@ start = time.time()
 prev = time.time()
 
 
-def eval_agent(agent: GreedyTdAgent, opponent: TttAgent):
-    play_and_report(agent, "greedyTd", opponent, "rando?", 100)
+def eval_agent(agent: GreedyTdAgent, opponent: TttAgent2):
+    play_and_report2(agent, "greedyTd", opponent, "rando?", 100)
 
 
 def eval_callback(ep_num):
