@@ -1,20 +1,14 @@
 """ Demonstrates invalid action masking
 """
 
-from pathlib import Path
-import time
 import numpy as np
-from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.monitor import Monitor
 
-from sb3_contrib.common.maskable.evaluation import evaluate_policy
 from sb3_contrib.common.wrappers import ActionMasker
 from sb3_contrib.ppo_mask import MaskablePPO
 
 from ttt.agents.perfect import PerfectAgent
 from ttt.agents.random import RandomAgent
-from ttt.agents.sarsa import SarsaAgent
 from ttt.env import TicTacToeEnv
 
 
