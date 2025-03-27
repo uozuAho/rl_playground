@@ -5,6 +5,7 @@ import math
 import random
 import typing as t
 import torch
+from ttt.agents.random import RandomAgent2
 from ttt.agents.torch_greedy_v import GreedyTdAgent
 import ttt.env2 as ttt
 
@@ -55,6 +56,7 @@ def build_mcts_tree(
 
         # select (using tree policy): trace a path to a leaf node
         # todo: make sure this explores
+        # todo: make sure this picks known wins
         while node.children:
             node = max_ucb_child(node)
 
@@ -67,8 +69,8 @@ def build_mcts_tree(
                 done = term or trunc
                 node.children[action] = MCTSNode(
                     GameState(temp_env, done, reward), parent=node)
-        # ... and pick a random node to run the simulation step
-        node = random.choice(list(node.children.values()))
+            # ... and pick a random node to run the simulation step
+            node = random.choice(list(node.children.values()))
 
         # simulate/rollout. Standard MCTS does a full "rollout" here, ie. plays
         # to the end of the game. Instead, we just use the state value estimate
@@ -104,3 +106,42 @@ path = "conv-greedy-v.pth"
 agent = GreedyTdAgent.load(path, device)
 env = ttt.Env()
 mcts_decision(env, 1000, agent.board_val)
+
+
+class MctsAgent:
+    def __init__(self, val_func: ValFunc, n_simulations: int):
+        self.val_func = val_func
+        self.n_simulations = n_simulations
+
+    def get_action(self, env: ttt.Env) -> int:
+        return mcts_decision(env, self.n_simulations, self.val_func)
+
+
+
+# todo: either gets 100 wins or 100-losses, seems wrong
+def eval_vs_random(n_games: int):
+    mcts_agent = MctsAgent(agent.board_val, 2)
+    rng_agent = RandomAgent2()
+    done = False
+    wins = 0
+    draws = 0
+    losses = 0
+    for _ in range(n_games):
+        env = ttt.Env()
+        while not done:
+            if env.current_player == ttt.X:
+                action = mcts_agent.get_action(env)
+            else:
+                action = rng_agent.get_action(env)
+            _, reward, term, trunc, _ = env.step(action)
+            done = term or trunc
+        if reward > 0:
+            wins += 1
+        elif reward < 0:
+            losses += 1
+        else:
+            draws += 1
+    print(f'{wins} wins, {draws} draws, {losses} losses')
+
+
+eval_vs_random(100)
