@@ -14,6 +14,7 @@ from ttt.agents.compare import play_and_report
 from ttt.agents.mcts import MctsAgent
 from ttt.agents.perfect import PerfectAgent
 from ttt.agents.random import RandomAgent, RandomAgent2
+from ttt.agents.sarsa import SarsaAgent
 from ttt.agents.sb3_dqn import Sb3DqnAgent
 from ttt.agents.tab_greedy_v import TabGreedyVAgent
 from ttt.agents.torch_nn_greedy_v import NnGreedyVAgent
@@ -42,10 +43,12 @@ def main():
         # (MctsAgent(n_sims=200), "mcts200"),
     ]
 
+    load_or_train_agent(agents, 'tabsarsa-rng', SarsaAgent,
+        lambda: SarsaAgent.train_new(RandomAgent(), 100))
+    load_or_train_agent(agents, 'tabgreedyv-rng', TabGreedyVAgent,
+        lambda: TabGreedyVAgent.train_new(100))
     load_or_train_agent(agents, 'sb3dqn-rng', Sb3DqnAgent,
         lambda: Sb3DqnAgent.train_new(opponent=RandomAgent(), steps=100, verbose=VERBOSE))
-    load_or_train_agent(agents, 'tgreedyv-rng', TabGreedyVAgent,
-        lambda: TabGreedyVAgent.train_new(100))
     load_or_train_agent(agents, 'nngreedyv-rng', NnGreedyVAgent,
         lambda: NnGreedyVAgent.train_new(RandomAgent2(), 100, DEVICE), DEVICE)
 
@@ -81,8 +84,8 @@ def try_load(agent_class, path, device=None):
             return agent_class.load(path, device)
         else:
             return agent_class.load(path)
-    except Exception as e:
-        print(f'failed to load {path}: {e}')
+    except FileNotFoundError:
+        print(f'{path}: no saved model')
         return None
 
 

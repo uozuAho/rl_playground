@@ -16,7 +16,7 @@ uv run sb3-mask_ppo.py # maskable ppo agent (don't do invalid actions)
 
 uv run bot-showdown.py  # all vs all bot fight
 
-uv run sb3-dqn-tuna.py # find good hyperparams
+uv run sb3-dqn-tuna.py # use optuna to find good hyperparams for DQN
 uv run optuna-dashboard sqlite:///dqn-ttt.db  # see hyperparam report
 ```
 

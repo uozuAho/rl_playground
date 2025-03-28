@@ -21,8 +21,18 @@ from ttt.env import TicTacToeEnv
 
 class Qtable:
     """ State+action q table"""
-    def __init__(self, data=None):
-        self._table = data or {}
+    def __init__(self, table=None):
+        self._table = table or {}
+
+    @staticmethod
+    def load(path):
+        with open(path) as infile:
+            serdict = json.loads(infile.read())
+        table = Qtable()
+        for k, v in serdict.items():
+            state, action = k.split('-')
+            table.set_value(state, action, v)
+        return table
 
     def size(self):
         return len(self._table)
@@ -35,7 +45,8 @@ class Qtable:
 
     def save(self, path):
         with open(path, 'w') as ofile:
-            ofile.write(json.dumps(self._table, indent=2))
+            serdict = {f'{k[0]}-{k[1]}': v for k, v in self._table.items()}
+            ofile.write(json.dumps(serdict, indent=2))
 
     def _env2state(self, env: TicTacToeEnv):
         return ''.join(str(x) for x in env.board)
@@ -51,10 +62,14 @@ class SarsaAgent(TttAgent):
 
     @staticmethod
     def load(path):
-        with open(path) as infile:
-            data = json.loads(infile.read())
+        qtable = Qtable.load(path)
+        return SarsaAgent(q_table=qtable)
+
+    @staticmethod
+    def train_new(opponent, n_eps):
+        env = TicTacToeEnv(opponent=opponent)
         agent = SarsaAgent()
-        agent._q_table = Qtable(data)
+        agent.train(env, n_eps)
         return agent
 
     def get_action(self, env: TicTacToeEnv):
@@ -73,6 +88,7 @@ class SarsaAgent(TttAgent):
             gamma=0.95,            # discount rate (discount past rewards)
             ep_callback=None
             ):
+        assert env.opponent is not None
         for episode in range(n_training_episodes):
 
             epsilon = min_epsilon + (
