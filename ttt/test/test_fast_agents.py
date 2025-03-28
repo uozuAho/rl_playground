@@ -1,5 +1,5 @@
-from ttt.agents.qlearn import QlearnAgent
-from ttt.agents.sarsa import SarsaAgent
+from ttt.agents.qlearn import TabQlearnAgent
+from ttt.agents.sarsa import TabSarsaAgent
 from ttt.agents.tab_greedy_v import TabGreedyVAgent
 import ttt.agents.tab_greedy_v
 import ttt.env
@@ -36,7 +36,7 @@ def test_perfect_agents_always_draw():
 
 def test_sarsa_train_and_play():
     for ye in [True, False]:
-        agent = SarsaAgent(allow_invalid_actions=ye)
+        agent = TabSarsaAgent(allow_invalid_actions=ye)
         env = TicTacToeEnv(
             opponent=RandomAgent(),
             on_invalid_action=ttt.env.INVALID_ACTION_GAME_OVER if ye else ttt.env.INVALID_ACTION_THROW)
@@ -51,7 +51,7 @@ def test_sarsa_train_and_play():
 
 def test_qlearn_train_and_play():
     for ye in [True, False]:
-        agent = QlearnAgent(allow_invalid_actions=ye)
+        agent = TabQlearnAgent(allow_invalid_actions=ye)
         env = TicTacToeEnv(
             opponent=RandomAgent(),
             on_invalid_action=ttt.env.INVALID_ACTION_GAME_OVER if ye else ttt.env.INVALID_ACTION_THROW)

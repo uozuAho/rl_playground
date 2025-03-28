@@ -13,8 +13,9 @@ from ttt.agents.agent import TttAgent
 from ttt.agents.compare import play_and_report
 from ttt.agents.mcts import MctsAgent
 from ttt.agents.perfect import PerfectAgent
+from ttt.agents.qlearn import TabQlearnAgent
 from ttt.agents.random import RandomAgent, RandomAgent2
-from ttt.agents.sarsa import SarsaAgent
+from ttt.agents.sarsa import TabSarsaAgent
 from ttt.agents.sb3_dqn import Sb3DqnAgent
 from ttt.agents.tab_greedy_v import TabGreedyVAgent
 from ttt.agents.torch_nn_greedy_v import NnGreedyVAgent
@@ -43,8 +44,10 @@ def main():
         # (MctsAgent(n_sims=200), "mcts200"),
     ]
 
-    load_or_train_agent(agents, 'tabsarsa-rng', SarsaAgent,
-        lambda: SarsaAgent.train_new(RandomAgent(), 100))
+    load_or_train_agent(agents, 'tabsarsa-rng', TabSarsaAgent,
+        lambda: TabSarsaAgent.train_new(RandomAgent(), 100))
+    load_or_train_agent(agents, 'tabqlearn-rng', TabQlearnAgent,
+        lambda: TabQlearnAgent.train_new(RandomAgent(), 100))
     load_or_train_agent(agents, 'tabgreedyv-rng', TabGreedyVAgent,
         lambda: TabGreedyVAgent.train_new(100))
     load_or_train_agent(agents, 'sb3dqn-rng', Sb3DqnAgent,

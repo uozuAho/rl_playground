@@ -1,51 +1,33 @@
-import json
 import random
 import numpy as np
 
 from ttt.agents.agent import TttAgent
+from ttt.agents.sarsa import QaTable
 from ttt.env import TicTacToeEnv
 
 
-class Qtable:
-    """ State+action q table"""
-    def __init__(self, data=None):
-        self._table = data or {}
-
-    def size(self):
-        return len(self._table)
-
-    def value(self, state: str, action: int):
-        return self._table.get((state, action), 0.0)
-
-    def set_value(self, state: str, action: int, value: float):
-        self._table[(state, action)] = value
-
-    def save(self, path):
-        with open(path, 'w') as ofile:
-            ofile.write(json.dumps(self._table, indent=2))
-
-    def _env2state(self, env: TicTacToeEnv):
-        return ''.join(str(x) for x in env.board)
-
-
-class QlearnAgent(TttAgent):
+class TabQlearnAgent(TttAgent):
     """
     Tabular q-learning agent. Stores a state-action q table. Trains against
     itself (ie don't supply an opponent).
     """
     def __init__(
             self,
-            q_table: Qtable | None = None,
+            q_table: QaTable | None = None,
             allow_invalid_actions=False):
-        self._q_table = q_table or Qtable()
+        self._q_table = q_table or QaTable()
         self.allow_invalid_actions = allow_invalid_actions
 
     @staticmethod
     def load(path):
-        with open(path) as infile:
-            data = json.loads(infile.read())
-        agent = QlearnAgent()
-        agent._q_table = Qtable(data)
+        qtable = QaTable.load(path)
+        return TabQlearnAgent(q_table=qtable)
+
+    @staticmethod
+    def train_new(opponent, n_eps: int):
+        agent = TabQlearnAgent()
+        env = TicTacToeEnv(opponent=opponent)
+        agent.train(env, n_eps)
         return agent
 
     def get_action(self, env: TicTacToeEnv):
@@ -64,6 +46,7 @@ class QlearnAgent(TttAgent):
             gamma=0.95,            # discount rate (discount past rewards)
             ep_callback=None
             ):
+        assert env.opponent is not None
         for episode in range(n_training_episodes):
 
             epsilon = min_epsilon + (
@@ -90,7 +73,7 @@ class QlearnAgent(TttAgent):
                 ep_callback(episode, epsilon)
 
 
-def greedy_policy(env: TicTacToeEnv, qtable: Qtable, allow_invalid):
+def greedy_policy(env: TicTacToeEnv, qtable: QaTable, allow_invalid):
     best_value = -999999999.9
     best_action = None
     actions = range(9) if allow_invalid else (env.valid_actions())
@@ -102,7 +85,7 @@ def greedy_policy(env: TicTacToeEnv, qtable: Qtable, allow_invalid):
     return best_action
 
 
-def egreedy_policy(env: TicTacToeEnv, qtable: Qtable, epsilon: float, allow_invalid):
+def egreedy_policy(env: TicTacToeEnv, qtable: QaTable, epsilon: float, allow_invalid):
     random_num = random.uniform(0, 1)
     if random_num > epsilon:
         action = greedy_policy(env, qtable, allow_invalid)

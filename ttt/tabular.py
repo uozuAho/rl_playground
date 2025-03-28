@@ -7,8 +7,8 @@ from ttt.agents.tab_greedy_v import TabGreedyVAgent
 import ttt.env
 from ttt.env import TicTacToeEnv
 from ttt.agents.random import RandomAgent
-from ttt.agents.sarsa import SarsaAgent
-from ttt.agents.qlearn import QlearnAgent
+from ttt.agents.sarsa import TabSarsaAgent
+from ttt.agents.qlearn import TabQlearnAgent
 
 
 def my_eval(a, opponent, num_games=20):
@@ -44,7 +44,7 @@ def eval_vs_opponents(agents, opponents, num_games):
             my_eval(a, o, num_games)
 
 
-def train_eval(agent: SarsaAgent | QlearnAgent | TabGreedyVAgent, opponent, total_eps, eval_interval):
+def train_eval(agent: TabSarsaAgent | TabQlearnAgent | TabGreedyVAgent, opponent, total_eps, eval_interval):
     ep_nums = []
     epsilons = []
     returns = []

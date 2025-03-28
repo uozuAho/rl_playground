@@ -19,7 +19,7 @@ from ttt.agents.agent import TttAgent
 from ttt.env import TicTacToeEnv
 
 
-class Qtable:
+class QaTable:
     """ State+action q table"""
     def __init__(self, table=None):
         self._table = table or {}
@@ -28,7 +28,7 @@ class Qtable:
     def load(path):
         with open(path) as infile:
             serdict = json.loads(infile.read())
-        table = Qtable()
+        table = QaTable()
         for k, v in serdict.items():
             state, action = k.split('-')
             table.set_value(state, action, v)
@@ -52,23 +52,23 @@ class Qtable:
         return ''.join(str(x) for x in env.board)
 
 
-class SarsaAgent(TttAgent):
+class TabSarsaAgent(TttAgent):
     def __init__(
             self,
-            q_table: Qtable | None = None,
+            q_table: QaTable | None = None,
             allow_invalid_actions=False):
-        self._q_table = q_table or Qtable()
+        self._q_table = q_table or QaTable()
         self.allow_invalid_actions = allow_invalid_actions
 
     @staticmethod
     def load(path):
-        qtable = Qtable.load(path)
-        return SarsaAgent(q_table=qtable)
+        qtable = QaTable.load(path)
+        return TabSarsaAgent(q_table=qtable)
 
     @staticmethod
     def train_new(opponent, n_eps):
         env = TicTacToeEnv(opponent=opponent)
-        agent = SarsaAgent()
+        agent = TabSarsaAgent()
         agent.train(env, n_eps)
         return agent
 
@@ -118,7 +118,7 @@ class SarsaAgent(TttAgent):
                 ep_callback(episode, epsilon)
 
 
-def greedy_policy(env: TicTacToeEnv, qtable: Qtable, allow_invalid):
+def greedy_policy(env: TicTacToeEnv, qtable: QaTable, allow_invalid):
     best_value = -999999999.9
     best_action = None
     actions = range(9) if allow_invalid else (env.valid_actions())
@@ -130,7 +130,7 @@ def greedy_policy(env: TicTacToeEnv, qtable: Qtable, allow_invalid):
     return best_action
 
 
-def egreedy_policy(env: TicTacToeEnv, qtable: Qtable, epsilon: float, allow_invalid):
+def egreedy_policy(env: TicTacToeEnv, qtable: QaTable, epsilon: float, allow_invalid):
     random_num = random.uniform(0, 1)
     if random_num > epsilon:
         action = greedy_policy(env, qtable, allow_invalid)
