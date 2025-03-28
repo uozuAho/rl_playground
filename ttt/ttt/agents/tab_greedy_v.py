@@ -50,6 +50,12 @@ class TabGreedyVAgent(TttAgent):
         agent._q_table = Qtable(data)
         return agent
 
+    @staticmethod
+    def train_new(n_eps: int):
+        agent = TabGreedyVAgent()
+        agent.train(TicTacToeEnv(), n_eps)
+        return agent
+
     def get_action(self, env: TicTacToeEnv):
         return greedy_policy(env, self._q_table)
 

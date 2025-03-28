@@ -14,7 +14,7 @@ N_ENVS = 16
 
 
 class Sb3DqnAgent(TttAgent):
-    def __init__(self, model):
+    def __init__(self, model: DQN):
         self._model = model
 
     @staticmethod
@@ -32,8 +32,11 @@ class Sb3DqnAgent(TttAgent):
         action, _ = self._model.predict(obs, deterministic=True)
         return action.item()
 
+    def save(self, path):
+        self._model.save(path)
+
     @staticmethod
-    def train_new(opponent, steps, save_as=None):
+    def train_new(opponent, steps, verbose: bool):
         env = make_vec_env(lambda: make_env(opponent=opponent), n_envs=N_ENVS)
 
         # using params found with optuna
@@ -51,15 +54,13 @@ class Sb3DqnAgent(TttAgent):
             policy_kwargs={
                 "net_arch": [32, 32]
             },
-            verbose=1
+            verbose=1 if verbose else 0
         )
         model.learn(
             total_timesteps=steps,
             log_interval=steps//30,
-            callback=MyEvalCallback()
+            callback=MyEvalCallback() if verbose else None
         )
-        if save_as:
-            model.save(save_as)
         return Sb3DqnAgent.from_model(model)
 
 

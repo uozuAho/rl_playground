@@ -8,7 +8,7 @@ Install uv
 
 ```sh
 uv sync
-uv run pytest
+./precommit.sh
 uv rur tabular.py  # tabular agents
 uv run sb3-ppo.py      # ppo agent .. doesn't learn properly, avg return -1 (always loses)
 uv run sb3-mask_ppo.py # maskable ppo agent (don't do invalid actions)

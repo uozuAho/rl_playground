@@ -137,6 +137,12 @@ class NnGreedyVAgent(TttAgent2):
         agent.nn.load_state_dict(torch.load(path, weights_only=True))
         return agent
 
+    @staticmethod
+    def train_new(opponent: TttAgent2, n_eps: int, device: str):
+        agent = NnGreedyVAgent(device)
+        agent.train(opponent, n_eps)
+        return agent
+
     def state_val(self, env: ttt.Env):
         return self._nn_out(env.board)
 
