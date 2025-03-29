@@ -17,15 +17,16 @@ from ttt.agents.qlearn import TabQlearnAgent
 from ttt.agents.random import RandomAgent, RandomAgent2
 from ttt.agents.sarsa import TabSarsaAgent
 from ttt.agents.sb3_dqn import Sb3DqnAgent
+from ttt.agents.sb3_maskppo import Sb3MaskPpoAgent
 from ttt.agents.tab_greedy_v import TabGreedyVAgent
 from ttt.agents.torch_nn_greedy_v import NnGreedyVAgent
 from utils.torch_device import find_device
 
 
-TRAINED_MODELS_PATH = Path("trained_models")
-TRAINED_MODELS_PATH.mkdir(exist_ok=True)
 TRAIN_FAST = True   # do short training just to verify training works
 # TRAIN_FAST = False  # do full training to make competent agents
+TRAINED_MODELS_PATH = Path("trained_models")
+TRAINED_MODELS_PATH.mkdir(exist_ok=True)
 VERBOSE = False
 DEVICE = find_device()
 
@@ -52,6 +53,8 @@ def main():
         lambda: TabGreedyVAgent.train_new(100))
     load_or_train_agent(agents, 'sb3dqn-rng', Sb3DqnAgent,
         lambda: Sb3DqnAgent.train_new(opponent=RandomAgent(), steps=100, verbose=VERBOSE))
+    load_or_train_agent(agents, 'sb3maskppo-rng', Sb3MaskPpoAgent,
+        lambda: Sb3MaskPpoAgent.train_new(opponent=RandomAgent(), steps=100, verbose=VERBOSE))
     load_or_train_agent(agents, 'nngreedyv-rng', NnGreedyVAgent,
         lambda: NnGreedyVAgent.train_new(RandomAgent2(), 100, DEVICE), DEVICE)
 
