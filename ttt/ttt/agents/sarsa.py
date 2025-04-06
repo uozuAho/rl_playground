@@ -17,6 +17,7 @@ import numpy as np
 
 from ttt.agents.agent import TttAgent
 from ttt.env import TicTacToeEnv
+import ttt.env2 as ttt
 
 
 class QaTable:
@@ -79,7 +80,7 @@ class TabSarsaAgent(TttAgent):
         self._q_table.save(path)
 
     def train(self,
-            env: TicTacToeEnv,
+            env: ttt.Env,
             n_training_episodes: int,
             min_epsilon=0.001,     # epsilon: exploration rate
             max_epsilon=1.0,
@@ -88,7 +89,7 @@ class TabSarsaAgent(TttAgent):
             gamma=0.95,            # discount rate (discount past rewards)
             ep_callback=None
             ):
-        assert env.opponent is not None
+        assert isinstance(env, ttt.Env)
         for episode in range(n_training_episodes):
 
             epsilon = min_epsilon + (

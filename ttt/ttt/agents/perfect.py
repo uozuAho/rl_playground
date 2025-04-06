@@ -1,51 +1,48 @@
-from ttt.agents.agent import TttAgent
-import ttt.env
-from ttt.env import TicTacToeEnv
+from ttt.agents.agent import TttAgent2
+import ttt.env2 as ttt
 
 
-class PerfectAgent(TttAgent):
-    def get_action(self, env: TicTacToeEnv):
+class PerfectAgent(TttAgent2):
+    def get_action(self, env: ttt.Env):
+        assert isinstance(env, ttt.Env)
         return find_best_move(env, env.current_player)
 
 
-def player_won(env, player):
-    if player == 'X' and env.get_status() == ttt.env.X_WIN:
-        return True
-    elif player == 'O' and env.get_status() == ttt.env.O_WIN:
-        return True
-    return False
+def player_won(env: ttt.Env, player: ttt.Player):
+    return ttt.winner(env.board) == player
 
 
-def find_best_move(env: TicTacToeEnv, player='X'):
-    opponent = 'O' if player == 'X' else 'X'
+def find_best_move(env: ttt.Env, player=ttt.X):
+    opponent = ttt.other_player(player)
 
     # Winning move
     # hacking env internals, using env.copy/env.step is dangerous
     for pos in range(9):
-        if env.board[pos] == ttt.env.EMPTY_CODE:
+        if env.board[pos] == ttt.EMPTY:
             tempboard = env.board[:]
-            tempboard[pos] = ttt.env.tocode(player)
-            status = ttt.env.check_game_status(tempboard)
-            if status == ttt.env.O_WIN and player == 'O':
+            tempboard[pos] = player
+            # status = ttt.env.check_game_status(tempboard)
+            status = ttt.status(tempboard)
+            if status == ttt.O and player == ttt.O:
                 return pos
-            if status == ttt.env.X_WIN and player == 'X':
+            if status == ttt.X and player == ttt.X:
                 return pos
 
     # Block opponent's win:
     # hacking this for now. hard to do esp. with an opponent in place
     for pos in range(9):
-        if env.board[pos] == ttt.env.EMPTY_CODE:
+        if env.board[pos] == ttt.EMPTY:
             tempboard = env.board[:]
-            tempboard[pos] = ttt.env.tocode(opponent)
-            status = ttt.env.check_game_status(tempboard)
-            if status == ttt.env.O_WIN and player == 'X':
+            tempboard[pos] = opponent
+            status = ttt.status(tempboard)
+            if status == ttt.O and player == ttt.X:
                 return pos
-            if status == ttt.env.X_WIN and player == 'O':
+            if status == ttt.X and player == ttt.O:
                 return pos
 
     num_empty = sum(1 for x in env.board if x == 0)
-    if player == 'O' and num_empty == 6:
-        x = ttt.env.X_CODE
+    if player == ttt.O and num_empty == 6:
+        x = ttt.X
         # block winning setup for x:
         # 1. x goes corner
         # 2. o goes middle

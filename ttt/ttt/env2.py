@@ -12,6 +12,8 @@ X = 1
 O = -1  # noqa: E741
 DRAW = 2
 IN_PROGRESS = 3
+INVALID_ACTION_THROW = 0
+INVALID_ACTION_GAME_OVER = 1
 type Action = int
 type Player = t.Literal[-1, 1]
 type Status = t.Literal[-1, 1, 2, 3]
@@ -19,9 +21,9 @@ type Board = list[int]
 
 
 class Env:
-    """ Assumes player/agent is X """
-    def __init__(self):
+    def __init__(self, invalid_action_response=INVALID_ACTION_THROW):
         self.reset()
+        self.invalid_action_response = invalid_action_response
 
     def reset(self):
         self.current_player = X
@@ -37,12 +39,28 @@ class Env:
         yield from valid_actions(self.board)
 
     def step(self, action) -> tuple[Board, int, bool, bool, dict]:
+        """ Reward assumes player/agent is X """
+        if self.board[action] != EMPTY:
+            if self.invalid_action_response == INVALID_ACTION_GAME_OVER:
+                return self.board, -1, True, False, {}
+            else:
+                raise IllegalActionError()
         do_action(self.current_player, action, self.board)
         self.current_player = other_player(self.current_player)
         s = status(self.board)
         reward = -1 if s == O else 1 if s == X else 0
         done = s != IN_PROGRESS
         return self.board, reward, done, False, {}
+
+    def status(self):
+        return status(self.board)
+
+    def winner(self):
+        return winner(self.board)
+
+
+class IllegalActionError(Exception):
+    pass
 
 
 _winning_combinations = [
