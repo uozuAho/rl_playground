@@ -10,11 +10,11 @@ from pathlib import Path
 import typing as t
 
 from ttt.agents.agent import TttAgent
-from ttt.agents.compare import play_and_report
+from ttt.agents.compare import play_and_report2
 from ttt.agents.mcts import MctsAgent
 from ttt.agents.perfect import PerfectAgent
 from ttt.agents.qlearn import TabQlearnAgent
-from ttt.agents.random import RandomAgent, RandomAgent2
+from ttt.agents.random import RandomAgent
 from ttt.agents.sarsa import TabSarsaAgent
 from ttt.agents.sb3_dqn import Sb3DqnAgent
 from ttt.agents.sb3_maskppo import Sb3MaskPpoAgent
@@ -63,13 +63,13 @@ def main():
     #     lambda: NnGreedyVAgent.train_new(RandomAgent2(), 100, DEVICE), DEVICE)
     # load_or_train_agent(agents, 'nngreedymcts1', None, None, DEVICE,
     #     lambda: load_NnGreedyVMctsAgent('nngreedyv-rng', 1))
-    load_or_train_agent(agents, 'nngreedymcts100', None, None, DEVICE,
-        lambda: load_NnGreedyVMctsAgent('nngreedyv-rng', 100))
+    # load_or_train_agent(agents, 'nngreedymcts100', None, None, DEVICE,
+    #     lambda: load_NnGreedyVMctsAgent('nngreedyv-rng', 100))
 
     for a1, l1 in agents:
         for a2, l2 in agents:
             if a1 == a2: continue
-            msg = play_and_report(a1, l1, a2, l2, 100, quiet=True)
+            msg = play_and_report2(a1, l1, a2, l2, 100, quiet=True)
             print(msg)
             with open("bot-showdown.txt", "a") as f:
                 f.write(msg + "\n")
