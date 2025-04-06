@@ -9,11 +9,7 @@ Install uv
 ```sh
 uv sync
 ./precommit.sh
-uv run sb3-ppo.py      # ppo agent .. doesn't learn properly, avg return -1 (always loses)
-uv run sb3-mask_ppo.py # maskable ppo agent (don't do invalid actions)
-                   # doesn't do any better than a random agent
-
-uv run bot-showdown.py  # all vs all bot fight
+uv run bot-showdown.py  # all vs all bot fight. Comment out bots as needed
 
 uv run sb3-dqn-tuna.py # use optuna to find good hyperparams for DQN
 uv run optuna-dashboard sqlite:///dqn-ttt.db  # see hyperparam report

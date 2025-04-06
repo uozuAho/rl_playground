@@ -4,13 +4,35 @@ from dataclasses import dataclass
 import math
 import random
 import typing as t
-import torch
-from ttt.agents.random import RandomAgent2
+from ttt.agents.agent import TttAgent2
 from ttt.agents.torch_nn_greedy_v import NnGreedyVAgent
 import ttt.env2 as ttt
 
 
 type ValFunc = t.Callable[[ttt.Board], float]
+
+
+class NnGreedyVMctsAgent(TttAgent2):
+    def __init__(self, trained_agent: NnGreedyVAgent, n_simulations: int):
+        self.agent = trained_agent
+        self.n_simulations = n_simulations
+
+    def get_action(self, env: ttt.Env) -> int:
+        return mcts_decision(env, self.n_simulations, self._val_func)
+
+    @staticmethod
+    def load(name_or_path, n_simulations: int):
+        agent = NnGreedyVAgent.load(name_or_path, device='cuda')
+        return NnGreedyVMctsAgent(agent, n_simulations)
+
+    def _val_func(self, board: ttt.Board):
+        return self.agent.board_val(board)
+
+
+def mcts_decision(env: ttt.Env, n_simulations: int, val_func: ValFunc):
+    root = build_mcts_tree(env, n_simulations, val_func)
+    best_move = max(root.children, key=lambda move: root.children[move].visits)
+    return best_move
 
 
 @dataclass
@@ -86,62 +108,3 @@ def build_mcts_tree(
             node = node.parent
 
     return root
-
-
-def mcts_decision(env: ttt.Env, n_simulations: int, val_func: ValFunc):
-    root = build_mcts_tree(env, n_simulations, val_func)
-    best_move = max(root.children, key=lambda move: root.children[move].visits)
-    return best_move
-
-
-device = (
-    "cuda" if torch.cuda.is_available() else
-    "mps" if torch.backends.mps.is_available() else
-    "cpu"
-)
-device = 'cpu'
-print(f'using device {device}')
-
-path = "conv-greedy-v.pth"
-agent = NnGreedyVAgent.load(path, device)
-env = ttt.Env()
-mcts_decision(env, 1000, agent.board_val)
-
-
-class MctsAgent:
-    def __init__(self, val_func: ValFunc, n_simulations: int):
-        self.val_func = val_func
-        self.n_simulations = n_simulations
-
-    def get_action(self, env: ttt.Env) -> int:
-        return mcts_decision(env, self.n_simulations, self.val_func)
-
-
-
-# todo: either gets 100 wins or 100-losses, seems wrong
-def eval_vs_random(n_games: int):
-    mcts_agent = MctsAgent(agent.board_val, 2)
-    rng_agent = RandomAgent2()
-    done = False
-    wins = 0
-    draws = 0
-    losses = 0
-    for _ in range(n_games):
-        env = ttt.Env()
-        while not done:
-            if env.current_player == ttt.X:
-                action = mcts_agent.get_action(env)
-            else:
-                action = rng_agent.get_action(env)
-            _, reward, term, trunc, _ = env.step(action)
-            done = term or trunc
-        if reward > 0:
-            wins += 1
-        elif reward < 0:
-            losses += 1
-        else:
-            draws += 1
-    print(f'{wins} wins, {draws} draws, {losses} losses')
-
-
-eval_vs_random(100)
