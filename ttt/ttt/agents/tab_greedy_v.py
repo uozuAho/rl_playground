@@ -3,7 +3,7 @@ import random
 import numpy as np
 import typing as t
 
-from ttt.agents.agent import TttAgent2
+from ttt.agents.agent import TttAgent
 import ttt.env as ttt
 
 
@@ -30,7 +30,7 @@ class Qtable:
             ofile.write(json.dumps(self._table, indent=2))
 
 
-class TabGreedyVAgent(TttAgent2):
+class TabGreedyVAgent(TttAgent):
     """
     Tabular greedy value learning agent. Stores a state q table. Trains against
     itself (ie don't supply an opponent).

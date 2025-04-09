@@ -3,7 +3,7 @@ from stable_baselines3 import DQN
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.callbacks import BaseCallback
 
-from ttt.agents.agent import TttAgent2
+from ttt.agents.agent import TttAgent
 from ttt.agents.compare import play_and_report2
 from ttt.agents.random import RandomAgent
 import ttt.env
@@ -12,7 +12,7 @@ import ttt.env
 N_ENVS = 16
 
 
-class Sb3DqnAgent(TttAgent2):
+class Sb3DqnAgent(TttAgent):
     def __init__(self, model: DQN):
         self._model = model
 

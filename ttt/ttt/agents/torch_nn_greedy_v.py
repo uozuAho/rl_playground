@@ -16,7 +16,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from ttt.agents.agent import TttAgent2
+from ttt.agents.agent import TttAgent
 import ttt.env as ttt
 import utils.epsilon
 
@@ -118,7 +118,7 @@ class ConvNet(nn.Module):
         return torch.tensor(state, dtype=torch.float32).reshape((3,3)).unsqueeze(0)
 
 
-class NnGreedyVAgent(TttAgent2):
+class NnGreedyVAgent(TttAgent):
     def __init__(self, device: str):
         self.nn = ConvNet(lr=1e-4, gamma=0.9, device=device).to(device)
         self.device = device
@@ -138,7 +138,7 @@ class NnGreedyVAgent(TttAgent2):
         return agent
 
     @staticmethod
-    def train_new(opponent: TttAgent2, n_eps: int, device: str):
+    def train_new(opponent: TttAgent, n_eps: int, device: str):
         agent = NnGreedyVAgent(device)
         agent.train(opponent, n_eps)
         return agent
@@ -151,7 +151,7 @@ class NnGreedyVAgent(TttAgent2):
 
     def train(
             self,
-            opponent: TttAgent2,
+            opponent: TttAgent,
             n_episodes: int,
             epsilon: t.Optional[t.Iterator[float]] = None,
             buffer_size = 64,
@@ -204,7 +204,7 @@ class NnGreedyVAgent(TttAgent2):
             return self.nn(state_t).item()
 
 
-def play_game(agent_x: NnGreedyVAgent, opponent_o: TttAgent2, epsilon: float):
+def play_game(agent_x: NnGreedyVAgent, opponent_o: TttAgent, epsilon: float):
     env = ttt.Env()
     done = False
     while not done:

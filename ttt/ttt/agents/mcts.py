@@ -1,11 +1,11 @@
 import math
 import random
 import typing as t
-from ttt.agents.agent import TttAgent2
+from ttt.agents.agent import TttAgent
 import ttt.env
 
 
-class MctsAgent(TttAgent2):
+class MctsAgent(TttAgent):
     def __init__(self, n_sims: int):
         self.n_sims = n_sims
 

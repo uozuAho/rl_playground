@@ -1,12 +1,12 @@
 import random
 import numpy as np
 
-from ttt.agents.agent import TttAgent2
+from ttt.agents.agent import TttAgent
 from ttt.agents.sarsa import QaTable
 import ttt.env as ttt
 
 
-class TabQlearnAgent(TttAgent2):
+class TabQlearnAgent(TttAgent):
     """
     Tabular q-learning agent. Stores a state-action q table. Trains against
     itself (ie don't supply an opponent).
@@ -24,7 +24,7 @@ class TabQlearnAgent(TttAgent2):
         return TabQlearnAgent(q_table=qtable)
 
     @staticmethod
-    def train_new(opponent: TttAgent2, n_eps: int):
+    def train_new(opponent: TttAgent, n_eps: int):
         agent = TabQlearnAgent()
         agent.train(ttt.Env(), opponent, n_eps)
         return agent
@@ -37,7 +37,7 @@ class TabQlearnAgent(TttAgent2):
 
     def train(self,
             env: ttt.Env,
-            opponent: TttAgent2,
+            opponent: TttAgent,
             n_training_episodes,
             min_epsilon=0.001,     # epsilon: exploration rate
             max_epsilon=1.0,

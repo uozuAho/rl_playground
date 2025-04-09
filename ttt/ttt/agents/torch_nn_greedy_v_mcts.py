@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import math
 import random
 import typing as t
-from ttt.agents.agent import TttAgent2
+from ttt.agents.agent import TttAgent
 from ttt.agents.torch_nn_greedy_v import NnGreedyVAgent
 import ttt.env as ttt
 
@@ -12,7 +12,7 @@ import ttt.env as ttt
 type ValFunc = t.Callable[[ttt.Board], float]
 
 
-class NnGreedyVMctsAgent(TttAgent2):
+class NnGreedyVMctsAgent(TttAgent):
     def __init__(self, trained_agent: NnGreedyVAgent, n_simulations: int):
         self.agent = trained_agent
         self.n_simulations = n_simulations

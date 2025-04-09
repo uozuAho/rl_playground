@@ -9,7 +9,7 @@ todo
 from pathlib import Path
 import typing as t
 
-from ttt.agents.agent import TttAgent2
+from ttt.agents.agent import TttAgent
 from ttt.agents.compare import play_and_report2
 from ttt.agents.mcts import MctsAgent
 from ttt.agents.perfect import PerfectAgent
@@ -79,7 +79,7 @@ def load_or_train_agent(
         agents,
         name,
         agent_class,
-        train_fn: t.Callable[[], TttAgent2],
+        train_fn: t.Callable[[], TttAgent],
         device: str | None = None,
         load_fn: t.Callable[[], t.Any] | None = None
         ):

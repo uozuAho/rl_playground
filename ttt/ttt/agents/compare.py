@@ -2,14 +2,14 @@ import time
 from collections import Counter
 import typing as t
 
-from ttt.agents.agent import TttAgent2
+from ttt.agents.agent import TttAgent
 import ttt.env as env
 
 
 type GameResult = t.Literal['O', 'X', 'draw', 'X-illegal', 'O-illegal']
 
 
-def play_game2(agent_x: TttAgent2, agent_o: TttAgent2) -> GameResult:
+def play_game2(agent_x: TttAgent, agent_o: TttAgent) -> GameResult:
     game = env.Env()
     done = False
     while not done:
@@ -31,7 +31,7 @@ def play_game2(agent_x: TttAgent2, agent_o: TttAgent2) -> GameResult:
     return 'draw'
 
 
-def play_games2(agent_x: TttAgent2, agent_o: TttAgent2, n_games: int):
+def play_games2(agent_x: TttAgent, agent_o: TttAgent, n_games: int):
     ctr: Counter[GameResult] = Counter()
     for _ in range(n_games):
         result = play_game2(agent_x, agent_o)
@@ -40,9 +40,9 @@ def play_games2(agent_x: TttAgent2, agent_o: TttAgent2, n_games: int):
 
 
 def play_and_report2(
-        agent_x: TttAgent2,
+        agent_x: TttAgent,
         label_x: str,
-        agent_o: TttAgent2,
+        agent_o: TttAgent,
         label_o: str,
         n_games: int,
         quiet: bool = False):

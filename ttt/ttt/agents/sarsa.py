@@ -15,7 +15,7 @@ import json
 import random
 import numpy as np
 
-from ttt.agents.agent import TttAgent2
+from ttt.agents.agent import TttAgent
 import ttt.env as ttt
 
 
@@ -52,7 +52,7 @@ class QaTable:
         return ''.join(str(x) for x in env.board)
 
 
-class TabSarsaAgent(TttAgent2):
+class TabSarsaAgent(TttAgent):
     def __init__(
             self,
             q_table: QaTable | None = None,
@@ -66,7 +66,7 @@ class TabSarsaAgent(TttAgent2):
         return TabSarsaAgent(q_table=qtable)
 
     @staticmethod
-    def train_new(opponent: TttAgent2, n_eps):
+    def train_new(opponent: TttAgent, n_eps):
         env = ttt.Env()
         agent = TabSarsaAgent()
         agent.train(env, opponent, n_eps)
@@ -80,7 +80,7 @@ class TabSarsaAgent(TttAgent2):
 
     def train(self,
             env: ttt.Env,
-            opponent: TttAgent2,
+            opponent: TttAgent,
             n_training_episodes: int,
             min_epsilon=0.001,     # epsilon: exploration rate
             max_epsilon=1.0,

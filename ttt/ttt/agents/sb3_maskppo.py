@@ -2,11 +2,11 @@ import numpy as np
 from stable_baselines3.common.env_util import make_vec_env
 from sb3_contrib import MaskablePPO
 from sb3_contrib.common.wrappers import ActionMasker
-from ttt.agents.agent import TttAgent2
+from ttt.agents.agent import TttAgent
 import ttt.env
 
 
-class Sb3MaskPpoAgent(TttAgent2):
+class Sb3MaskPpoAgent(TttAgent):
     def __init__(self, model: MaskablePPO):
         self.model = model
 
