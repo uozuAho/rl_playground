@@ -1,47 +1,47 @@
 from ttt.agents.agent import TttAgent
-import ttt.env as ttt
+import ttt.env as t3
 
 
 class PerfectAgent(TttAgent):
-    def get_action(self, env: ttt.Env):
+    def get_action(self, env: t3.Env):
         return find_best_move(env, env.current_player)
 
 
-def player_won(env: ttt.Env, player: ttt.Player):
-    return ttt.winner(env.board) == player
+def player_won(env: t3.Env, player: t3.Player):
+    return t3.winner(env.board) == player
 
 
-def find_best_move(env: ttt.Env, player=ttt.X):
-    opponent = ttt.other_player(player)
+def find_best_move(env: t3.Env, player=t3.X):
+    opponent = t3.other_player(player)
 
     # Winning move
     # hacking env internals, using env.copy/env.step is dangerous
     for pos in range(9):
-        if env.board[pos] == ttt.EMPTY:
+        if env.board[pos] == t3.EMPTY:
             tempboard = env.board[:]
             tempboard[pos] = player
             # status = ttt.env.check_game_status(tempboard)
-            status = ttt.status(tempboard)
-            if status == ttt.O and player == ttt.O:
+            status = t3.status(tempboard)
+            if status == t3.O and player == t3.O:
                 return pos
-            if status == ttt.X and player == ttt.X:
+            if status == t3.X and player == t3.X:
                 return pos
 
     # Block opponent's win:
     # hacking this for now. hard to do esp. with an opponent in place
     for pos in range(9):
-        if env.board[pos] == ttt.EMPTY:
+        if env.board[pos] == t3.EMPTY:
             tempboard = env.board[:]
             tempboard[pos] = opponent
-            status = ttt.status(tempboard)
-            if status == ttt.O and player == ttt.X:
+            status = t3.status(tempboard)
+            if status == t3.O and player == t3.X:
                 return pos
-            if status == ttt.X and player == ttt.O:
+            if status == t3.X and player == t3.O:
                 return pos
 
     num_empty = sum(1 for x in env.board if x == 0)
-    if player == ttt.O and num_empty == 6:
-        x = ttt.X
+    if player == t3.O and num_empty == 6:
+        x = t3.X
         # block winning setup for x:
         # 1. x goes corner
         # 2. o goes middle

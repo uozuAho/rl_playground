@@ -1,10 +1,3 @@
-"""
-Improvement over first env:
-
-- simpler code
-- faster
-"""
-
 import typing as t
 
 

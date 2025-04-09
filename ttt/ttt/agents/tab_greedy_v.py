@@ -4,7 +4,7 @@ import numpy as np
 import typing as t
 
 from ttt.agents.agent import TttAgent
-import ttt.env as ttt
+import ttt.env as t3
 
 
 class Qtable:
@@ -53,15 +53,15 @@ class TabGreedyVAgent(TttAgent):
     @staticmethod
     def train_new(n_eps: int):
         agent = TabGreedyVAgent()
-        agent.train(ttt.Env(), n_eps)
+        agent.train(t3.Env(), n_eps)
         return agent
 
-    def get_action(self, env: ttt.Env):
+    def get_action(self, env: t3.Env):
         return greedy_policy(env, self._q_table)
 
     def action_values(self, board_str: str):
         """ For debugging """
-        env = ttt.Env.from_str(board_str)
+        env = t3.Env.from_str(board_str)
         values = {}
         for a in env.valid_actions():
             tempenv = env.copy()
@@ -73,7 +73,7 @@ class TabGreedyVAgent(TttAgent):
         self._q_table.save(path)
 
     def train(self,
-            env: ttt.Env,
+            env: t3.Env,
             n_training_episodes,
             min_epsilon=0.001,     # epsilon: exploration rate
             max_epsilon=1.0,
@@ -118,7 +118,7 @@ class TabGreedyVAgent(TttAgent):
                 ep_callback(episode, epsilon)
 
 
-def greedy_policy(env: ttt.Env, qtable: Qtable):
+def greedy_policy(env: t3.Env, qtable: Qtable):
     """ Greedily select the action that results in the highest value next state """
     best_value = -999999999.9
     best_action = None
@@ -132,7 +132,7 @@ def greedy_policy(env: ttt.Env, qtable: Qtable):
     return best_action
 
 
-def egreedy_policy(env: ttt.Env, qtable: Qtable, epsilon: float):
+def egreedy_policy(env: t3.Env, qtable: Qtable, epsilon: float):
     random_num = random.uniform(0, 1)
     if random_num > epsilon:
         action = greedy_policy(env, qtable)
@@ -141,6 +141,6 @@ def egreedy_policy(env: ttt.Env, qtable: Qtable, epsilon: float):
     return action
 
 
-def envstate(env: ttt.Env):
-    c = ''.join('x' if i == ttt.X else 'o' if i == ttt.O else '.' for i in env.board)
+def envstate(env: t3.Env):
+    c = ''.join('x' if i == t3.X else 'o' if i == t3.O else '.' for i in env.board)
     return f'{c[:3]}|{c[3:6]}|{c[6:]}'

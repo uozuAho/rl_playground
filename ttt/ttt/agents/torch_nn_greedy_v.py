@@ -17,7 +17,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from ttt.agents.agent import TttAgent
-import ttt.env as ttt
+import ttt.env as t3
 import utils.epsilon
 
 
@@ -28,8 +28,8 @@ type GameStatus = t.Literal['O', 'X', 'draw', 'in_progress']
 
 @dataclass
 class GameStep:
-    state: ttt.Board
-    next_state: ttt.Board
+    state: t3.Board
+    next_state: t3.Board
     reward: int
     is_end: bool
 
@@ -113,7 +113,7 @@ class ConvNet(nn.Module):
             torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
             self.optimiser.step()
 
-    def state2input(self, state: ttt.Board):
+    def state2input(self, state: t3.Board):
         # reshape board list to 2d, add channels for conv2d
         return torch.tensor(state, dtype=torch.float32).reshape((3,3)).unsqueeze(0)
 
@@ -123,7 +123,7 @@ class NnGreedyVAgent(TttAgent):
         self.nn = ConvNet(lr=1e-4, gamma=0.9, device=device).to(device)
         self.device = device
 
-    def get_action(self, env: ttt.Env, epsilon=0.0):
+    def get_action(self, env: t3.Env, epsilon=0.0):
         if random.random() < epsilon:
             return random.choice(list(env.valid_actions()))
         return self._greedy_action(env)
@@ -143,10 +143,10 @@ class NnGreedyVAgent(TttAgent):
         agent.train(opponent, n_eps)
         return agent
 
-    def state_val(self, env: ttt.Env):
+    def state_val(self, env: t3.Env):
         return self._nn_out(env.board)
 
-    def board_val(self, board: ttt.Board):
+    def board_val(self, board: t3.Board):
         return self._nn_out(board)
 
     def train(
@@ -172,7 +172,7 @@ class NnGreedyVAgent(TttAgent):
                 callback(i)
         print('training done')
 
-    def action_vals(self, env: ttt.Env):
+    def action_vals(self, env: t3.Env):
         """ For debugging """
         vals = {}
         for a in env.valid_actions():
@@ -181,23 +181,23 @@ class NnGreedyVAgent(TttAgent):
             vals[str(temp)] = self.state_val(temp).item()
         return vals
 
-    def _greedy_action(self, env: ttt.Env):
+    def _greedy_action(self, env: t3.Env):
         max_move = None
         max_val = -999999999.0
         # cheating here for perf
         # todo: could do better by sending all states as batch to nn
         temp_board = env.board[:]
         for i in range(len(temp_board)):
-            if temp_board[i] == ttt.EMPTY:
-                temp_board[i] = ttt.X
+            if temp_board[i] == t3.EMPTY:
+                temp_board[i] = t3.X
                 val = self._nn_out(temp_board)
                 if val > max_val:
                     max_move = i
                     max_val = val
-                temp_board[i] = ttt.EMPTY
+                temp_board[i] = t3.EMPTY
         return max_move
 
-    def _nn_out(self, state: ttt.Board) -> float:
+    def _nn_out(self, state: t3.Board) -> float:
         # unsqueeze to batch of 1
         state_t = self.nn.state2input(state).unsqueeze(0).to(self.device)
         with torch.no_grad():
@@ -205,11 +205,11 @@ class NnGreedyVAgent(TttAgent):
 
 
 def play_game(agent_x: NnGreedyVAgent, opponent_o: TttAgent, epsilon: float):
-    env = ttt.Env()
+    env = t3.Env()
     done = False
     while not done:
         state = env.board[:]
-        if env.current_player == ttt.X:
+        if env.current_player == t3.X:
             action = agent_x.get_action(env, epsilon)
         else:
             action = opponent_o.get_action(env)

@@ -27,6 +27,8 @@ from utils.torch_device import find_device
 
 TRAIN_FAST = True   # do short training just to verify training works
 # TRAIN_FAST = False  # do full training to make competent agents
+# FORCE_TRAIN = False
+FORCE_TRAIN = True  # train agents even if they have a saved model
 TRAINED_MODELS_PATH = Path("trained_models")
 TRAINED_MODELS_PATH.mkdir(exist_ok=True)
 VERBOSE = False
@@ -83,17 +85,19 @@ def load_or_train_agent(
         device: str | None = None,
         load_fn: t.Callable[[], t.Any] | None = None
         ):
-    if load_fn:
-        agent = load_fn()
-    else:
-        path = TRAINED_MODELS_PATH/name
-        agent = try_load(agent_class, path, device)
-    if agent:
+    path = TRAINED_MODELS_PATH/name
+    if FORCE_TRAIN:
+        agent = train_fn()
+        agent.save(path)
         agents.append((agent, name))
-        return agent
-    agent = train_fn()
-    agent.save(path)
-    agents.append((agent, name))
+    else:
+        if load_fn:
+            agent = load_fn()
+        else:
+            agent = try_load(agent_class, path, device)
+        if agent:
+            agents.append((agent, name))
+            return agent
 
 
 def try_load(agent_class, path, device=None):
