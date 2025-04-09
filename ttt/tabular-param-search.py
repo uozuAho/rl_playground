@@ -61,6 +61,7 @@ for lr, mne, mxe, ed, g, a in itertools.product(
     print(f'training {current_name} for {n_train_eps} eps...')
     current_agent.train(
         make_env(),
+        RandomAgent(),
         n_training_episodes=n_train_eps,
         min_epsilon=mne,
         max_epsilon=mxe,

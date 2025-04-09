@@ -36,7 +36,7 @@ DEVICE = find_device()  # todo: let agents decide what device they use
 def main():
     agents = [
         (RandomAgent(), "random"),
-        # (MctsAgent(n_sims=1), "mcts1"),
+        (MctsAgent(n_sims=1), "mcts1"),
         # (MctsAgent(n_sims=5), "mcts5"),
         # (MctsAgent(n_sims=10), "mcts10"),
         (PerfectAgent(), "perfect"),
@@ -47,24 +47,24 @@ def main():
         # (MctsAgent(n_sims=200), "mcts200"),
     ]
 
-    # load_or_train_agent(agents, 'tabsarsa-rng', TabSarsaAgent,
-    #     lambda: TabSarsaAgent.train_new(RandomAgent(), 100))
-    # load_or_train_agent(agents, 'tabqlearn-rng', TabQlearnAgent,
-    #     lambda: TabQlearnAgent.train_new(RandomAgent(), 100))
-    # load_or_train_agent(agents, 'tabgreedyv-rng', TabGreedyVAgent,
-    #     lambda: TabGreedyVAgent.train_new(100))
-    # load_or_train_agent(agents, 'sb3dqn-rng', Sb3DqnAgent,
-    #     lambda: Sb3DqnAgent.train_new(opponent=RandomAgent(), steps=100, verbose=VERBOSE))
-    # load_or_train_agent(agents, 'sb3ppo-rng', Sb3PpoAgent,
-    #     lambda: Sb3PpoAgent.train_new(opponent=RandomAgent(), steps=100, verbose=VERBOSE))
-    # load_or_train_agent(agents, 'sb3maskppo-rng', Sb3MaskPpoAgent,
-    #     lambda: Sb3MaskPpoAgent.train_new(opponent=RandomAgent(), steps=100, verbose=VERBOSE))
-    # load_or_train_agent(agents, 'nngreedyv-rng', NnGreedyVAgent,
-    #     lambda: NnGreedyVAgent.train_new(RandomAgent2(), 100, DEVICE), DEVICE)
-    # load_or_train_agent(agents, 'nngreedymcts1', None, None, DEVICE,
-    #     lambda: load_NnGreedyVMctsAgent('nngreedyv-rng', 1))
-    # load_or_train_agent(agents, 'nngreedymcts100', None, None, DEVICE,
-    #     lambda: load_NnGreedyVMctsAgent('nngreedyv-rng', 100))
+    load_or_train_agent(agents, 'tabsarsa-rng', TabSarsaAgent,
+        lambda: TabSarsaAgent.train_new(RandomAgent(), 100))
+    load_or_train_agent(agents, 'tabqlearn-rng', TabQlearnAgent,
+        lambda: TabQlearnAgent.train_new(RandomAgent(), 100))
+    load_or_train_agent(agents, 'tabgreedyv-rng', TabGreedyVAgent,
+        lambda: TabGreedyVAgent.train_new(100))
+    load_or_train_agent(agents, 'sb3dqn-rng', Sb3DqnAgent,
+        lambda: Sb3DqnAgent.train_new(opponent=RandomAgent(), steps=100, verbose=VERBOSE))
+    load_or_train_agent(agents, 'sb3ppo-rng', Sb3PpoAgent,
+        lambda: Sb3PpoAgent.train_new(opponent=RandomAgent(), steps=100, verbose=VERBOSE))
+    load_or_train_agent(agents, 'sb3maskppo-rng', Sb3MaskPpoAgent,
+        lambda: Sb3MaskPpoAgent.train_new(opponent=RandomAgent(), steps=100, verbose=VERBOSE))
+    load_or_train_agent(agents, 'nngreedyv-rng', NnGreedyVAgent,
+        lambda: NnGreedyVAgent.train_new(RandomAgent(), 100, DEVICE), DEVICE)
+    load_or_train_agent(agents, 'nngreedymcts1', None, None, DEVICE,
+        lambda: load_NnGreedyVMctsAgent('nngreedyv-rng', 1))
+    load_or_train_agent(agents, 'nngreedymcts100', None, None, DEVICE,
+        lambda: load_NnGreedyVMctsAgent('nngreedyv-rng', 100))
 
     for a1, l1 in agents:
         for a2, l2 in agents:
@@ -109,7 +109,7 @@ def try_load(agent_class, path, device=None):
 
 def load_NnGreedyVMctsAgent(name, n_sims):
     path = TRAINED_MODELS_PATH/name
-    agent: NnGreedyVMctsAgent | None = try_load(NnGreedyVMctsAgent, path, DEVICE)
+    agent = try_load(NnGreedyVMctsAgent, path, DEVICE)
     if agent:
         agent.n_simulations = n_sims
         return agent
