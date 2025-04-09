@@ -89,7 +89,6 @@ class TabSarsaAgent(TttAgent):
             gamma=0.95,            # discount rate (discount past rewards)
             ep_callback=None
             ):
-        assert isinstance(env, ttt.Env)
         for episode in range(n_training_episodes):
 
             epsilon = min_epsilon + (

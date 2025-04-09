@@ -9,7 +9,7 @@ import ttt.env as env
 type GameResult = t.Literal['O', 'X', 'draw', 'X-illegal', 'O-illegal']
 
 
-def play_game2(agent_x: TttAgent, agent_o: TttAgent) -> GameResult:
+def play_game(agent_x: TttAgent, agent_o: TttAgent) -> GameResult:
     game = env.Env()
     done = False
     while not done:
@@ -31,15 +31,15 @@ def play_game2(agent_x: TttAgent, agent_o: TttAgent) -> GameResult:
     return 'draw'
 
 
-def play_games2(agent_x: TttAgent, agent_o: TttAgent, n_games: int):
+def play_games(agent_x: TttAgent, agent_o: TttAgent, n_games: int):
     ctr: Counter[GameResult] = Counter()
     for _ in range(n_games):
-        result = play_game2(agent_x, agent_o)
+        result = play_game(agent_x, agent_o)
         ctr[result] += 1
     return ctr
 
 
-def play_and_report2(
+def play_and_report(
         agent_x: TttAgent,
         label_x: str,
         agent_o: TttAgent,
@@ -47,7 +47,7 @@ def play_and_report2(
         n_games: int,
         quiet: bool = False):
     start = time.time()
-    results = play_games2(agent_x, agent_o, n_games)
+    results = play_games(agent_x, agent_o, n_games)
     end = time.time()
 
     x, o, d = results['X'], results['O'], results['draw']

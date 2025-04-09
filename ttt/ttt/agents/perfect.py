@@ -4,7 +4,6 @@ import ttt.env as ttt
 
 class PerfectAgent(TttAgent):
     def get_action(self, env: ttt.Env):
-        assert isinstance(env, ttt.Env)
         return find_best_move(env, env.current_player)
 
 

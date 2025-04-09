@@ -4,7 +4,7 @@ from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.callbacks import BaseCallback
 
 from ttt.agents.agent import TttAgent
-from ttt.agents.compare import play_and_report2
+from ttt.agents.compare import play_and_report
 from ttt.agents.random import RandomAgent
 import ttt.env
 
@@ -69,7 +69,7 @@ class MyEvalCallback(BaseCallback):
             print(f"train: {self.num_timesteps} steps")
             agent = Sb3DqnAgent.from_model(self.model)
             opponent = RandomAgent()
-            play_and_report2(agent, 'sb3dqn', opponent, 'rng', 100)
+            play_and_report(agent, 'sb3dqn', opponent, 'rng', 100)
         return True
 
 

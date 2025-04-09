@@ -10,7 +10,7 @@ from pathlib import Path
 import typing as t
 
 from ttt.agents.agent import TttAgent
-from ttt.agents.compare import play_and_report2
+from ttt.agents.compare import play_and_report
 from ttt.agents.mcts import MctsAgent
 from ttt.agents.perfect import PerfectAgent
 from ttt.agents.qlearn import TabQlearnAgent
@@ -69,7 +69,7 @@ def main():
     for a1, l1 in agents:
         for a2, l2 in agents:
             if a1 == a2: continue
-            msg = play_and_report2(a1, l1, a2, l2, 100, quiet=True)
+            msg = play_and_report(a1, l1, a2, l2, 100, quiet=True)
             print(msg)
             with open("bot-showdown.txt", "a") as f:
                 f.write(msg + "\n")
