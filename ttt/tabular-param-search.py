@@ -4,14 +4,13 @@ from collections import defaultdict
 import itertools
 from ttt.agents.qlearn import TabQlearnAgent
 from ttt.agents.sarsa import TabSarsaAgent
-import ttt.env
 from ttt.agents.random import RandomAgent
-from ttt.env import TicTacToeEnv
 import matplotlib.pyplot as plt
+import ttt.env2
 
 
 def make_env():
-    return TicTacToeEnv(
+    return ttt.env2.EnvWithOpponent(
         opponent=RandomAgent(),
         on_invalid_action=ttt.env.INVALID_ACTION_GAME_OVER)
 

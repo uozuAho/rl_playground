@@ -1,17 +1,15 @@
 import math
 import random
 import typing as t
-from ttt.agents.agent import TttAgent
-
-import ttt.env
-from ttt.env import TicTacToeEnv
+from ttt.agents.agent import TttAgent2
+import ttt.env2
 
 
-class MctsAgent(TttAgent):
+class MctsAgent(TttAgent2):
     def __init__(self, n_sims: int):
         self.n_sims = n_sims
 
-    def get_action(self, env: TicTacToeEnv):
+    def get_action(self, env: ttt.env2.Env):
         return mcts_decision(env, self.n_sims)
 
 
@@ -19,17 +17,17 @@ type Player = t.Literal['O', 'X']
 type GameState = t.Literal['O', 'X', 'draw', 'in_progress']
 
 
-def gamestate(env: TicTacToeEnv) -> GameState:
-    state = env.get_status()
-    if state == ttt.env.O_WIN: return 'O'
-    if state == ttt.env.X_WIN: return 'X'
-    if state == ttt.env.DRAW: return 'draw'
+def gamestate(env: ttt.env2.Env) -> GameState:
+    status = env.status()
+    if status == ttt.env2.O: return 'O'
+    if status == ttt.env2.X: return 'X'
+    if status == ttt.env2.DRAW: return 'draw'
     return 'in_progress'
 
 
 class MCTSNode:
-    def __init__(self, state: TicTacToeEnv, parent):
-        self.state: TicTacToeEnv = state
+    def __init__(self, state: ttt.env2.Env, parent):
+        self.state: ttt.env2.Env = state
         self.parent: MCTSNode = parent
         self.children: t.Dict[int, MCTSNode] = {}  # action, node
         self.visits = 0
@@ -78,7 +76,7 @@ class MCTSNode:
         return self.wins / self.visits + math.sqrt(2 * math.log(self.parent.visits) / self.visits)
 
 
-def build_mcts_tree(state: TicTacToeEnv, simulations: int):
+def build_mcts_tree(state: ttt.env2.Env, simulations: int):
     root = MCTSNode(state, parent=None)
     for _ in range(simulations):
         node = root
@@ -98,7 +96,7 @@ def build_mcts_tree(state: TicTacToeEnv, simulations: int):
     return root
 
 
-def mcts_decision(state: TicTacToeEnv, n_simulations: int):
+def mcts_decision(state: ttt.env2.Env, n_simulations: int):
     root = build_mcts_tree(state, n_simulations)
     best_move = max(root.children, key=lambda move: root.children[move].visits)
     return best_move

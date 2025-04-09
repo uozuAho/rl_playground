@@ -1,15 +1,15 @@
 import os
 import optuna
+from ttt.agents.random import RandomAgent
 import ttt.env
 from stable_baselines3 import DQN
-from ttt.agents.random import RandomAgent
-from ttt.env import TicTacToeEnv
 import torch.nn as nn
 from utils import tuna
+import ttt.env2
 
 
 def make_env():
-    return TicTacToeEnv(
+    return ttt.env2.EnvWithOpponent(
         opponent=RandomAgent(),
         on_invalid_action=ttt.env.INVALID_ACTION_GAME_OVER)
 

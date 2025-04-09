@@ -7,6 +7,8 @@ Improvement over first env:
 
 import typing as t
 
+from ttt.agents.agent import TttAgent2
+
 EMPTY = 0
 X = 1
 O = -1  # noqa: E741
@@ -28,6 +30,24 @@ class Env:
     def reset(self):
         self.current_player = X
         self.board = [EMPTY] * 9
+
+    @staticmethod
+    def from_str(str):
+        env = Env()
+        for i, c in enumerate(str.replace('|', '').lower()):
+            if c == 'x':
+                env.board[i] = X
+            elif c == 'o':
+                env.board[i] = O
+            elif c == '.':
+                env.board[i] = EMPTY
+            else:
+                raise ValueError(f'Invalid character in board string: {c}')
+        numx = sum(1 if X else 0 for c in env.board)
+        numo = sum(1 if O else 0 for c in env.board)
+        assert numx - numo == 1 or numx - numo == 0
+        env.current_player = O if numx > numo else X
+        return env
 
     def copy(self):
         env = Env()
@@ -57,6 +77,19 @@ class Env:
 
     def winner(self):
         return winner(self.board)
+
+
+class EnvWithOpponent(Env):
+    def __init__(self, opponent: TttAgent2, invalid_action_response=INVALID_ACTION_THROW):
+        super().__init__(invalid_action_response)
+        self.opponent = opponent
+
+    def step(self, action):
+        obs, reward, term, trunc, info = super().step(action)
+        if term or trunc:
+            return obs, reward, term, trunc, info
+        op_action = self.opponent.get_action(self)
+        return super().step(op_action)
 
 
 class IllegalActionError(Exception):

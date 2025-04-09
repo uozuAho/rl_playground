@@ -4,7 +4,6 @@ import numpy as np
 import typing as t
 
 from ttt.agents.agent import TttAgent2
-from ttt.env import TicTacToeEnv
 import ttt.env2 as ttt
 
 
@@ -62,7 +61,7 @@ class TabGreedyVAgent(TttAgent2):
 
     def action_values(self, board_str: str):
         """ For debugging """
-        env = TicTacToeEnv.from_str(board_str)
+        env = ttt.Env.from_str(board_str)
         values = {}
         for a in env.valid_actions():
             tempenv = env.copy()
