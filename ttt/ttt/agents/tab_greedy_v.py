@@ -3,8 +3,9 @@ import random
 import numpy as np
 import typing as t
 
-from ttt.agents.agent import TttAgent
+from ttt.agents.agent import TttAgent2
 from ttt.env import TicTacToeEnv
+import ttt.env2 as ttt
 
 
 class Qtable:
@@ -30,7 +31,7 @@ class Qtable:
             ofile.write(json.dumps(self._table, indent=2))
 
 
-class TabGreedyVAgent(TttAgent):
+class TabGreedyVAgent(TttAgent2):
     """
     Tabular greedy value learning agent. Stores a state q table. Trains against
     itself (ie don't supply an opponent).
@@ -53,10 +54,10 @@ class TabGreedyVAgent(TttAgent):
     @staticmethod
     def train_new(n_eps: int):
         agent = TabGreedyVAgent()
-        agent.train(TicTacToeEnv(), n_eps)
+        agent.train(ttt.Env(), n_eps)
         return agent
 
-    def get_action(self, env: TicTacToeEnv):
+    def get_action(self, env: ttt.Env):
         return greedy_policy(env, self._q_table)
 
     def action_values(self, board_str: str):
@@ -73,7 +74,7 @@ class TabGreedyVAgent(TttAgent):
         self._q_table.save(path)
 
     def train(self,
-            env: TicTacToeEnv,
+            env: ttt.Env,
             n_training_episodes,
             min_epsilon=0.001,     # epsilon: exploration rate
             max_epsilon=1.0,
@@ -87,7 +88,6 @@ class TabGreedyVAgent(TttAgent):
             - ep_callback: func(episode_num, current_epsilon) -> None. Called
               at the end of every episode.
         """
-        assert env.opponent is None  # expects no opponent, trains against random moves
         for episode in range(n_training_episodes):
             epsilon = min_epsilon + (
                 (max_epsilon - min_epsilon) *
@@ -101,7 +101,7 @@ class TabGreedyVAgent(TttAgent):
                     action = egreedy_policy(env, self._q_table, epsilon)
                 else:
                     action = random.choice(list(env.valid_actions()))
-                next_state, reward, terminated, truncated, _ = env.step(action)
+                _, reward, terminated, truncated, _ = env.step(action)
                 next_state = env
                 done = terminated or truncated
 
@@ -119,7 +119,7 @@ class TabGreedyVAgent(TttAgent):
                 ep_callback(episode, epsilon)
 
 
-def greedy_policy(env: TicTacToeEnv, qtable: Qtable):
+def greedy_policy(env: ttt.Env, qtable: Qtable):
     """ Greedily select the action that results in the highest value next state """
     best_value = -999999999.9
     best_action = None
@@ -133,7 +133,7 @@ def greedy_policy(env: TicTacToeEnv, qtable: Qtable):
     return best_action
 
 
-def egreedy_policy(env: TicTacToeEnv, qtable: Qtable, epsilon: float):
+def egreedy_policy(env: ttt.Env, qtable: Qtable, epsilon: float):
     random_num = random.uniform(0, 1)
     if random_num > epsilon:
         action = greedy_policy(env, qtable)
@@ -142,6 +142,6 @@ def egreedy_policy(env: TicTacToeEnv, qtable: Qtable, epsilon: float):
     return action
 
 
-def envstate(env: TicTacToeEnv):
-    c = ''.join('x' if i == 2 else 'o' if i == 1 else '.' for i in env.board)
+def envstate(env: ttt.Env):
+    c = ''.join('x' if i == ttt.X else 'o' if i == ttt.O else '.' for i in env.board)
     return f'{c[:3]}|{c[3:6]}|{c[6:]}'
