@@ -14,13 +14,13 @@ def test_perfect_agent_never_loses_to_random():
     env = ttt.env2.Env()
     for _ in range(20):
         env.reset()
-        while not env.is_game_over:
-            if env.current_player == ttt.X:
+        while env.status() == ttt.env2.IN_PROGRESS:
+            if env.current_player == ttt.env2.X:
                 action = p_agent.get_action(env)
             else:
                 action = r_agent.get_action(env)
             env.step(action)
-        assert ttt.status() in [ttt.DRAW, ttt.X]
+        assert env.status() in [ttt.env2.DRAW, ttt.env2.X]
 
 
 def test_perfect_agents_always_draw():
@@ -30,9 +30,9 @@ def test_perfect_agents_always_draw():
     for _ in range(20):
         env.reset()
         while env.status() == ttt.env2.IN_PROGRESS:
-            action = x_agent.get_action(env) if env.current_player == ttt.X else o_agent.get_action(env)
+            action = x_agent.get_action(env) if env.current_player == ttt.env2.X else o_agent.get_action(env)
             env.step(action)
-        assert env.get_status() == ttt.DRAW
+        assert env.status() == ttt.env2.DRAW
 
 
 def test_sarsa_train_and_play():

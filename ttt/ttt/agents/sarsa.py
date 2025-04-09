@@ -104,7 +104,7 @@ class TabSarsaAgent(TttAgent2):
                 assert env.current_player == ttt.X
                 _, reward, terminated, truncated, _ = env.step(action)
                 if not (terminated or truncated):
-                    _, reward, terminated, truncated, _ = env.step(opponent.get_action(state))
+                    _, reward, terminated, truncated, _ = env.step(opponent.get_action(env))
                 next_state = env
                 next_action = egreedy_policy(env, self._q_table, epsilon, self.allow_invalid_actions)
                 done = terminated or truncated
@@ -138,7 +138,11 @@ def egreedy_policy(env: ttt.Env, qtable: QaTable, epsilon: float, allow_invalid)
     if random_num > epsilon:
         action = greedy_policy(env, qtable, allow_invalid)
     else:
-        action = random.choice(list(env.valid_actions()))
+        valid = list(env.valid_actions())
+        if valid:
+            action = random.choice(list(env.valid_actions()))
+        else:
+            action = None
     return action
 
 
