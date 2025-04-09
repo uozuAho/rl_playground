@@ -6,11 +6,11 @@ from ttt.agents.qlearn import TabQlearnAgent
 from ttt.agents.sarsa import TabSarsaAgent
 from ttt.agents.random import RandomAgent
 import matplotlib.pyplot as plt
-import ttt.env2
+import ttt.env
 
 
 def make_env():
-    return ttt.env2.EnvWithOpponent(
+    return ttt.env.EnvWithOpponent(
         opponent=RandomAgent(),
         on_invalid_action=ttt.env.INVALID_ACTION_GAME_OVER)
 

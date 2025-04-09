@@ -3,7 +3,7 @@ import numpy as np
 
 from ttt.agents.agent import TttAgent2
 from ttt.agents.sarsa import QaTable
-import ttt.env2 as ttt
+import ttt.env as ttt
 
 
 class TabQlearnAgent(TttAgent2):

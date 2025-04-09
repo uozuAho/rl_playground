@@ -4,7 +4,7 @@ import numpy as np
 import typing as t
 
 from ttt.agents.agent import TttAgent2
-import ttt.env2 as ttt
+import ttt.env as ttt
 
 
 class Qtable:

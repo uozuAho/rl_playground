@@ -2,14 +2,14 @@ import math
 import random
 import typing as t
 from ttt.agents.agent import TttAgent2
-import ttt.env2
+import ttt.env
 
 
 class MctsAgent(TttAgent2):
     def __init__(self, n_sims: int):
         self.n_sims = n_sims
 
-    def get_action(self, env: ttt.env2.Env):
+    def get_action(self, env: ttt.env.Env):
         return mcts_decision(env, self.n_sims)
 
 
@@ -17,17 +17,17 @@ type Player = t.Literal['O', 'X']
 type GameState = t.Literal['O', 'X', 'draw', 'in_progress']
 
 
-def gamestate(env: ttt.env2.Env) -> GameState:
+def gamestate(env: ttt.env.Env) -> GameState:
     status = env.status()
-    if status == ttt.env2.O: return 'O'
-    if status == ttt.env2.X: return 'X'
-    if status == ttt.env2.DRAW: return 'draw'
+    if status == ttt.env.O: return 'O'
+    if status == ttt.env.X: return 'X'
+    if status == ttt.env.DRAW: return 'draw'
     return 'in_progress'
 
 
 class MCTSNode:
-    def __init__(self, state: ttt.env2.Env, parent):
-        self.state: ttt.env2.Env = state
+    def __init__(self, state: ttt.env.Env, parent):
+        self.state: ttt.env.Env = state
         self.parent: MCTSNode = parent
         self.children: t.Dict[int, MCTSNode] = {}  # action, node
         self.visits = 0
@@ -76,7 +76,7 @@ class MCTSNode:
         return self.wins / self.visits + math.sqrt(2 * math.log(self.parent.visits) / self.visits)
 
 
-def build_mcts_tree(state: ttt.env2.Env, simulations: int):
+def build_mcts_tree(state: ttt.env.Env, simulations: int):
     root = MCTSNode(state, parent=None)
     for _ in range(simulations):
         node = root
@@ -96,7 +96,7 @@ def build_mcts_tree(state: ttt.env2.Env, simulations: int):
     return root
 
 
-def mcts_decision(state: ttt.env2.Env, n_simulations: int):
+def mcts_decision(state: ttt.env.Env, n_simulations: int):
     root = build_mcts_tree(state, n_simulations)
     best_move = max(root.children, key=lambda move: root.children[move].visits)
     return best_move

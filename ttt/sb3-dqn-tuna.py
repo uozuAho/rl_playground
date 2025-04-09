@@ -4,11 +4,11 @@ from ttt.agents.random import RandomAgent
 from stable_baselines3 import DQN
 import torch.nn as nn
 from utils import tuna
-import ttt.env2
+import ttt.env
 
 
 def make_env():
-    return ttt.env2.EnvWithOpponent(
+    return ttt.env.EnvWithOpponent(
         opponent=RandomAgent(),
         on_invalid_action=ttt.env.INVALID_ACTION_GAME_OVER)
 

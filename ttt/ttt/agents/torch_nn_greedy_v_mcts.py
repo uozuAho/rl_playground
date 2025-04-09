@@ -6,7 +6,7 @@ import random
 import typing as t
 from ttt.agents.agent import TttAgent2
 from ttt.agents.torch_nn_greedy_v import NnGreedyVAgent
-import ttt.env2 as ttt
+import ttt.env as ttt
 
 
 type ValFunc = t.Callable[[ttt.Board], float]

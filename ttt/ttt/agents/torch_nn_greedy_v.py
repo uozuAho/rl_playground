@@ -17,7 +17,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from ttt.agents.agent import TttAgent2
-import ttt.env2 as ttt
+import ttt.env as ttt
 import utils.epsilon
 
 

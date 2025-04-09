@@ -6,7 +6,7 @@ from stable_baselines3.common.callbacks import BaseCallback
 from ttt.agents.agent import TttAgent2
 from ttt.agents.compare import play_and_report2
 from ttt.agents.random import RandomAgent
-import ttt.env2
+import ttt.env
 
 
 N_ENVS = 16
@@ -25,7 +25,7 @@ class Sb3DqnAgent(TttAgent2):
     def from_model(model):
         return Sb3DqnAgent(model)
 
-    def get_action(self, env: ttt.env2.Env):
+    def get_action(self, env: ttt.env.Env):
         # hack env internals to get obs
         obs = np.array(env.board).reshape((3,3))
         action, _ = self._model.predict(obs, deterministic=True)
@@ -74,7 +74,7 @@ class MyEvalCallback(BaseCallback):
 
 
 def make_env(opponent):
-    return ttt.env2.EnvWithOpponent(
+    return ttt.env.EnvWithOpponent(
         opponent=opponent,
         on_invalid_action=ttt.env.INVALID_ACTION_GAME_OVER
     )

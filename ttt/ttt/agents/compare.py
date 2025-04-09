@@ -3,24 +3,24 @@ from collections import Counter
 import typing as t
 
 from ttt.agents.agent import TttAgent2
-import ttt.env2 as env2
+import ttt.env as env
 
 
 type GameResult = t.Literal['O', 'X', 'draw', 'X-illegal', 'O-illegal']
 
 
 def play_game2(agent_x: TttAgent2, agent_o: TttAgent2) -> GameResult:
-    game = env2.Env()
+    game = env.Env()
     done = False
     while not done:
-        if game.current_player == env2.X:
+        if game.current_player == env.X:
             move = agent_x.get_action(game)
         else:
             move = agent_o.get_action(game)
         try:
             _, reward, done, _, _ = game.step(move)
-        except env2.IllegalActionError:
-            if game.current_player == env2.X:
+        except env.IllegalActionError:
+            if game.current_player == env.X:
                 return 'X-illegal'
             else:
                 return 'O-illegal'

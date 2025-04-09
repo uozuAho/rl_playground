@@ -1,5 +1,5 @@
 from abc import ABC
-import ttt.env2 as ttt2
+import ttt.env as ttt2
 
 
 class TttAgent2(ABC):
