@@ -3,17 +3,16 @@ from stable_baselines3 import DQN
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.callbacks import BaseCallback
 
-from ttt.agents.agent import TttAgent
-from ttt.agents.compare import play_and_report
-import ttt.env
+from ttt.agents.agent import TttAgent2
+from ttt.agents.compare import play_and_report2
 from ttt.agents.random import RandomAgent
-from ttt.env import TicTacToeEnv
+import ttt.env2
 
 
 N_ENVS = 16
 
 
-class Sb3DqnAgent(TttAgent):
+class Sb3DqnAgent(TttAgent2):
     def __init__(self, model: DQN):
         self._model = model
 
@@ -26,7 +25,7 @@ class Sb3DqnAgent(TttAgent):
     def from_model(model):
         return Sb3DqnAgent(model)
 
-    def get_action(self, env: TicTacToeEnv):
+    def get_action(self, env: ttt.env2.Env):
         # hack env internals to get obs
         obs = np.array(env.board).reshape((3,3))
         action, _ = self._model.predict(obs, deterministic=True)
@@ -70,12 +69,12 @@ class MyEvalCallback(BaseCallback):
             print(f"train: {self.num_timesteps} steps")
             agent = Sb3DqnAgent.from_model(self.model)
             opponent = RandomAgent()
-            play_and_report(agent, 'sb3dqn', opponent, 'rng', 100)
+            play_and_report2(agent, 'sb3dqn', opponent, 'rng', 100)
         return True
 
 
 def make_env(opponent):
-    return TicTacToeEnv(
+    return ttt.env2.EnvWithOpponent(
         opponent=opponent,
         on_invalid_action=ttt.env.INVALID_ACTION_GAME_OVER
     )

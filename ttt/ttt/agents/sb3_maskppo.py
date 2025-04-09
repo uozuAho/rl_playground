@@ -2,18 +2,18 @@ import numpy as np
 from stable_baselines3.common.env_util import make_vec_env
 from sb3_contrib import MaskablePPO
 from sb3_contrib.common.wrappers import ActionMasker
-from ttt.agents.agent import TttAgent
-from ttt.env import TicTacToeEnv
+from ttt.agents.agent import TttAgent2
+import ttt.env2
 
 
-class Sb3MaskPpoAgent(TttAgent):
+class Sb3MaskPpoAgent(TttAgent2):
     def __init__(self, model: MaskablePPO):
         self.model = model
 
-    def get_action(self, env: TicTacToeEnv):
+    def get_action(self, env: ttt.env2.Env):
         # hack env internals to get obs
         obs = np.array(env.board).reshape((3,3))
-        action, _ = self.model.predict(obs, action_masks=env.valid_action_mask())
+        action, _ = self.model.predict(obs, action_masks=mask_fn(env))
         return action.item()
 
     def save(self, name_or_path):
@@ -42,8 +42,9 @@ class Sb3MaskPpoAgent(TttAgent):
 
 
 def make_env(opponent):
-    return ActionMasker(TicTacToeEnv(opponent=opponent), mask_fn)
+    return ActionMasker(ttt.env2.EnvWithOpponent(opponent=opponent), mask_fn)
 
 
-def mask_fn(env: TicTacToeEnv):
-    return env.valid_action_mask()
+def mask_fn(env: ttt.env2.Env):
+    valid_actions = list(env.valid_actions())
+    return [a in valid_actions for a in range(9)]

@@ -2,7 +2,6 @@ from ttt.agents.qlearn import TabQlearnAgent
 from ttt.agents.sarsa import TabSarsaAgent
 from ttt.agents.tab_greedy_v import TabGreedyVAgent
 import ttt.agents.tab_greedy_v
-import ttt.env
 from ttt.agents.random import RandomAgent
 from ttt.agents.perfect import PerfectAgent
 import ttt.env2

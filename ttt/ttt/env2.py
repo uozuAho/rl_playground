@@ -7,7 +7,6 @@ Improvement over first env:
 
 import typing as t
 
-from ttt.agents.agent import TttAgent2
 
 EMPTY = 0
 X = 1
@@ -80,7 +79,7 @@ class Env:
 
 
 class EnvWithOpponent(Env):
-    def __init__(self, opponent: TttAgent2, invalid_action_response=INVALID_ACTION_THROW):
+    def __init__(self, opponent, invalid_action_response=INVALID_ACTION_THROW):
         super().__init__(invalid_action_response)
         self.opponent = opponent
 

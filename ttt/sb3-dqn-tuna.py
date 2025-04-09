@@ -1,7 +1,6 @@
 import os
 import optuna
 from ttt.agents.random import RandomAgent
-import ttt.env
 from stable_baselines3 import DQN
 import torch.nn as nn
 from utils import tuna
