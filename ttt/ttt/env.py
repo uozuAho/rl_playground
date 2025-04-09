@@ -1,4 +1,5 @@
 import typing as t
+import gymnasium as gym
 
 
 EMPTY = 0
@@ -14,7 +15,7 @@ type Status = t.Literal[-1, 1, 2, 3]
 type Board = list[int]
 
 
-class Env:
+class Env(gym.Env):
     def __init__(self, invalid_action_response=INVALID_ACTION_THROW):
         self.reset()
         self.invalid_action_response = invalid_action_response

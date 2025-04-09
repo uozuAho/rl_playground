@@ -128,7 +128,7 @@ class NnGreedyVAgent(TttAgent):
             return random.choice(list(env.valid_actions()))
         return self._greedy_action(env)
 
-    def save(self, path: str):
+    def save(self, path: str | Path):
         torch.save(self.nn.state_dict(), path)
 
     @staticmethod
