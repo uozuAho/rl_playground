@@ -1,5 +1,7 @@
 import random
 
+import numpy as np
+
 import ttt.env
 
 
@@ -18,7 +20,7 @@ def test_fuzz():
             action = random.choice(va)
             obs, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
-            assert obs == env.board
+            assert np.array_equal(obs, np.array(env.board).reshape((3,3)))
             numx = sum(1 if c == ttt.env.X else 0 for c in env.board)
             numo = sum(1 if c == ttt.env.O else 0 for c in env.board)
             assert abs(numx - numo) <= 1

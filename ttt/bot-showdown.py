@@ -81,12 +81,12 @@ def load_or_train_agent(
         agents,
         name,
         agent_class,
-        train_fn: t.Callable[[], TttAgent],
+        train_fn: t.Callable[[], TttAgent] | None,
         device: str | None = None,
         load_fn: t.Callable[[], t.Any] | None = None
         ):
     path = TRAINED_MODELS_PATH/name
-    if FORCE_TRAIN:
+    if FORCE_TRAIN and train_fn:
         agent = train_fn()
         agent.save(path)
         agents.append((agent, name))

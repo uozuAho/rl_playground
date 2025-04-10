@@ -1,5 +1,7 @@
 import typing as t
 import gymnasium as gym
+from gymnasium import spaces
+import numpy as np
 
 
 EMPTY = 0
@@ -19,10 +21,13 @@ class Env(gym.Env):
     def __init__(self, invalid_action_response=INVALID_ACTION_THROW):
         self.reset()
         self.invalid_action_response = invalid_action_response
+        self.action_space = spaces.Discrete(9)
+        self.observation_space = spaces.Box(low=-1, high=1, shape=(3,3), dtype=np.int8)
 
-    def reset(self):
+    def reset(self, seed=None, options=None):
         self.current_player = X
         self.board = [EMPTY] * 9
+        return self._obs(), {}
 
     @staticmethod
     def from_str(str):
@@ -51,11 +56,11 @@ class Env(gym.Env):
     def valid_actions(self):
         yield from valid_actions(self.board)
 
-    def step(self, action) -> tuple[Board, int, bool, bool, dict]:
+    def step(self, action) -> tuple[np.ndarray, int, bool, bool, dict]:
         """ Reward assumes player/agent is X """
         if self.board[action] != EMPTY:
             if self.invalid_action_response == INVALID_ACTION_GAME_OVER:
-                return self.board, -1, True, False, {}
+                return self._obs(), -1, True, False, {}
             else:
                 raise IllegalActionError()
         do_action(self.current_player, action, self.board)
@@ -63,13 +68,16 @@ class Env(gym.Env):
         s = status(self.board)
         reward = -1 if s == O else 1 if s == X else 0
         done = s != IN_PROGRESS
-        return self.board, reward, done, False, {}
+        return self._obs(), reward, done, False, {}
 
     def status(self):
         return status(self.board)
 
     def winner(self):
         return winner(self.board)
+
+    def _obs(self):
+        return np.array(self.board).reshape((3,3))
 
 
 class EnvWithOpponent(Env):
