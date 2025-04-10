@@ -1,7 +1,7 @@
 import numpy as np
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
-from ttt.env import TicTacToeEnv
+
 import ttt.env
 
 
@@ -9,7 +9,7 @@ class Sb3PpoAgent:
     def __init__(self, model: PPO):
         self.model = model
 
-    def get_action(self, env: TicTacToeEnv):
+    def get_action(self, env: ttt.env.Env):
         # hack env internals to get obs
         obs = np.array(env.board).reshape((3,3))
         action, _ = self.model.predict(obs)
@@ -43,7 +43,7 @@ class Sb3PpoAgent:
 
 
 def make_env(opponent):
-    return TicTacToeEnv(
+    return ttt.env.EnvWithOpponent(
         opponent=opponent,
-        on_invalid_action=ttt.env.INVALID_ACTION_GAME_OVER
+        invalid_action_response=ttt.env.INVALID_ACTION_GAME_OVER
     )

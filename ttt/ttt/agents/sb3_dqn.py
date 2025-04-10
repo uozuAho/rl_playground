@@ -5,9 +5,8 @@ from stable_baselines3.common.callbacks import BaseCallback
 
 from ttt.agents.agent import TttAgent
 from ttt.agents.compare import play_and_report
-import ttt.env
 from ttt.agents.random import RandomAgent
-from ttt.env import TicTacToeEnv
+import ttt.env
 
 
 N_ENVS = 16
@@ -26,7 +25,7 @@ class Sb3DqnAgent(TttAgent):
     def from_model(model):
         return Sb3DqnAgent(model)
 
-    def get_action(self, env: TicTacToeEnv):
+    def get_action(self, env: ttt.env.Env):
         # hack env internals to get obs
         obs = np.array(env.board).reshape((3,3))
         action, _ = self._model.predict(obs, deterministic=True)
@@ -75,7 +74,7 @@ class MyEvalCallback(BaseCallback):
 
 
 def make_env(opponent):
-    return TicTacToeEnv(
+    return ttt.env.EnvWithOpponent(
         opponent=opponent,
-        on_invalid_action=ttt.env.INVALID_ACTION_GAME_OVER
+        invalid_action_response=ttt.env.INVALID_ACTION_GAME_OVER
     )

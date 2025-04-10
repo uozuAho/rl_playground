@@ -1,17 +1,16 @@
 import os
 import optuna
-import ttt.env
-from stable_baselines3 import DQN
 from ttt.agents.random import RandomAgent
-from ttt.env import TicTacToeEnv
+from stable_baselines3 import DQN
 import torch.nn as nn
 from utils import tuna
+import ttt.env
 
 
 def make_env():
-    return TicTacToeEnv(
+    return ttt.env.EnvWithOpponent(
         opponent=RandomAgent(),
-        on_invalid_action=ttt.env.INVALID_ACTION_GAME_OVER)
+        invalid_action_response=ttt.env.INVALID_ACTION_GAME_OVER)
 
 
 def sample_params(trial: optuna.Trial):

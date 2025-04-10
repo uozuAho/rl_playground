@@ -4,20 +4,20 @@ from dataclasses import dataclass
 import math
 import random
 import typing as t
-from ttt.agents.agent import TttAgent2
+from ttt.agents.agent import TttAgent
 from ttt.agents.torch_nn_greedy_v import NnGreedyVAgent
-import ttt.env2 as ttt
+import ttt.env as t3
 
 
-type ValFunc = t.Callable[[ttt.Board], float]
+type ValFunc = t.Callable[[t3.Board], float]
 
 
-class NnGreedyVMctsAgent(TttAgent2):
+class NnGreedyVMctsAgent(TttAgent):
     def __init__(self, trained_agent: NnGreedyVAgent, n_simulations: int):
         self.agent = trained_agent
         self.n_simulations = n_simulations
 
-    def get_action(self, env: ttt.Env) -> int:
+    def get_action(self, env: t3.Env) -> int:
         return mcts_decision(env, self.n_simulations, self._val_func)
 
     @staticmethod
@@ -25,11 +25,11 @@ class NnGreedyVMctsAgent(TttAgent2):
         agent = NnGreedyVAgent.load(name_or_path, device='cuda')
         return NnGreedyVMctsAgent(agent, n_simulations)
 
-    def _val_func(self, board: ttt.Board):
+    def _val_func(self, board: t3.Board):
         return self.agent.board_val(board)
 
 
-def mcts_decision(env: ttt.Env, n_simulations: int, val_func: ValFunc):
+def mcts_decision(env: t3.Env, n_simulations: int, val_func: ValFunc):
     root = build_mcts_tree(env, n_simulations, val_func)
     best_move = max(root.children, key=lambda move: root.children[move].visits)
     return best_move
@@ -37,7 +37,7 @@ def mcts_decision(env: ttt.Env, n_simulations: int, val_func: ValFunc):
 
 @dataclass
 class GameState:
-    env: ttt.Env
+    env: t3.Env
     is_terminal: bool
     reward: int
 
@@ -56,7 +56,7 @@ class MCTSNode:
         return self.total_reward / self.visits + math.sqrt(math.log(self.parent.visits) / self.visits)
 
     def __repr__(self):
-        b = ''.join('x' if c == ttt.X else 'o' if c == ttt.O else '.' for c in self.state.env.board)
+        b = ''.join('x' if c == t3.X else 'o' if c == t3.O else '.' for c in self.state.env.board)
         end = ''
         if self.state.is_terminal:
             end = 'WIN' if self.state.reward > 0 else 'LOSS'
@@ -68,7 +68,7 @@ def max_ucb_child(node: MCTSNode) -> MCTSNode:
 
 
 def build_mcts_tree(
-        env: ttt.Env,
+        env: t3.Env,
         simulations: int,
         val_func: ValFunc
         ):

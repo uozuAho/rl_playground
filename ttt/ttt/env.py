@@ -1,265 +1,133 @@
-# Originally copied from https://github.com/haje01/gym-tictactoe/blob/master/gym_tictactoe/env.py
-# Modified until I could get it working with stable baselines
-
 import typing as t
-import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
+import numpy as np
 
 
-NUM_LOC = 9
-IN_PROGRESS_REWARD = 0
-WIN_REWARD = 1
-LOSS_REWARD = -1
-INVALID_ACTION_REWARD = -1
-EMPTY_CODE = 0
-O_CODE = 1
-X_CODE = 2
-
-IN_PROGRESS = -1
-DRAW = 0
-O_WIN = 1
-X_WIN = 2
-
-# invalid action responses
+EMPTY = 0
+X = 1
+O = -1  # noqa: E741
+DRAW = 2
+IN_PROGRESS = 3
 INVALID_ACTION_THROW = 0
 INVALID_ACTION_GAME_OVER = 1
+type Action = int
+type Player = t.Literal[-1, 1]
+type Status = t.Literal[-1, 1, 2, 3]
+type Board = list[int]
 
 
-def tomark(code):
-    if code == O_CODE: return 'O'
-    elif code == X_CODE: return 'X'
-    else: return ' '
+class Env(gym.Env):
+    def __init__(self, invalid_action_response=INVALID_ACTION_THROW):
+        self.reset()
+        self.invalid_action_response = invalid_action_response
+        self.action_space = spaces.Discrete(9)
+        self.observation_space = spaces.Box(low=-1, high=1, shape=(3,3), dtype=np.int8)
+
+    def reset(self, seed=None, options=None):
+        self.current_player = X
+        self.board = [EMPTY] * 9
+        return self._obs(), {}
+
+    @staticmethod
+    def from_str(str):
+        env = Env()
+        for i, c in enumerate(str.replace('|', '').lower()):
+            if c == 'x':
+                env.board[i] = X
+            elif c == 'o':
+                env.board[i] = O
+            elif c == '.':
+                env.board[i] = EMPTY
+            else:
+                raise ValueError(f'Invalid character in board string: {c}')
+        numx = sum(1 if X else 0 for c in env.board)
+        numo = sum(1 if O else 0 for c in env.board)
+        assert numx - numo == 1 or numx - numo == 0
+        env.current_player = O if numx > numo else X
+        return env
+
+    def copy(self):
+        env = Env()
+        env.board = self.board[:]
+        env.current_player = self.current_player
+        return env
+
+    def valid_actions(self):
+        yield from valid_actions(self.board)
+
+    def step(self, action) -> tuple[np.ndarray, int, bool, bool, dict]:
+        """ Reward assumes player/agent is X """
+        if self.board[action] != EMPTY:
+            if self.invalid_action_response == INVALID_ACTION_GAME_OVER:
+                return self._obs(), -1, True, False, {}
+            else:
+                raise IllegalActionError()
+        do_action(self.current_player, action, self.board)
+        self.current_player = other_player(self.current_player)
+        s = status(self.board)
+        reward = -1 if s == O else 1 if s == X else 0
+        done = s != IN_PROGRESS
+        return self._obs(), reward, done, False, {}
+
+    def status(self):
+        return status(self.board)
+
+    def winner(self):
+        return winner(self.board)
+
+    def _obs(self):
+        return np.array(self.board).reshape((3,3))
 
 
-def tocode(mark):
-    if mark == 'O': return O_CODE
-    if mark == 'X': return X_CODE
-    if mark == ' ': return EMPTY_CODE
-    raise Exception(f"Invalid mark: '{mark}'")
+class EnvWithOpponent(Env):
+    def __init__(self, opponent, invalid_action_response=INVALID_ACTION_THROW):
+        super().__init__(invalid_action_response)
+        self.opponent = opponent
 
-
-def next_mark(mark):
-    return 'X' if mark == 'O' else 'O'
-
-
-def check_game_status(board):
-    """Return game status by current board status.
-
-    Args:
-        board (list): Current board state
-
-    Returns:
-        int:
-            -1: game in progress
-            0: draw game,
-            1 or 2 for finished game(winner mark code).
-    """
-    for code in [O_CODE, X_CODE]:
-        for j in range(0, 9, 3):
-            if [code] * 3 == [board[i] for i in range(j, j+3)]:
-                return code
-        for j in range(0, 3):
-            if board[j] == code and board[j+3] == code and board[j+6] == code:
-                return code
-        if board[0] == code and board[4] == code and board[8] == code:
-            return code
-        if board[2] == code and board[4] == code and board[6] == code:
-            return code
-
-    for i in range(9):
-        if board[i] == 0:
-            return IN_PROGRESS
-
-    return DRAW
+    def step(self, action):
+        obs, reward, term, trunc, info = super().step(action)
+        if term or trunc:
+            return obs, reward, term, trunc, info
+        op_action = self.opponent.get_action(self)
+        return super().step(op_action)
 
 
 class IllegalActionError(Exception):
     pass
 
 
-class TicTacToeEnv(gym.Env):
-    metadata = {'render.modes': ['human']}
-
-    def __init__(self,
-                 my_mark='X',
-                 opponent=None,
-                 on_invalid_action=INVALID_ACTION_THROW):
-        """
-        Params
-            - opponent: has a get_action(env) method
-        """
-        self.action_space = spaces.Discrete(NUM_LOC)
-        self.observation_space = spaces.Box(low=0, high=2, shape=(3,3), dtype=np.int8)
-        self.my_mark = my_mark
-        self.opponent = opponent
-        self.on_invalid_action = on_invalid_action
-        self.reset()
-
-    @staticmethod
-    def from_str(board_str: str):
-        board_str = board_str.replace('|', '')
-        assert len(board_str) == 9
-        assert board_str.upper().count('X') >= board_str.upper().count('O')
-        env = TicTacToeEnv()
-        env.board = [tocode(c.upper()) for c in board_str]
-        if board_str.upper().count('X') > board_str.upper().count('O'):
-            env.next_mark = 'O'
-        status = check_game_status(env.board)
-        if status >= 0:
-            env.is_game_over = True
-        return env
-
-    def __str__(self):
-        b = ''.join(tomark(x) for x in self.board)
-        return f'{b[:3]}|{b[3:6]}|{b[6:]}'
-
-    def reset(self, **kwargs):
-        self.board = [0] * NUM_LOC
-        self.next_mark = 'X'  # X always goes first
-        self.is_game_over = False
-        return self._get_obs(), {}
-
-    def copy(self):
-        c = TicTacToeEnv()
-        c.my_mark = self.my_mark
-        c.next_mark = self.next_mark
-        c.opponent = self.opponent
-        c.board = self.board[:]
-        c.is_game_over = self.is_game_over
-        c.on_invalid_action = self.on_invalid_action
-        return c
-
-    @property
-    def current_player(self) -> t.Literal['X', 'O']:
-        """ Alias for next_mark """
-        return self.next_mark
-
-    def get_status(self):
-        """ Returns one of
-
-            - IN_PROGRESS
-            - DRAW
-            - O_WIN
-            - X_WIN
-        """
-        return check_game_status(self.board)
-
-    def step(self, action):
-        """ Make a move, then if there's an opponent, make their move.
-            Returns:
-            state, reward, game_over?, truncated?, info
-        """
-        if not self.opponent:
-            return self._step(action)
-        else:
-            obs, reward, done, _, _ = self._step(action)
-            if done:
-                return obs, reward, done, False, {}
-            op_action = self.opponent.get_action(self)
-            return self._step(op_action)
-
-    def _step(self, action):
-        """ Make a move, then hand over to the opponent """
-        assert self.action_space.contains(action)
-
-        if self.is_game_over:
-            return self._get_obs(), 0, True, False, {}
-
-        loc = action
-        if self.board[loc] != 0:
-            if self.on_invalid_action == INVALID_ACTION_GAME_OVER:
-                self.is_game_over = True
-                return self._get_obs(), INVALID_ACTION_REWARD, True, False, {}
-            elif self.on_invalid_action == INVALID_ACTION_THROW:
-                raise IllegalActionError(f"action: {loc}: position already filled")
-            else:
-                raise Exception(f"unknown invalid action response: {self.on_invalid_action}")
-
-        reward = IN_PROGRESS_REWARD
-        self.board[loc] = tocode(self.next_mark)
-        status = check_game_status(self.board)
-        if status >= 0:
-            self.is_game_over = True
-            if status in [1, 2]:
-                reward = WIN_REWARD if status == tocode(self.my_mark) else LOSS_REWARD
-
-        self.next_mark = next_mark(self.next_mark)
-        return self._get_obs(), reward, self.is_game_over, False, {}
-
-    def valid_action_mask(self):
-        return np.array(
-            [0 if x else 1 for x in self.board],
-            dtype=np.int8
-        )
-
-    def valid_actions(self):
-        for a, is_valid in enumerate(self.valid_action_mask()):
-            if is_valid:
-                yield a
-
-    def _get_obs(self):
-        return np.array(self.board).reshape((3,3))
-
-    def render(self, mode='human', close=False):
-        if close:
-            return
-        if mode == 'human':
-            self._show_board(print)  # NOQA
-            print('')
-        else:
-            self._show_board(print)
-
-    def show_episode(self, human, episode):
-        self._show_episode(print, episode)
-
-    def _show_episode(self, showfn, episode):
-        showfn("==== Episode {} ====".format(episode))
-
-    def _show_board(self, showfn):
-        """Draw tictactoe board."""
-        for j in range(0, 9, 3):
-            def mark(i):
-                return tomark(self.board[i]) if True or\
-                    self.board[i] != 0 else str(i+1)
-            showfn('  ' + '|'.join([mark(i) for i in range(j, j+3)]))
-            if j < 6:
-                showfn('  ' + '-----')
-
-    def show_turn(self, human, mark):
-        self._show_turn(print, mark)
-
-    def _show_turn(self, showfn, mark):
-        showfn("{}'s turn.".format(mark))
-
-    def show_result(self, human, mark, reward):
-        self._show_result(print, mark, reward)
-
-    def _show_result(self, showfn, mark, reward):
-        status = check_game_status(self.board)
-        assert status >= 0
-        if status == 0:
-            showfn("==== Finished: Draw ====")
-        else:
-            msg = "Winner is '{}'!".format(tomark(status))
-            showfn("==== Finished: {} ====".format(msg))
-        showfn('')
+_winning_combinations = [
+    (0, 1, 2), (3, 4, 5), (6, 7, 8),
+    (0, 3, 6), (1, 4, 7), (2, 5, 8),
+    (0, 4, 8), (2, 4, 6)
+]
 
 
-if __name__ == "__main__":
-    env = TicTacToeEnv()
-    obs = env.reset()
-    print("reset. obs:", obs)
+def winner(board: Board):
+    for a, b, c in _winning_combinations:
+        if board[a] != EMPTY and board[a] == board[b] == board[c]:
+            return board[a]
 
-    terminated = False
-    while not terminated:
-        # action = env.action_space.sample()
-        action = env.action_space.sample(mask=env.valid_action_mask())
-        print('action:', action)
 
-        obs, reward, terminated, truncated, info = env.step(action)
-        print("reward:", reward)
+def status(board) -> Status:
+    w = winner(board)
+    if w is not None:
+        return t.cast(Status, w)
+    if any(x == EMPTY for x in board):
+        return t.cast(Status, IN_PROGRESS)
+    return t.cast(Status, DRAW)
 
-        env.render()
 
-    env.show_result(True, 'not used', 'not used')
+def valid_actions(board: Board):
+    for i in range(9):
+        if board[i] == EMPTY:
+            yield i
+
+
+def do_action(player: Player, action: Action, board: Board):
+    board[action] = player
+
+
+def other_player(player: Player):
+    return X if player == O else O

@@ -16,7 +16,7 @@ import random
 import numpy as np
 
 from ttt.agents.agent import TttAgent
-from ttt.env import TicTacToeEnv
+import ttt.env as t3
 
 
 class QaTable:
@@ -48,7 +48,7 @@ class QaTable:
             serdict = {f'{k[0]}-{k[1]}': v for k, v in self._table.items()}
             ofile.write(json.dumps(serdict, indent=2))
 
-    def _env2state(self, env: TicTacToeEnv):
+    def _env2state(self, env: t3.Env):
         return ''.join(str(x) for x in env.board)
 
 
@@ -66,20 +66,21 @@ class TabSarsaAgent(TttAgent):
         return TabSarsaAgent(q_table=qtable)
 
     @staticmethod
-    def train_new(opponent, n_eps):
-        env = TicTacToeEnv(opponent=opponent)
+    def train_new(opponent: TttAgent, n_eps):
+        env = t3.Env()
         agent = TabSarsaAgent()
-        agent.train(env, n_eps)
+        agent.train(env, opponent, n_eps)
         return agent
 
-    def get_action(self, env: TicTacToeEnv):
+    def get_action(self, env: t3.Env):
         return greedy_policy(env, self._q_table, self.allow_invalid_actions)
 
     def save(self, path):
         self._q_table.save(path)
 
     def train(self,
-            env: TicTacToeEnv,
+            env: t3.Env,
+            opponent: TttAgent,
             n_training_episodes: int,
             min_epsilon=0.001,     # epsilon: exploration rate
             max_epsilon=1.0,
@@ -88,7 +89,6 @@ class TabSarsaAgent(TttAgent):
             gamma=0.95,            # discount rate (discount past rewards)
             ep_callback=None
             ):
-        assert env.opponent is not None
         for episode in range(n_training_episodes):
 
             epsilon = min_epsilon + (
@@ -100,8 +100,10 @@ class TabSarsaAgent(TttAgent):
             done = False
 
             while not done:
-                # todo (maybe): don't update value after exploratory step? (off policy)
-                next_state, reward, terminated, truncated, _ = env.step(action)
+                assert env.current_player == t3.X
+                _, reward, terminated, truncated, _ = env.step(action)
+                if not (terminated or truncated):
+                    _, reward, terminated, truncated, _ = env.step(opponent.get_action(env))
                 next_state = env
                 next_action = egreedy_policy(env, self._q_table, epsilon, self.allow_invalid_actions)
                 done = terminated or truncated
@@ -118,7 +120,7 @@ class TabSarsaAgent(TttAgent):
                 ep_callback(episode, epsilon)
 
 
-def greedy_policy(env: TicTacToeEnv, qtable: QaTable, allow_invalid):
+def greedy_policy(env: t3.Env, qtable: QaTable, allow_invalid):
     best_value = -999999999.9
     best_action = None
     actions = range(9) if allow_invalid else (env.valid_actions())
@@ -130,15 +132,18 @@ def greedy_policy(env: TicTacToeEnv, qtable: QaTable, allow_invalid):
     return best_action
 
 
-def egreedy_policy(env: TicTacToeEnv, qtable: QaTable, epsilon: float, allow_invalid):
+def egreedy_policy(env: t3.Env, qtable: QaTable, epsilon: float, allow_invalid):
     random_num = random.uniform(0, 1)
     if random_num > epsilon:
         action = greedy_policy(env, qtable, allow_invalid)
     else:
-        mask = np.ones(9, dtype=np.int8) if allow_invalid else env.valid_action_mask()
-        action = env.action_space.sample(mask=mask)
+        valid = list(env.valid_actions())
+        if valid:
+            action = random.choice(list(env.valid_actions()))
+        else:
+            action = None
     return action
 
 
-def envstate(env: TicTacToeEnv):
+def envstate(env: t3.Env):
     return ''.join(str(x) for x in env.board)

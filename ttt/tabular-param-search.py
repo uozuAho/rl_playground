@@ -4,16 +4,15 @@ from collections import defaultdict
 import itertools
 from ttt.agents.qlearn import TabQlearnAgent
 from ttt.agents.sarsa import TabSarsaAgent
-import ttt.env
 from ttt.agents.random import RandomAgent
-from ttt.env import TicTacToeEnv
 import matplotlib.pyplot as plt
+import ttt.env
 
 
 def make_env():
-    return TicTacToeEnv(
+    return ttt.env.EnvWithOpponent(
         opponent=RandomAgent(),
-        on_invalid_action=ttt.env.INVALID_ACTION_GAME_OVER)
+        invalid_action_response=ttt.env.INVALID_ACTION_GAME_OVER)
 
 
 learning_rates = [0.05, 0.2]
@@ -61,6 +60,7 @@ for lr, mne, mxe, ed, g, a in itertools.product(
     print(f'training {current_name} for {n_train_eps} eps...')
     current_agent.train(
         make_env(),
+        RandomAgent(),
         n_training_episodes=n_train_eps,
         min_epsilon=mne,
         max_epsilon=mxe,

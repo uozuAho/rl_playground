@@ -2,45 +2,44 @@ from ttt.agents.qlearn import TabQlearnAgent
 from ttt.agents.sarsa import TabSarsaAgent
 from ttt.agents.tab_greedy_v import TabGreedyVAgent
 import ttt.agents.tab_greedy_v
-import ttt.env
-from ttt.env import TicTacToeEnv
 from ttt.agents.random import RandomAgent
 from ttt.agents.perfect import PerfectAgent
+import ttt.env
 
 
 def test_perfect_agent_never_loses_to_random():
     p_agent = PerfectAgent()
     r_agent = RandomAgent()
-    env = TicTacToeEnv(opponent=r_agent)
+    env = ttt.env.Env()
     for _ in range(20):
         env.reset()
-        while not env.is_game_over:
-            action = p_agent.get_action(env)
+        while env.status() == ttt.env.IN_PROGRESS:
+            if env.current_player == ttt.env.X:
+                action = p_agent.get_action(env)
+            else:
+                action = r_agent.get_action(env)
             env.step(action)
-        assert env.get_status() in [ttt.env.DRAW, ttt.env.X_WIN]
+        assert env.status() in [ttt.env.DRAW, ttt.env.X]
 
 
 def test_perfect_agents_always_draw():
     x_agent = PerfectAgent()
     o_agent = PerfectAgent()
-    env = TicTacToeEnv(opponent=o_agent)
+    env = ttt.env.Env()
     for _ in range(20):
         env.reset()
-        while not env.is_game_over:
-            env.render()
-            action = x_agent.get_action(env)
-            print('x action: ', action)
+        while env.status() == ttt.env.IN_PROGRESS:
+            action = x_agent.get_action(env) if env.current_player == ttt.env.X else o_agent.get_action(env)
             env.step(action)
-        assert env.get_status() == ttt.env.DRAW
+        assert env.status() == ttt.env.DRAW
 
 
 def test_sarsa_train_and_play():
     for ye in [True, False]:
         agent = TabSarsaAgent(allow_invalid_actions=ye)
-        env = TicTacToeEnv(
-            opponent=RandomAgent(),
-            on_invalid_action=ttt.env.INVALID_ACTION_GAME_OVER if ye else ttt.env.INVALID_ACTION_THROW)
-        agent.train(env, 1)
+        env = ttt.env.Env(
+            invalid_action_response=ttt.env.INVALID_ACTION_GAME_OVER if ye else ttt.env.INVALID_ACTION_THROW)
+        agent.train(env, RandomAgent(), 1)
         env.reset()
         done = False
         while not done:
@@ -52,10 +51,8 @@ def test_sarsa_train_and_play():
 def test_qlearn_train_and_play():
     for ye in [True, False]:
         agent = TabQlearnAgent(allow_invalid_actions=ye)
-        env = TicTacToeEnv(
-            opponent=RandomAgent(),
-            on_invalid_action=ttt.env.INVALID_ACTION_GAME_OVER if ye else ttt.env.INVALID_ACTION_THROW)
-        agent.train(env, 1)
+        env = ttt.env.Env(invalid_action_response=ttt.env.INVALID_ACTION_GAME_OVER if ye else ttt.env.INVALID_ACTION_THROW)
+        agent.train(env, RandomAgent(), 1)
         env.reset()
         done = False
         while not done:
@@ -69,5 +66,5 @@ def test_greedy_v_is_greedy():
         '...|.x.|...': 0.9,
     }
     agent = TabGreedyVAgent(ttt.agents.tab_greedy_v.Qtable(qtable))
-    env = TicTacToeEnv()
+    env = ttt.env.Env()
     assert agent.get_action(env) == 4
