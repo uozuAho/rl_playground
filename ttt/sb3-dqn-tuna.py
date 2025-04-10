@@ -10,7 +10,7 @@ import ttt.env
 def make_env():
     return ttt.env.EnvWithOpponent(
         opponent=RandomAgent(),
-        on_invalid_action=ttt.env.INVALID_ACTION_GAME_OVER)
+        invalid_action_response=ttt.env.INVALID_ACTION_GAME_OVER)
 
 
 def sample_params(trial: optuna.Trial):

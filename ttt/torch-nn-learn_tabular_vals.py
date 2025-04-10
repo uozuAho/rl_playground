@@ -170,7 +170,7 @@ print(f'using device {device}')
 batch_size = 50
 net = MidConv(device).to(device)
 torchinfo.summary(net, input_size=(batch_size, 1, 3, 3))
-tab_agent = TabGreedyVAgent.load('tabular-greedy-v.json')
+tab_agent = TabGreedyVAgent.load('trained_models/tabgreedyv-rng')
 q_table = tab_agent._q_table
 all_vals = list(q_table.values())
 
