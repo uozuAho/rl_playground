@@ -49,14 +49,14 @@ def main():
         # (MctsAgent(n_sims=200), "mcts200"),
     ]
 
-    load_or_train_agent(agents, 'tabsarsa-rng', TabSarsaAgent,
-        lambda: TabSarsaAgent.train_new(RandomAgent(), 100 if TRAIN_FAST else 5000))
+    # load_or_train_agent(agents, 'tabsarsa-rng', TabSarsaAgent,
+    #     lambda: TabSarsaAgent.train_new(RandomAgent(), 100 if TRAIN_FAST else 5000))
     # load_or_train_agent(agents, 'tabqlearn-rng', TabQlearnAgent,
-    #     lambda: TabQlearnAgent.train_new(RandomAgent(), 100))
+    #     lambda: TabQlearnAgent.train_new(RandomAgent(), 100 if TRAIN_FAST else 5000))
     # load_or_train_agent(agents, 'tabgreedyv-rng', TabGreedyVAgent,
-    #     lambda: TabGreedyVAgent.train_new(100))
-    # load_or_train_agent(agents, 'sb3dqn-rng', Sb3DqnAgent,
-    #     lambda: Sb3DqnAgent.train_new(opponent=RandomAgent(), steps=100, verbose=VERBOSE))
+    #     lambda: TabGreedyVAgent.train_new(100 if TRAIN_FAST else 5000))
+    load_or_train_agent(agents, 'sb3dqn-rng', Sb3DqnAgent,
+        lambda: Sb3DqnAgent.train_new(opponent=RandomAgent(), steps=100 if TRAIN_FAST else 50000, verbose=VERBOSE))
     # load_or_train_agent(agents, 'sb3ppo-rng', Sb3PpoAgent,
     #     lambda: Sb3PpoAgent.train_new(opponent=RandomAgent(), steps=100, verbose=VERBOSE))
     # load_or_train_agent(agents, 'sb3maskppo-rng', Sb3MaskPpoAgent,
