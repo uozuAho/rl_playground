@@ -7,11 +7,11 @@ from ttt.agents.perfect import PerfectAgent
 import ttt.env
 
 
-def test_perfect_agent_never_loses_to_random():
+def test_perfect_x_agent_never_loses_to_random():
     p_agent = PerfectAgent()
     r_agent = RandomAgent()
     env = ttt.env.Env()
-    for _ in range(20):
+    for _ in range(1000):
         env.reset()
         while env.status() == ttt.env.IN_PROGRESS:
             if env.current_player == ttt.env.X:
@@ -20,6 +20,27 @@ def test_perfect_agent_never_loses_to_random():
                 action = r_agent.get_action(env)
             env.step(action)
         assert env.status() in [ttt.env.DRAW, ttt.env.X]
+
+
+def test_perfect_o_agent_never_loses_to_random():
+    r_agent = RandomAgent()
+    p_agent = PerfectAgent()
+    env = ttt.env.Env()
+    for _ in range(1000):
+        actions = []
+        env.reset()
+        while env.status() == ttt.env.IN_PROGRESS:
+            if env.current_player == ttt.env.X:
+                action = r_agent.get_action(env)
+            else:
+                action = p_agent.get_action(env)
+            actions.append(('x' if env.current_player == ttt.env.X else 'o', action))
+            env.step(action)
+        if env.status() not in [ttt.env.DRAW, ttt.env.O]:
+            for a in actions:
+                print(a)
+            print(env.str2d())
+            raise Exception("perfect o lost")
 
 
 def test_perfect_agents_always_draw():

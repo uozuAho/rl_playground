@@ -76,6 +76,16 @@ class Env(gym.Env):
     def winner(self):
         return winner(self.board)
 
+    def str1d(self):
+        return self._str('|')
+
+    def str2d(self):
+        return self._str('\n')
+
+    def _str(self, sep: chr):
+        b = ''.join('x' if c == X else 'o' if c == O else '.' for c in self.board)
+        return f'{b[:3]}{sep}{b[3:6]}{sep}{b[6:]}'
+
     def _obs(self):
         return np.array(self.board).reshape((3,3))
 
