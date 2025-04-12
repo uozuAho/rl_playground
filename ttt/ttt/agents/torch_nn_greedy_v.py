@@ -2,7 +2,7 @@
     result in the highest board value.
 
     Doesn't do very well as x after 5000 eps of training. Maybe NN arch isn't
-    great. Does worse as o, not designed to play as o.
+    great. Can play as o.
 
     Todo later
     - add double learning
@@ -192,8 +192,12 @@ class NnGreedyVAgent(TttAgent):
 
         actions = list(env.valid_actions())
         next_states = [next_state(env.board, a, env.current_player) for a in actions]
-        max_i = self._nn_out_batch(next_states).argmax().item()
-        return actions[max_i]
+        if env.current_player == t3.X:
+            action_idx = self._nn_out_batch(next_states).argmax().item()
+        else:
+            # assumes trained playing as x. best o move is worst x move ... right?
+            action_idx = self._nn_out_batch(next_states).argmin().item()
+        return actions[action_idx]
 
     def _nn_out(self, state: t3.Board) -> float:
         # unsqueeze to batch of 1
