@@ -3,6 +3,8 @@
 Various agents. Some demonstrate the usage of 'invalid action masking':
 https://sb3-contrib.readthedocs.io/en/master/modules/ppo_mask.html
 
+Most train as x, and don't play well as o.
+
 # quick start
 Install uv
 

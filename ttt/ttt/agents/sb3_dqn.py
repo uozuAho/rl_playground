@@ -1,3 +1,8 @@
+""" stable baselines DQN agent. Plays well as x, not o, as it doesn't get any
+    experience as o during training.
+"""
+
+
 import numpy as np
 from stable_baselines3 import DQN
 from stable_baselines3.common.env_util import make_vec_env
