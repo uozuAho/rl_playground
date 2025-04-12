@@ -1,6 +1,9 @@
 """ Greedy v learner. Learns board values then plays greedily on moves that
     result in the highest board value.
 
+    Doesn't do very well as x after 5000 eps of training. Maybe NN arch isn't
+    great. Does worse as o, not designed to play as o.
+
     Todo later
     - add double learning
     - perf (maybe) learn final board values as part of the main batch
@@ -114,7 +117,7 @@ class ConvNet(nn.Module):
             self.optimiser.step()
 
     def state2input(self, state: t3.Board):
-        # reshape board list to 2d, add channels for conv2d
+        # reshape board list to 2d, unsqueeze to add channels for conv2d
         return torch.tensor(state, dtype=torch.float32).reshape((3,3)).unsqueeze(0)
 
 
@@ -187,15 +190,21 @@ class NnGreedyVAgent(TttAgent):
             next_board[action] = player
             return next_board
 
-        next_states = [(a, next_state(env.board, a, t3.X)) for a in env.valid_actions()]
-        next_values = [(a, self._nn_out(s)) for a, s in next_states]
-        return max(next_values, key=lambda x: x[1])[0]
+        actions = list(env.valid_actions())
+        next_states = [next_state(env.board, a, env.current_player) for a in actions]
+        max_i = self._nn_out_batch(next_states).argmax().item()
+        return actions[max_i]
 
     def _nn_out(self, state: t3.Board) -> float:
         # unsqueeze to batch of 1
         state_t = self.nn.state2input(state).unsqueeze(0).to(self.device)
         with torch.no_grad():
             return self.nn(state_t).item()
+
+    def _nn_out_batch(self, states: list[t3.Board]):
+        states_t = torch.stack([self.nn.state2input(s) for s in states]).to(self.device)
+        with torch.no_grad():
+            return self.nn(states_t)
 
 
 def play_game(agent_x: NnGreedyVAgent, opponent_o: TttAgent, epsilon: float):
