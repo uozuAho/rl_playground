@@ -9,6 +9,9 @@
     just uses state value estimation (not state,action). I don't
     know how just state is supposed to work, since how can you know
     the subsequent state in order to choose the best action?
+
+    Only plays well as X. I think the issue with O is that no
+    states are saved when it's O's turn during training.
 """
 
 import json
@@ -104,9 +107,9 @@ class TabSarsaAgent(TttAgent):
                 _, reward, terminated, truncated, _ = env.step(action)
                 if not (terminated or truncated):
                     _, reward, terminated, truncated, _ = env.step(opponent.get_action(env))
-                next_state = env
-                next_action = egreedy_policy(env, self._q_table, epsilon, self.allow_invalid_actions)
                 done = terminated or truncated
+                next_state = env
+                next_action = None if done else egreedy_policy(env, self._q_table, epsilon, self.allow_invalid_actions)
 
                 current_q = self._q_table.value(envstate(state), action)
                 next_q = self._q_table.value(envstate(next_state), next_action)
@@ -121,15 +124,13 @@ class TabSarsaAgent(TttAgent):
 
 
 def greedy_policy(env: t3.Env, qtable: QaTable, allow_invalid):
-    best_value = -999999999.9
-    best_action = None
-    actions = range(9) if allow_invalid else (env.valid_actions())
-    for a in actions:
-        value = qtable.value(envstate(env), a)
-        if value > best_value:
-            best_value = value
-            best_action = a
-    return best_action
+    # assumes qtable has been trained for playing X
+    actions = list(range(9)) if allow_invalid else list(env.valid_actions())
+    assert actions
+    if env.current_player == t3.X:
+        return max(actions, key=lambda a: qtable.value(envstate(env), a))
+    else:
+        return min(actions, key=lambda a: qtable.value(envstate(env), a))
 
 
 def egreedy_policy(env: t3.Env, qtable: QaTable, epsilon: float, allow_invalid):

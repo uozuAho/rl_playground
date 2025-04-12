@@ -1,4 +1,6 @@
-""" Same as greedy v, but use MCTS for planning """
+""" Same as greedy v, but use MCTS for planning. No training - uses the value
+    model learned by the greedy agent.
+"""
 
 from dataclasses import dataclass
 import math
