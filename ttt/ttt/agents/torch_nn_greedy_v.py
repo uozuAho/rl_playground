@@ -182,20 +182,14 @@ class NnGreedyVAgent(TttAgent):
         return vals
 
     def _greedy_action(self, env: t3.Env):
-        max_move = None
-        max_val = -999999999.0
-        # cheating here for perf
-        # todo: could do better by sending all states as batch to nn
-        temp_board = env.board[:]
-        for i in range(len(temp_board)):
-            if temp_board[i] == t3.EMPTY:
-                temp_board[i] = t3.X
-                val = self._nn_out(temp_board)
-                if val > max_val:
-                    max_move = i
-                    max_val = val
-                temp_board[i] = t3.EMPTY
-        return max_move
+        def next_state(board, action, player):
+            next_board = board[:]
+            next_board[action] = player
+            return next_board
+
+        next_states = [(a, next_state(env.board, a, t3.X)) for a in env.valid_actions()]
+        next_values = [(a, self._nn_out(s)) for a, s in next_states]
+        return max(next_values, key=lambda x: x[1])[0]
 
     def _nn_out(self, state: t3.Board) -> float:
         # unsqueeze to batch of 1
