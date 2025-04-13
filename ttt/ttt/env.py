@@ -17,12 +17,16 @@ type Status = t.Literal[-1, 1, 2, 3]
 type Board = list[int]
 
 
+ACTION_SPACE = spaces.Discrete(9)
+OBS_SPACE = spaces.Box(low=-1, high=1, shape=(3,3), dtype=np.int8)
+
+
 class Env(gym.Env):
     def __init__(self, invalid_action_response=INVALID_ACTION_THROW):
         self.reset()
         self.invalid_action_response = invalid_action_response
-        self.action_space = spaces.Discrete(9)
-        self.observation_space = spaces.Box(low=-1, high=1, shape=(3,3), dtype=np.int8)
+        self.action_space = ACTION_SPACE
+        self.observation_space = OBS_SPACE
 
     def reset(self, seed=None, options=None):
         self.current_player = X

@@ -41,13 +41,8 @@ def main():
         (RandomAgent(), "random"),
         # (MctsAgent(n_sims=1), "mcts1"),
         # (MctsAgent(n_sims=5), "mcts5"),
-        (MctsAgent(n_sims=10), "mcts10"),
+        (MctsAgent(n_sims=200), "mcts200"),
         # (PerfectAgent(), "perfect"),
-
-        # too slow
-        # (MctsAgent(n_sims=50), "mcts50"),
-        # (MctsAgent(n_sims=100), "mcts100"),
-        # (MctsAgent(n_sims=200), "mcts200"),
     ]
 
     # load_or_train_agent(agents, 'tabsarsa-rng', TabSarsaAgent,
