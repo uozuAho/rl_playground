@@ -25,14 +25,15 @@ class NnGreedyVMctsAgent(TttAgent):
         self.n_simulations = n_simulations
 
     def get_action(self, env: t3.Env) -> int:
-        return mcts_decision(env, self.n_simulations, self._val_func)
+        multiplier = 1 if env.current_player == t3.X else -1
+        return mcts_decision(env, self.n_simulations, val_func=lambda b: multiplier * self._board_val(b))
 
     @staticmethod
     def load(name_or_path, n_simulations: int):
         agent = NnGreedyVAgent.load(name_or_path, device='cuda')
         return NnGreedyVMctsAgent(agent, n_simulations)
 
-    def _val_func(self, board: t3.Board):
+    def _board_val(self, board: t3.Board):
         return self.agent.board_val(board)
 
 

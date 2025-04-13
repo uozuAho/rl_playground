@@ -33,7 +33,7 @@ FORCE_TRAIN = True  # train agents even if they have a saved model
 TRAINED_MODELS_PATH = Path("trained_models")
 TRAINED_MODELS_PATH.mkdir(exist_ok=True)
 VERBOSE = False
-DEVICE = find_device()  # todo: let agents decide what device they use
+# DEVICE = find_device()  # todo: let agents decide what device they use
 
 
 def main():
@@ -41,8 +41,8 @@ def main():
         (RandomAgent(), "random"),
         # (MctsAgent(n_sims=1), "mcts1"),
         # (MctsAgent(n_sims=5), "mcts5"),
-        # (MctsAgent(n_sims=10), "mcts10"),
-        (PerfectAgent(), "perfect"),
+        (MctsAgent(n_sims=10), "mcts10"),
+        # (PerfectAgent(), "perfect"),
 
         # too slow
         # (MctsAgent(n_sims=50), "mcts50"),
@@ -66,8 +66,8 @@ def main():
     #     lambda: NnGreedyVAgent.train_new(RandomAgent(), 100 if TRAIN_FAST else 5000, DEVICE), DEVICE)
     # load_or_train_agent(agents, 'nngreedymcts1', None, None, DEVICE,
     #     lambda: load_NnGreedyVMctsAgent('nngreedyv-rng', 1))
-    load_or_train_agent(agents, 'nngreedymcts10', None, None, DEVICE,
-        lambda: load_NnGreedyVMctsAgent('nngreedyv-rng', 20))
+    # load_or_train_agent(agents, 'nngreedymcts10', None, None, DEVICE,
+    #     lambda: load_NnGreedyVMctsAgent('nngreedyv-rng', 20))
 
     for a1, l1 in agents:
         for a2, l2 in agents:
