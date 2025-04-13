@@ -1,5 +1,10 @@
 """ Same as greedy v, but use MCTS for planning. No training - uses the value
     model learned by the greedy agent.
+
+    Slow, but wins ~97% as x against a random opponent with 20 sims.
+
+    Todo:
+    - play as o. Should be able to
 """
 
 from dataclasses import dataclass
