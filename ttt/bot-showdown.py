@@ -1,10 +1,4 @@
-""" Bot fight!
-
-todo
-- add all bots
-- support short/long training (short for testing)
-- support loading saved models
-"""
+""" Bot fight! """
 
 from pathlib import Path
 import time
@@ -41,7 +35,7 @@ def main():
         (RandomAgent(), "random"),
         # (MctsAgent(n_sims=1), "mcts1"),
         # (MctsAgent(n_sims=5), "mcts5"),
-        (MctsAgent(n_sims=200), "mcts200"),
+        (MctsAgent(n_sims=50), "mcts50"),
         # (PerfectAgent(), "perfect"),
     ]
 

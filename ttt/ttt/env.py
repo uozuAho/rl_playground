@@ -86,7 +86,7 @@ class Env(gym.Env):
     def str2d(self):
         return self._str('\n')
 
-    def _str(self, sep: chr):
+    def _str(self, sep: str):
         b = ''.join('x' if c == X else 'o' if c == O else '.' for c in self.board)
         return f'{b[:3]}{sep}{b[3:6]}{sep}{b[6:]}'
 
