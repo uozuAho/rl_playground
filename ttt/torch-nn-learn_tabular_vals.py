@@ -40,23 +40,11 @@ class Simple(nn.Module):
         x = self.l3(x)
         return x
 
-    def learn_single(self, state: str, value: float):
-        q_est = net(state)
-        q_actual = torch.tensor([value])
-
-        self.optimiser.zero_grad()
-        criterion = nn.SmoothL1Loss()
-        loss = criterion(q_est, q_actual)
-        loss.backward()
-        self.optimiser.step()
-
-        return loss.item()
-
     def learn_batch(self, batch: t.List[t.Tuple[str, float]]):
         states = [b[0] for b in batch]
         vals = [b[1] for b in batch]
         state_batch = self._states2batch(states)
-        q_est = net(state_batch)
+        q_est = self(state_batch)
         q_actual = torch.tensor(vals, dtype=torch.float32).unsqueeze(0).t().to(DEVICE)
 
         self.optimiser.zero_grad()
@@ -99,24 +87,11 @@ class SimpleConv(nn.Module):
         x = self.fc2(x)
         return x
 
-    def learn_single(self, state: str, value: float):
-        input_t = self._state2input(state)
-        q_est = net(input_t)
-        q_actual = torch.tensor([value]).unsqueeze(0)
-
-        self.optimiser.zero_grad()
-        criterion = nn.SmoothL1Loss()
-        loss = criterion(q_est, q_actual)
-        loss.backward()
-        self.optimiser.step()
-
-        return loss.item()
-
     def learn_batch(self, batch: t.List[t.Tuple[str, float]]):
         states = [b[0] for b in batch]
         vals = [b[1] for b in batch]
         state_batch = self._states2batch(states)
-        q_est = net(state_batch)
+        q_est = self(state_batch)
         q_actual = torch.tensor(vals, dtype=torch.float32).unsqueeze(0).t().to(DEVICE)
 
         self.optimiser.zero_grad()
@@ -172,7 +147,7 @@ class MidConv(nn.Module):
         states = [b[0] for b in batch]
         vals = [b[1] for b in batch]
         state_batch = self._states2batch(states)
-        q_est = net(state_batch)
+        q_est = self(state_batch)
         q_actual = torch.tensor(vals, dtype=torch.float32).unsqueeze(0).t().to(DEVICE)
 
         self.optimiser.zero_grad()
@@ -198,33 +173,6 @@ class MidConv(nn.Module):
         return batch
 
 
-class Conv3(nn.Module):
-    """WIP. """
-    def __init__(self, device):
-        super(Conv3, self).__init__()
-        self.device = device
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=2, padding=1)
-        self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=2, padding=1)
-        self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(800, 32)
-        self.fc2 = nn.Linear(32, 8)
-        self.fc3 = nn.Linear(8, 1)
-        self.optimiser = optim.Adam(self.parameters(), lr=1e-4)
-
-    def print_summary(self, batch_size):
-        torchinfo.summary(self, input_size=(batch_size, 1, 3, 3))
-
-    def forward(self, x):
-        x = torch.relu(self.conv1(x))
-        x = torch.relu(self.conv2(x))
-        x = self.flatten(x)
-        x = torch.relu(self.fc1(x))
-        x = torch.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
-
-
-
 def state2nums(state_str: str):
     state_str = state_str.replace('|', '')
     assert len(state_str) == 9
@@ -244,12 +192,15 @@ DEVICE = torch.device(
 # device = 'cpu'
 print(f'using device {DEVICE}')
 
+# TEST = True  # quickly test that all nets can train
+TEST = False
 NUM_VALS_TO_LEARN = 999999999999 # set to 999999999999999 for max
 BATCH_SIZE = 100
-# net = Simple(DEVICE)
-# net = SimpleConv(DEVICE)
-net = MidConv(DEVICE).to(DEVICE)
-net.print_summary(BATCH_SIZE)
+nets: list[nn.Module] = [
+    Simple(DEVICE),
+    # SimpleConv(DEVICE),
+    # MidConv(DEVICE).to(DEVICE)
+]
 tab_agent = TabGreedyVAgent.load('trained_models/tabgreedyv-rng')
 q_table = tab_agent._q_table
 all_vals = list(q_table.values())[:NUM_VALS_TO_LEARN]
@@ -257,18 +208,21 @@ all_vals = list(q_table.values())[:NUM_VALS_TO_LEARN]
 print(f'Fitting net to {len(all_vals)} values. Batch size: {BATCH_SIZE}.')
 input("press any key to start, ctrl+c to stop")
 
-start = time.time()
-t_prev = time.time()
-for i in range(99999999999999999):
-    random.shuffle(all_vals)
-    losses = []
-
-    for batch in batches(all_vals, BATCH_SIZE):
-        loss = net.learn_batch(batch)
-        losses.append(loss)
-
-    tt = time.time() - start
-    tn = time.time() - t_prev
+for net in nets:
+    # mypy is wrong
+    net.print_summary(BATCH_SIZE)  # type: ignore
+    start = time.time()
     t_prev = time.time()
-    avg_loss = sum(losses)/len(losses)
-    print(f'{tt:3.1f} ({tn:.2f}): loss: avg: {avg_loss:.3f}, max: {max(losses):.3f}')
+    for i in range(1 if TEST else 99999999999999999):
+        random.shuffle(all_vals)
+        losses = []
+
+        for batch in batches(all_vals, BATCH_SIZE):
+            loss = net.learn_batch(batch) # type: ignore
+            losses.append(loss)
+
+        tt = time.time() - start
+        tn = time.time() - t_prev
+        t_prev = time.time()
+        avg_loss = sum(losses)/len(losses)
+        print(f'{tt:3.1f} ({tn:.2f}): loss: avg: {avg_loss:.3f}, max: {max(losses):.3f}')
