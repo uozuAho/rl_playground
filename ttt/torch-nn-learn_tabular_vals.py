@@ -63,6 +63,51 @@ class Simple(nn.Module):
         return batch
 
 
+class Simple2(nn.Module):
+    # 10 values: loss: avg: 0.000, max: 0.000
+    # 100 values: 34.9s (0.01): loss: avg: 0.000, max: 0.002
+    # 1000 values: 38.1s (0.02): loss: avg: 0.060, max: 0.079
+    def __init__(self, device):
+        super(Simple2, self).__init__()
+        self.device = device
+        self.model = nn.Sequential(
+            nn.Linear(9, 27),
+            nn.ReLU(),
+            nn.Linear(27, 9),
+            nn.ReLU(),
+            nn.Linear(9, 1)
+        )
+        self.optimiser = optim.Adam(self.parameters(), lr=1e-4)
+
+    def forward(self, x):
+        return self.model(x)
+
+    def print_summary(self, batch_size):
+        torchinfo.summary(self, input_size=(batch_size, 9))
+
+    def learn_batch(self, batch: t.List[t.Tuple[str, float]]):
+        states = [b[0] for b in batch]
+        vals = [b[1] for b in batch]
+        state_batch = self._states2batch(states)
+        q_est = self(state_batch)
+        q_actual = torch.tensor(vals, dtype=torch.float32).unsqueeze(0).t().to(DEVICE)
+
+        self.optimiser.zero_grad()
+        criterion = nn.MSELoss()
+        loss = criterion(q_est, q_actual)
+        loss.backward()
+        self.optimiser.step()
+
+        return loss.item()
+
+    def _state2input(self, state_str: str):
+        return torch.tensor(state2nums(state_str), dtype=torch.float32)
+
+    def _states2batch(self, states: t.List[str]):
+        batch = torch.stack([self._state2input(s) for s in states]).to(self.device)
+        return batch
+
+
 class SimpleConv(nn.Module):
     # Based on https://github.com/arjangroen/RLC/blob/e54eb7380875f64fd06106c59aa376b426d9e5ca/RLC/real_chess/agent.py#L122C5-L133C29
     # similar perf to simple
@@ -71,7 +116,7 @@ class SimpleConv(nn.Module):
         super(SimpleConv, self).__init__()
         self.device = device
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=8, kernel_size=3, padding=0)
-        self.activation = nn.Sigmoid()
+        self.activation = nn.ReLU
         self.flatten = nn.Flatten()
         self.fc1 = nn.Linear(8, 10)
         self.fc2 = nn.Linear(10, 1)
@@ -120,6 +165,7 @@ class SimpleConv(nn.Module):
 class MidConv(nn.Module):
     # Does better! Was still learning when I stopped it:
     # loss: avg: 0.016, max: 0.032 after 1 minute, batch size 50
+    # 1000 values, batch size 100: 40.8s (0.02): loss: avg: 0.002, max: 0.002
     def __init__(self, device):
         super(MidConv, self).__init__()
         self.device = device
@@ -194,12 +240,13 @@ print(f'using device {DEVICE}')
 
 # TEST = True  # quickly test that all nets can train
 TEST = False
-NUM_VALS_TO_LEARN = 999999999999 # set to 999999999999999 for max
+NUM_VALS_TO_LEARN = 1000 # set to 999999999999999 for max
 BATCH_SIZE = 100
 nets: list[nn.Module] = [
-    Simple(DEVICE),
+    # Simple(DEVICE),
+    # Simple2(DEVICE),
     # SimpleConv(DEVICE),
-    # MidConv(DEVICE).to(DEVICE)
+    MidConv(DEVICE).to(DEVICE)
 ]
 tab_agent = TabGreedyVAgent.load('trained_models/tabgreedyv-rng')
 q_table = tab_agent._q_table
@@ -214,15 +261,21 @@ for net in nets:
     start = time.time()
     t_prev = time.time()
     for i in range(1 if TEST else 99999999999999999):
-        random.shuffle(all_vals)
-        losses = []
+        try:
+            random.shuffle(all_vals)
+            losses = []
 
-        for batch in batches(all_vals, BATCH_SIZE):
-            loss = net.learn_batch(batch) # type: ignore
-            losses.append(loss)
+            for batch in batches(all_vals, BATCH_SIZE):
+                loss = net.learn_batch(batch) # type: ignore
+                losses.append(loss)
 
-        tt = time.time() - start
-        tn = time.time() - t_prev
-        t_prev = time.time()
-        avg_loss = sum(losses)/len(losses)
-        print(f'{tt:3.1f} ({tn:.2f}): loss: avg: {avg_loss:.3f}, max: {max(losses):.3f}')
+            tt = time.time() - start
+            tn = time.time() - t_prev
+            t_prev = time.time()
+            avg_loss = sum(losses)/len(losses)
+            print(f'{tt:3.1f}s ({tn:.2f}): loss: avg: {avg_loss:.3f}, max: {max(losses):.3f}')
+        except KeyboardInterrupt:
+            print()
+            print(f'{NUM_VALS_TO_LEARN} values, batch size {BATCH_SIZE}: ' +
+                  f'{tt:3.1f}s ({tn:.2f}): loss: avg: {avg_loss:.3f}, max: {max(losses):.3f}')
+            break
