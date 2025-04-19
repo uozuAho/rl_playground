@@ -16,25 +16,25 @@ class TabMctsAgent(TttAgent):
     """
     Tabular MCTS learning agent.
     """
-    def __init__(self, q_table: Qtable | None = None):
+    def __init__(self, n_sims: int, q_table: Qtable | None = None):
         self._q_table = q_table or Qtable()
+        self.n_sims = n_sims
 
     @staticmethod
-    def load(path):
+    def load(path, n_sims: int):
         with open(path) as infile:
             data = json.loads(infile.read())
-        agent = TabMctsAgent()
-        agent._q_table = Qtable(data)
+        agent = TabMctsAgent(n_sims, Qtable(data))
         return agent
 
     @staticmethod
-    def train_new(opponent: TttAgent, n_eps: int):
-        agent = TabMctsAgent()
-        agent.train(t3.Env(), opponent, n_eps)
+    def train_new(opponent: TttAgent, n_eps: int, n_sims):
+        agent = TabMctsAgent(n_sims)
+        agent.train(t3.Env(), opponent, n_eps, n_sims=n_sims)
         return agent
 
-    def get_action(self, env: t3.Env, n_sims=10):
-        return mcts_policy(env, self._q_table, n_sims)
+    def get_action(self, env: t3.Env):
+        return mcts_policy(env, self._q_table, self.n_sims)
 
     def save(self, path):
         self._q_table.save(path)
@@ -47,7 +47,7 @@ class TabMctsAgent(TttAgent):
             eps_end=0,
             learning_rate=0.5,
             gamma=0.95,
-            n_sims=10,
+            n_sims=20,
             ep_callback: t.Optional[EpCallback]=None
             ):
         eps_gen = epsfuncs.exp_decay_gen(eps_start, eps_end, n_training_episodes)
@@ -60,7 +60,7 @@ class TabMctsAgent(TttAgent):
             while not done:
                 # trains x values
                 # todo: self play? o values = -x values?
-                if env.current_player == 'X':
+                if env.current_player == t3.X:
                     action = emcts_policy(env, self._q_table, n_sims, epsilon)
                 else:
                     action = opponent.get_action(env)

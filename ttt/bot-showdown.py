@@ -15,6 +15,7 @@ from ttt.agents.sb3_dqn import Sb3DqnAgent
 from ttt.agents.sb3_maskppo import Sb3MaskPpoAgent
 from ttt.agents.sb3ppo import Sb3PpoAgent
 from ttt.agents.tab_greedy_v import TabGreedyVAgent
+from ttt.agents.tab_mcts import TabMctsAgent
 from ttt.agents.torch_nn_greedy_v import NnGreedyVAgent
 from utils.torch_device import find_device
 
@@ -38,24 +39,27 @@ def main():
         (PerfectAgent(), "perfect"),
     ]
 
-    load_or_train_agent(agents, 'tabsarsa-rng', TabSarsaAgent,
-        lambda: TabSarsaAgent.train_new(RandomAgent(), 100 if TRAIN_FAST else 5000))
-    load_or_train_agent(agents, 'tabqlearn-rng', TabQlearnAgent,
-        lambda: TabQlearnAgent.train_new(RandomAgent(), 100 if TRAIN_FAST else 5000))
-    load_or_train_agent(agents, 'tabgreedyv-rng', TabGreedyVAgent,
-        lambda: TabGreedyVAgent.train_new(100 if TRAIN_FAST else 5000))
-    load_or_train_agent(agents, 'sb3dqn-rng', Sb3DqnAgent,
-        lambda: Sb3DqnAgent.train_new(opponent=RandomAgent(), steps=100 if TRAIN_FAST else 50000, verbose=VERBOSE))
-    load_or_train_agent(agents, 'sb3ppo-rng', Sb3PpoAgent,
-        lambda: Sb3PpoAgent.train_new(opponent=RandomAgent(), steps=100 if TRAIN_FAST else 100000, verbose=VERBOSE))
-    load_or_train_agent(agents, 'sb3maskppo-rng', Sb3MaskPpoAgent,
-        lambda: Sb3MaskPpoAgent.train_new(opponent=RandomAgent(), steps=100 if TRAIN_FAST else 50000, verbose=VERBOSE))
-    load_or_train_agent(agents, 'nngreedyv-rng', NnGreedyVAgent,
-        lambda: NnGreedyVAgent.train_new(RandomAgent(), 100 if TRAIN_FAST else 5000, DEVICE), DEVICE)
-    load_or_train_agent(agents, 'nngreedymcts10', None, None, DEVICE,
-        lambda: load_NnGreedyVMctsAgent('nngreedyv-rng', 10))
-    load_or_train_agent(agents, 'nngreedymcts10', None, None, DEVICE,
-        lambda: load_NnGreedyVMctsAgent('nngreedyv-rng', 20))
+    # load_or_train_agent(agents, 'tabsarsa-rng', TabSarsaAgent,
+    #     lambda: TabSarsaAgent.train_new(RandomAgent(), 100 if TRAIN_FAST else 5000))
+    # load_or_train_agent(agents, 'tabqlearn-rng', TabQlearnAgent,
+    #     lambda: TabQlearnAgent.train_new(RandomAgent(), 100 if TRAIN_FAST else 5000))
+    # load_or_train_agent(agents, 'tabgreedyv-rng', TabGreedyVAgent,
+    #     lambda: TabGreedyVAgent.train_new(100 if TRAIN_FAST else 5000))
+    load_or_train_agent(agents, 'tabmcts-rng', TabMctsAgent,
+        train_fn=lambda: TabMctsAgent.train_new(RandomAgent(), 100 if TRAIN_FAST else 10000, n_sims=20),
+        load_fn=lambda: TabMctsAgent.load(TRAINED_MODELS_PATH/'tabmcts-rng', n_sims=100))
+    # load_or_train_agent(agents, 'sb3dqn-rng', Sb3DqnAgent,
+    #     lambda: Sb3DqnAgent.train_new(opponent=RandomAgent(), steps=100 if TRAIN_FAST else 50000, verbose=VERBOSE))
+    # load_or_train_agent(agents, 'sb3ppo-rng', Sb3PpoAgent,
+    #     lambda: Sb3PpoAgent.train_new(opponent=RandomAgent(), steps=100 if TRAIN_FAST else 100000, verbose=VERBOSE))
+    # load_or_train_agent(agents, 'sb3maskppo-rng', Sb3MaskPpoAgent,
+    #     lambda: Sb3MaskPpoAgent.train_new(opponent=RandomAgent(), steps=100 if TRAIN_FAST else 50000, verbose=VERBOSE))
+    # load_or_train_agent(agents, 'nngreedyv-rng', NnGreedyVAgent,
+    #     lambda: NnGreedyVAgent.train_new(RandomAgent(), 100 if TRAIN_FAST else 5000, DEVICE), DEVICE)
+    # load_or_train_agent(agents, 'nngreedymcts10', None, None, DEVICE,
+    #     lambda: load_NnGreedyVMctsAgent('nngreedyv-rng', 10))
+    # load_or_train_agent(agents, 'nngreedymcts10', None, None, DEVICE,
+    #     lambda: load_NnGreedyVMctsAgent('nngreedyv-rng', 20))
 
     for a1, l1 in agents:
         for a2, l2 in agents:
