@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 import math
 import random
 import typing as t
@@ -6,14 +5,11 @@ from ttt.agents.agent import TttAgent
 import ttt.env as t3
 
 
-type ValFunc = t.Callable[[t3.Env], float]
+type ValFunc = t.Callable[[t3.Env, t3.Player], float]
 
 
-def random_rollout_reward(env: t3.Env):
-    """ Returns the reward from a random rollout. Reward is 1 for a win for
-        the current player.
-    """
-    player = env.current_player
+def random_rollout_reward(env: t3.Env, player: t3.Player):
+    """ Returns the given player's reward from a random rollout """
     s = env.status()
     if s == t3.IN_PROGRESS:
         tempenv = env.copy()
@@ -24,22 +20,8 @@ def random_rollout_reward(env: t3.Env):
     return 1 if s == player else -1 if s == t3.other_player(player) else 0
 
 
-def random_rollout_win(env: t3.Env):
-    """ Returns 1 if random rollout results in a win for the current player.
-    """
-    player = env.current_player
-    s = env.status()
-    if s == t3.IN_PROGRESS:
-        tempenv = env.copy()
-        while tempenv.status() == t3.IN_PROGRESS:
-            move = random.choice(list(tempenv.valid_actions()))
-            tempenv.step(move)
-        s = tempenv.status()
-    return 1 if s == player else 0
-
-
 class MctsAgent2(TttAgent):
-    def __init__(self, n_sims: int, valfn: ValFunc = random_rollout_win):
+    def __init__(self, n_sims: int, valfn: ValFunc = random_rollout_reward):
         self.n_sims = n_sims
         self._valfn = valfn
 
@@ -53,15 +35,8 @@ def _mcts_decision(env: t3.Env, n_simulations: int, val_func: ValFunc):
     return best_move
 
 
-@dataclass
-class GameState:
-    env: t3.Env
-    is_terminal: bool
-    reward: int
-
-
 class _MCTSNode:
-    def __init__(self, state: GameState, parent):
+    def __init__(self, state: t3.Env, parent):
         self.state = state
         self.parent: _MCTSNode = parent
         self.children: t.Dict[int, _MCTSNode] = {}  # action, node
@@ -74,10 +49,7 @@ class _MCTSNode:
         return self.total_reward / self.visits + math.sqrt(2 * math.log(self.parent.visits) / self.visits)
 
     def __repr__(self):
-        end = ''
-        if self.state.is_terminal:
-            end = 'WIN' if self.state.reward > 0 else 'LOSS'
-        return f'v{self.visits} t{self.total_reward:.2f}  u{self.ucb1():.2f} {end}'
+        return f'v{self.visits:3} t{self.total_reward:0.2f} u{self.ucb1():0.3f}'
 
 
 def _max_ucb_child(node: _MCTSNode) -> _MCTSNode:
@@ -89,7 +61,8 @@ def _build_mcts_tree(
         simulations: int,
         val_func: ValFunc
         ):
-    root = _MCTSNode(GameState(env, False, 0), parent=None)
+    root = _MCTSNode(env, parent=None)
+    player = env.current_player  # assume we're planning for the current player
     for _ in range(simulations):
         node = root
 
@@ -98,20 +71,18 @@ def _build_mcts_tree(
             node = _max_ucb_child(node)
 
         # expand: initialise child nodes of leaf
-        if node.state.env.status() == t3.IN_PROGRESS:
-            env = node.state.env
+        if node.state.status() == t3.IN_PROGRESS:
+            env = node.state
             for action in env.valid_actions():
                 temp_env = env.copy()
-                _, reward, term, trunc, _ = temp_env.step(action)
-                done = term or trunc
-                node.children[action] = _MCTSNode(
-                    GameState(temp_env, done, reward), parent=node)
+                _, reward, _, _, _ = temp_env.step(action)
+                node.children[action] = _MCTSNode(temp_env, parent=node)
             # ... and pick a random node to run the simulation step
             node = random.choice(list(node.children.values()))
 
         # simulate/rollout. Standard MCTS does a full "rollout" here, ie. plays
         # to the end of the game. Instead, we just use the state value estimate
-        reward = val_func(node.state.env)
+        reward = val_func(node.state, player)
 
         # propagate values back to root
         while node:
