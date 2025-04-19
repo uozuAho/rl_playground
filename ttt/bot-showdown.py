@@ -7,7 +7,7 @@ import typing as t
 from ttt.agents.agent import TttAgent
 from ttt.agents.compare import play_and_report
 from ttt.agents.mcts import MctsAgent
-from ttt.agents.mcts2 import MctsAgent2
+from ttt.agents.mcts import MctsAgent
 from ttt.agents.perfect import PerfectAgent
 from ttt.agents.qlearn import TabQlearnAgent
 from ttt.agents.random import RandomAgent
@@ -33,11 +33,10 @@ DEVICE = find_device()  # todo: let agents decide what device they use
 
 def main():
     agents = [
-        # (RandomAgent(), "random"),
+        (RandomAgent(), "random"),
         # (MctsAgent(n_sims=1), "mcts1"),
         # (MctsAgent(n_sims=5), "mcts5"),
-        (MctsAgent(n_sims=100), "mcts10"),
-        (MctsAgent2(n_sims=100), "mcts10rr"),
+        (MctsAgent(n_sims=10), "mcts10"),
         # (PerfectAgent(), "perfect"),
     ]
 
