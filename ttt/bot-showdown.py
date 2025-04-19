@@ -22,8 +22,8 @@ from utils.torch_device import find_device
 
 # TRAIN_FAST = True   # do short training just to verify training works
 TRAIN_FAST = False  # do full training to make competent agents
-FORCE_TRAIN = False
-# FORCE_TRAIN = True  # train agents even if they have a saved model
+# FORCE_TRAIN = False
+FORCE_TRAIN = True  # train agents even if they have a saved model
 TRAINED_MODELS_PATH = Path("trained_models")
 TRAINED_MODELS_PATH.mkdir(exist_ok=True)
 VERBOSE = False
@@ -35,7 +35,7 @@ def main():
         (RandomAgent(), "random"),
         # (MctsAgent(n_sims=1), "mcts1"),
         # (MctsAgent(n_sims=5), "mcts5"),
-        (MctsAgent(n_sims=10), "mcts10"),
+        # (MctsAgent(n_sims=10), "mcts10"),
         (PerfectAgent(), "perfect"),
     ]
 
@@ -45,9 +45,9 @@ def main():
     #     lambda: TabQlearnAgent.train_new(RandomAgent(), 100 if TRAIN_FAST else 5000))
     # load_or_train_agent(agents, 'tabgreedyv-rng', TabGreedyVAgent,
     #     lambda: TabGreedyVAgent.train_new(100 if TRAIN_FAST else 5000))
-    load_or_train_agent(agents, 'tabmcts-rng', TabMctsAgent,
-        train_fn=lambda: TabMctsAgent.train_new(RandomAgent(), 100 if TRAIN_FAST else 10000, n_sims=20),
-        load_fn=lambda: TabMctsAgent.load(TRAINED_MODELS_PATH/'tabmcts-rng', n_sims=100))
+    load_or_train_agent(agents, 'tabmcts', TabMctsAgent,
+        train_fn=lambda: TabMctsAgent.train_new(100 if TRAIN_FAST else 10000, n_sims=20),
+        load_fn=lambda: TabMctsAgent.load(TRAINED_MODELS_PATH/'tabmcts', n_sims=20))
     # load_or_train_agent(agents, 'sb3dqn-rng', Sb3DqnAgent,
     #     lambda: Sb3DqnAgent.train_new(opponent=RandomAgent(), steps=100 if TRAIN_FAST else 50000, verbose=VERBOSE))
     # load_or_train_agent(agents, 'sb3ppo-rng', Sb3PpoAgent,

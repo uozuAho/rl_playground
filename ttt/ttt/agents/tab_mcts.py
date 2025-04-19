@@ -28,9 +28,9 @@ class TabMctsAgent(TttAgent):
         return agent
 
     @staticmethod
-    def train_new(opponent: TttAgent, n_eps: int, n_sims):
+    def train_new(n_eps: int, n_sims):
         agent = TabMctsAgent(n_sims)
-        agent.train(t3.Env(), opponent, n_eps, n_sims=n_sims)
+        agent.train(t3.Env(), n_eps, n_sims=n_sims)
         return agent
 
     def get_action(self, env: t3.Env):
@@ -41,7 +41,6 @@ class TabMctsAgent(TttAgent):
 
     def train(self,
             env: t3.Env,
-            opponent: TttAgent,
             n_training_episodes,
             eps_start=0.99,
             eps_end=0,
@@ -58,12 +57,7 @@ class TabMctsAgent(TttAgent):
             epsilon = eps_gen.__next__()
 
             while not done:
-                # trains x values
-                # todo: self play? o values = -x values?
-                if env.current_player == t3.X:
-                    action = emcts_policy(env, self._q_table, n_sims, epsilon)
-                else:
-                    action = opponent.get_action(env)
+                action = emcts_policy(env, self._q_table, n_sims, epsilon)
                 _, reward, terminated, truncated, _ = env.step(action)
                 next_state = env
                 done = terminated or truncated
