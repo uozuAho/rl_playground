@@ -1,10 +1,10 @@
 from abc import ABC
 from pathlib import Path
-import ttt.env as ttt2
+import ttt.env as t3
 
 
 class TttAgent(ABC):
-    def get_action(self, env: ttt2.Env):
+    def get_action(self, env: t3.Env):
         return NotImplementedError()
 
     def save(self, path: str | Path):
