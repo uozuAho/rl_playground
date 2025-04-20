@@ -22,14 +22,53 @@ def main():
     # limit 10;
     # """)
 
-    symmetric_values("o.xxo..ox")
+    # print_symmetrics("o.xxo..ox")
+
+    table_quality_report()
+
+
+def table_quality_report():
+    """ Attempt to succinctly show how good/bad the table is """
+    print("Num winning boards: ")
+    print(duckdb.sql("""
+    select count(*) from d
+    where value = 1.0
+    """).fetchone()[0])
+
+    top10 = [r[0] for r in duckdb.sql("""
+    select board from d
+    order by value desc
+    limit 10;
+    """).fetchall()]
+
+    print("Average num symmetrics for 10 winning boards:")
+    print(sum([len(load_symmetrics(b)) for b in top10])/10)
+
+    top_nearly_wins = [r[0] for r in duckdb.sql("""
+    select board from d
+    where value < 1.0
+    order by value desc
+    limit 10;
+    """).fetchall()]
+
+    print("Average num symmetrics for top 10 nearly winning boards:")
+    print(sum([len(load_symmetrics(b)) for b in top_nearly_wins])/10)
+
+    for b in top_nearly_wins:
+        print([f'{v:0.2f}' for _,v in load_symmetrics(b)])
 
 
 def print_bv_query(query: str):
     print_bv_pairs(duckdb.sql(query).fetchall())
 
 
-def symmetric_values(board: str):
+def print_symmetrics(board: str):
+    results = load_symmetrics(board)
+    print(len(results), "values")
+    print_bv_pairs(results)
+
+
+def load_symmetrics(board):
     quoted_list = ','.join(f"'{s}'" for s in symmetrics(board))
     result = duckdb.sql(f"""
     select * from d
@@ -39,8 +78,7 @@ def symmetric_values(board: str):
     """, )
 
     results = result.fetchall()
-    print(len(results), "values")
-    print_bv_pairs(results)
+    return results
 
 
 def print_bv_pairs(bvs: t.List[t.Tuple[str, float]]):
