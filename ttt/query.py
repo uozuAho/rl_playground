@@ -5,7 +5,7 @@ import json
 import duckdb
 import numpy as np
 
-FILE = 'trained_models/tabmcts_10k_20'
+FILE = 'trained_models/tabmcts_10k_10lr.1'
 
 duckdb.sql('create table d (board text, value float)')
 
@@ -29,6 +29,9 @@ def main():
 
 def table_quality_report():
     """ Attempt to succinctly show how good/bad the table is """
+    print("Num boards: ")
+    print(duckdb.sql("""select count(*) from d""").fetchone()[0])
+
     print("Num winning boards: ")
     print(duckdb.sql("""
     select count(*) from d
@@ -41,7 +44,7 @@ def table_quality_report():
     limit 10;
     """).fetchall()]
 
-    print("Average num symmetrics for 10 winning boards:")
+    print("Average num symmetrics for 10 winning boards (should be 8):")
     print(sum([len(load_symmetrics(b)) for b in top10])/10)
 
     top_nearly_wins = [r[0] for r in duckdb.sql("""
@@ -51,9 +54,10 @@ def table_quality_report():
     limit 10;
     """).fetchall()]
 
-    print("Average num symmetrics for top 10 nearly winning boards:")
+    print("Average num symmetrics for top 10 nearly winning boards (should be 8):")
     print(sum([len(load_symmetrics(b)) for b in top_nearly_wins])/10)
 
+    print("Symmetric values for top 10 nearly wins (should all be close to 1.0)")
     for b in top_nearly_wins:
         print([f'{v:0.2f}' for _,v in load_symmetrics(b)])
 

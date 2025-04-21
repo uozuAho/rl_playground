@@ -33,10 +33,10 @@ DEVICE = find_device()  # todo: let agents decide what device they use
 def main():
     agents = [
         (RandomAgent(), "random"),
-        # (MctsAgent(n_sims=1), "mcts1"),
-        # (MctsAgent(n_sims=5), "mcts5"),
-        # (MctsAgent(n_sims=10), "mcts10"),
-        (PerfectAgent(), "perfect"),
+        # (MctsAgent(n_sims=1), "mctsrr1"),
+        # (MctsAgent(n_sims=5), "mctsrr5"),
+        # (MctsAgent(n_sims=10), "mctsrr10"),
+        # (PerfectAgent(), "perfect"),
     ]
 
     # load_or_train_agent(agents, 'tabsarsa-rng', TabSarsaAgent,
@@ -45,9 +45,9 @@ def main():
     #     lambda: TabQlearnAgent.train_new(RandomAgent(), 100 if TRAIN_FAST else 5000))
     # load_or_train_agent(agents, 'tabgreedyv-rng', TabGreedyVAgent,
     #     lambda: TabGreedyVAgent.train_new(100 if TRAIN_FAST else 5000))
-    load_or_train_agent(agents, 'tabmcts', TabMctsAgent,
-        train_fn=lambda: TabMctsAgent.train_new(100 if TRAIN_FAST else 10000, n_sims=20),
-        load_fn=lambda: TabMctsAgent.load(TRAINED_MODELS_PATH/'tabmcts', n_sims=20))
+    load_or_train_agent(agents, 'tabmcts_asdf', TabMctsAgent,
+        train_fn=lambda: TabMctsAgent.train_new(100 if TRAIN_FAST else 1000, n_sims=10),
+        load_fn=lambda: TabMctsAgent.load(TRAINED_MODELS_PATH/'tabmcts', n_sims=10))
     # load_or_train_agent(agents, 'sb3dqn-rng', Sb3DqnAgent,
     #     lambda: Sb3DqnAgent.train_new(opponent=RandomAgent(), steps=100 if TRAIN_FAST else 50000, verbose=VERBOSE))
     # load_or_train_agent(agents, 'sb3ppo-rng', Sb3PpoAgent,

@@ -44,7 +44,7 @@ class TabMctsAgent(TttAgent):
             n_training_episodes,
             eps_start=0.99,
             eps_end=0,
-            learning_rate=0.5,
+            learning_rate=0.1,
             gamma=0.95,
             n_sims=20,
             ep_callback: t.Optional[EpCallback]=None
