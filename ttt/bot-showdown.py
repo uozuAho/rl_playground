@@ -35,7 +35,7 @@ def main():
         (RandomAgent(), "random"),
         # (MctsAgent(n_sims=1), "mctsrr1"),
         # (MctsAgent(n_sims=5), "mctsrr5"),
-        # (MctsAgent(n_sims=10), "mctsrr10"),
+        (MctsAgent(n_sims=10), "mctsrr10"),
         # (PerfectAgent(), "perfect"),
     ]
 
@@ -45,7 +45,7 @@ def main():
     #     lambda: TabQlearnAgent.train_new(RandomAgent(), 100 if TRAIN_FAST else 5000))
     # load_or_train_agent(agents, 'tabgreedyv-rng', TabGreedyVAgent,
     #     lambda: TabGreedyVAgent.train_new(100 if TRAIN_FAST else 5000))
-    load_or_train_agent(agents, 'tabmcts_asdf', TabMctsAgent,
+    load_or_train_agent(agents, 'tabmcts_10k_10', TabMctsAgent,
         train_fn=lambda: TabMctsAgent.train_new(100 if TRAIN_FAST else 10000, n_sims=10),
         load_fn=lambda: TabMctsAgent.load(TRAINED_MODELS_PATH/'tabmcts', n_sims=10))
     # load_or_train_agent(agents, 'sb3dqn-rng', Sb3DqnAgent,
