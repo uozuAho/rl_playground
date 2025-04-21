@@ -21,6 +21,36 @@ ACTION_SPACE = spaces.Discrete(9)
 OBS_SPACE = spaces.Box(low=-1, high=1, shape=(3,3), dtype=np.int8)
 
 
+class FastEnv:
+    """ Minimal, going for all out speed. TODO use this for Env """
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.current_player = X
+        self.board = [EMPTY] * 9
+
+    def copy(self):
+        env = FastEnv()
+        env.board = self.board[:]
+        env.current_player = self.current_player
+        return env
+
+    def valid_actions(self):
+        yield from valid_actions(self.board)
+
+    def step(self, action) -> tuple[Board, int, bool, bool, None]:
+        """ Reward assumes player/agent is X """
+        if self.board[action] != EMPTY:  # invalid action loses game
+            return self.board, -1, True, False, None
+        self.board[action] = self.current_player
+        self.current_player = X if self.current_player == O else O
+        s = status(self.board)
+        reward = -1 if s == O else 1 if s == X else 0
+        done = s != IN_PROGRESS
+        return self.board, reward, done, False, None
+
+
 class Env(gym.Env):
     def __init__(self, invalid_action_response=INVALID_ACTION_THROW):
         self.reset()
