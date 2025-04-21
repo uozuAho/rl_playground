@@ -29,6 +29,7 @@ class FastEnv:
     def reset(self):
         self.current_player = X
         self.board = [EMPTY] * 9
+        self._step_count = 0
 
     def copy(self):
         env = FastEnv()
@@ -47,11 +48,12 @@ class FastEnv:
 
     def step(self, action) -> tuple[Board, int, bool, bool, None]:
         """ Reward assumes player/agent is X """
+        self._step_count += 1
         if self.board[action] != EMPTY:  # invalid action loses game
             return self.board, -1, True, False, None
         self.board[action] = self.current_player
         self.current_player = X if self.current_player == O else O
-        s = status(self.board)
+        s = IN_PROGRESS if self._step_count < 5 else status(self.board)
         reward = -1 if s == O else 1 if s == X else 0
         done = s != IN_PROGRESS
         return self.board, reward, done, False, None
