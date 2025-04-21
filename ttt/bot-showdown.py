@@ -46,7 +46,7 @@ def main():
     # load_or_train_agent(agents, 'tabgreedyv-rng', TabGreedyVAgent,
     #     lambda: TabGreedyVAgent.train_new(100 if TRAIN_FAST else 5000))
     load_or_train_agent(agents, 'tabmcts_asdf', TabMctsAgent,
-        train_fn=lambda: TabMctsAgent.train_new(100 if TRAIN_FAST else 1000, n_sims=10),
+        train_fn=lambda: TabMctsAgent.train_new(100 if TRAIN_FAST else 10000, n_sims=10),
         load_fn=lambda: TabMctsAgent.load(TRAINED_MODELS_PATH/'tabmcts', n_sims=10))
     # load_or_train_agent(agents, 'sb3dqn-rng', Sb3DqnAgent,
     #     lambda: Sb3DqnAgent.train_new(opponent=RandomAgent(), steps=100 if TRAIN_FAST else 50000, verbose=VERBOSE))

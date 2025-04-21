@@ -39,6 +39,12 @@ class FastEnv:
     def valid_actions(self):
         yield from valid_actions(self.board)
 
+    def status(self):
+        return status(self.board)
+
+    def str1d(self):
+        return ''.join('x' if c == X else 'o' if c == O else '.' for c in self.board)
+
     def step(self, action) -> tuple[Board, int, bool, bool, None]:
         """ Reward assumes player/agent is X """
         if self.board[action] != EMPTY:  # invalid action loses game

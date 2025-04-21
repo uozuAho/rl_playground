@@ -5,10 +5,10 @@ from ttt.agents.agent import TttAgent
 import ttt.env as t3
 
 
-type ValFunc = t.Callable[[t3.Env, t3.Player], float]
+type ValFunc = t.Callable[[t3.FastEnv, t3.Player], float]
 
 
-def random_rollout_reward(env: t3.Env, player: t3.Player):
+def random_rollout_reward(env: t3.FastEnv, player: t3.Player):
     """ Returns the given player's reward from a random rollout """
     s = env.status()
     if s == t3.IN_PROGRESS:
@@ -25,18 +25,18 @@ class MctsAgent(TttAgent):
         self.n_sims = n_sims
         self._valfn = valfn
 
-    def get_action(self, env: t3.Env):
+    def get_action(self, env: t3.FastEnv):
         return _mcts_decision(env, self.n_sims, self._valfn)
 
 
-def _mcts_decision(env: t3.Env, n_simulations: int, val_func: ValFunc):
+def _mcts_decision(env: t3.FastEnv, n_simulations: int, val_func: ValFunc):
     root = _build_mcts_tree(env, n_simulations, val_func)
     best_move = max(root.children, key=lambda move: root.children[move].visits)
     return best_move
 
 
 class _MCTSNode:
-    def __init__(self, state: t3.Env, parent):
+    def __init__(self, state: t3.FastEnv, parent):
         self.state = state
         self.parent: _MCTSNode = parent
         self.children: t.Dict[int, _MCTSNode] = {}  # action, node
@@ -57,7 +57,7 @@ def _max_ucb_child(node: _MCTSNode) -> _MCTSNode:
 
 
 def _build_mcts_tree(
-        env: t3.Env,
+        env: t3.FastEnv,
         simulations: int,
         val_func: ValFunc
         ):

@@ -30,21 +30,21 @@ class TabMctsAgent(TttAgent):
     @staticmethod
     def train_new(n_eps: int, n_sims):
         agent = TabMctsAgent(n_sims)
-        agent.train(t3.Env(), n_eps, n_sims=n_sims)
+        agent.train(t3.FastEnv(), n_eps, n_sims=n_sims)
         return agent
 
-    def get_action(self, env: t3.Env):
+    def get_action(self, env: t3.FastEnv):
         return mcts_policy(env, self._q_table, self.n_sims)
 
     def save(self, path):
         self._q_table.save(path)
 
     def train(self,
-            env: t3.Env,
+            env: t3.FastEnv,
             n_training_episodes,
             eps_start=0.99,
             eps_end=0,
-            learning_rate=0.1,
+            learning_rate=0.2,
             gamma=0.95,
             n_sims=20,
             ep_callback: t.Optional[EpCallback]=None
@@ -76,11 +76,11 @@ class TabMctsAgent(TttAgent):
                 ep_callback(episode)
 
 
-def mcts_policy(env: t3.Env, qtable: Qtable, n_sims: int):
+def mcts_policy(env: t3.FastEnv, qtable: Qtable, n_sims: int):
     return _mcts_decision(env, n_sims, lambda e,p: qtable.value(e.str1d()) * p)
 
 
-def emcts_policy(env: t3.Env, qtable: Qtable, n_sims: int, epsilon: float):
+def emcts_policy(env: t3.FastEnv, qtable: Qtable, n_sims: int, epsilon: float):
     random_num = random.uniform(0, 1)
     if random_num > epsilon:
         action = mcts_policy(env, qtable, n_sims)
