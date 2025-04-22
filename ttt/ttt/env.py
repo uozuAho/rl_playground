@@ -119,7 +119,7 @@ class Env(gym.Env):
         return winner(self.board)
 
     def str1d(self):
-        return self._str('|')
+        return self._str('')
 
     def str2d(self):
         return self._str('\n')

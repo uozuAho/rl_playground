@@ -34,10 +34,25 @@ class TabMctsAgent(TttAgent):
         return agent
 
     def get_action(self, env: t3.FastEnv):
-        return mcts_policy(env, self._q_table, self.n_sims)
+        return self._mcts_policy(env, self._q_table, self.n_sims)
 
     def save(self, path):
         self._q_table.save(path)
+
+    def _mcts_policy(self, env: t3.FastEnv, qtable: Qtable, n_sims: int):
+        return _mcts_decision(env, n_sims, self._val_estimate)
+
+    def _emcts_policy(self, env: t3.FastEnv, qtable: Qtable, n_sims: int, epsilon: float):
+        random_num = random.uniform(0, 1)
+        if random_num > epsilon:
+            action = self._mcts_policy(env, qtable, n_sims)
+        else:
+            action = random.choice(list(env.valid_actions()))
+        return action
+
+    def _val_estimate(self, env: t3.FastEnv, player: t3.Player):
+        board_str = env.str1d()
+        return self._q_table.value(board_str) * player
 
     def train(self,
             env: t3.FastEnv,
@@ -57,7 +72,7 @@ class TabMctsAgent(TttAgent):
             epsilon = eps_gen.__next__()
 
             while not done:
-                action = emcts_policy(env, self._q_table, n_sims, epsilon)
+                action = self._emcts_policy(env, self._q_table, n_sims, epsilon)
                 _, reward, terminated, truncated, _ = env.step(action)
                 next_state = env
                 done = terminated or truncated
@@ -75,15 +90,3 @@ class TabMctsAgent(TttAgent):
             if ep_callback:
                 ep_callback(episode)
 
-
-def mcts_policy(env: t3.FastEnv, qtable: Qtable, n_sims: int):
-    return _mcts_decision(env, n_sims, lambda e,p: qtable.value(e.str1d()) * p)
-
-
-def emcts_policy(env: t3.FastEnv, qtable: Qtable, n_sims: int, epsilon: float):
-    random_num = random.uniform(0, 1)
-    if random_num > epsilon:
-        action = mcts_policy(env, qtable, n_sims)
-    else:
-        action = random.choice(list(env.valid_actions()))
-    return action
