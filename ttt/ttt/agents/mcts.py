@@ -79,9 +79,15 @@ def _build_mcts_tree(
                 node.children[action] = _MCTSNode(temp_env, parent=node)
             # ... and pick a random node to run the simulation step
             node = random.choice(list(node.children.values()))
+            # todo: picking random node here seems to make tabmcts bad
+            # idea: add a child selection function parameter
+            #    - az: uses puct with 'prior'
+            #    - random: random
+            #    - tab: max tab value (save for perf?)
 
         # simulate/rollout. Standard MCTS does a full "rollout" here, ie. plays
         # to the end of the game. Instead, we just use the state value estimate
+        # todo: this should use the real reward for terminal states
         reward = val_func(node.state, player)
 
         # propagate values back to root

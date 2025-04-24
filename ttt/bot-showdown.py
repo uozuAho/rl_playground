@@ -22,8 +22,8 @@ from utils.torch_device import find_device
 
 # TRAIN_FAST = True   # do short training just to verify training works
 TRAIN_FAST = False  # do full training to make competent agents
-# FORCE_TRAIN = False
-FORCE_TRAIN = True  # train agents even if they have a saved model
+FORCE_TRAIN = False
+# FORCE_TRAIN = True  # train agents even if they have a saved model
 TRAINED_MODELS_PATH = Path("trained_models")
 TRAINED_MODELS_PATH.mkdir(exist_ok=True)
 VERBOSE = False
@@ -32,10 +32,11 @@ DEVICE = find_device()  # todo: let agents decide what device they use
 
 def main():
     agents = [
-        (RandomAgent(), "random"),
+        # (RandomAgent(), "random"),
         # (MctsAgent(n_sims=1), "mctsrr1"),
         # (MctsAgent(n_sims=5), "mctsrr5"),
-        (MctsAgent(n_sims=10), "mctsrr10"),
+        # (MctsAgent(n_sims=10), "mctsrr10"),
+        (MctsAgent(n_sims=30), "mctsrr30"),
         # (PerfectAgent(), "perfect"),
     ]
 
@@ -45,9 +46,15 @@ def main():
     #     lambda: TabQlearnAgent.train_new(RandomAgent(), 100 if TRAIN_FAST else 5000))
     # load_or_train_agent(agents, 'tabgreedyv-rng', TabGreedyVAgent,
     #     lambda: TabGreedyVAgent.train_new(100 if TRAIN_FAST else 5000))
-    load_or_train_agent(agents, 'tabmcts_10k_10', TabMctsAgent,
-        train_fn=lambda: TabMctsAgent.train_new(100 if TRAIN_FAST else 10000, n_sims=10),
-        load_fn=lambda: TabMctsAgent.load(TRAINED_MODELS_PATH/'tabmcts', n_sims=10))
+    # load_or_train_agent(agents, 'tabmcts_20k_20', TabMctsAgent,
+    #     train_fn=lambda: TabMctsAgent.train_new(100 if TRAIN_FAST else 20000, n_sims=20),
+    #     load_fn=lambda: TabMctsAgent.load(TRAINED_MODELS_PATH/'tabmcts_20k_20', n_sims=20))
+    # load_or_train_agent(agents, 'tabmcts_50k_5', TabMctsAgent,
+    #     train_fn=lambda: TabMctsAgent.train_new(100 if TRAIN_FAST else 50000, n_sims=5),
+    #     load_fn=lambda: TabMctsAgent.load(TRAINED_MODELS_PATH/'tabmcts_50k_5', n_sims=5))
+    load_or_train_agent(agents, 'tabmcts_100k_30', TabMctsAgent,
+        train_fn=lambda: TabMctsAgent.train_new(100 if TRAIN_FAST else 100000, n_sims=10),
+        load_fn=lambda: TabMctsAgent.load(TRAINED_MODELS_PATH/'tabmcts_100k_10', n_sims=30))
     # load_or_train_agent(agents, 'sb3dqn-rng', Sb3DqnAgent,
     #     lambda: Sb3DqnAgent.train_new(opponent=RandomAgent(), steps=100 if TRAIN_FAST else 50000, verbose=VERBOSE))
     # load_or_train_agent(agents, 'sb3ppo-rng', Sb3PpoAgent,

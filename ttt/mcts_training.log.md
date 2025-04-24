@@ -158,3 +158,33 @@ Symmetric values for top 10 nearly wins (should all be close to 1.0)
 ['1.00', '0.87', '0.87', '0.68', '0.38', '0.00', '0.00']
 ['1.00', '0.01', '0.01', '0.00']
 ['1.00', '0.96', '0.78', '0.44', '0.17']
+
+
+training tabmcts_100k_10...
+done in 65.7s
+random           (x) vs perfect          (o). 100 games in 0.0s. x wins:   0 (  0.0%), o wins:  82 ( 82.0%), draws:  18 ( 18.0%), x illegal:   0 (  0.0%), o illegal:   0 (  0.0%)
+random           (x) vs tabmcts_100k_10  (o). 100 games in 0.1s. x wins:   9 (  9.0%), o wins:  84 ( 84.0%), draws:   7 (  7.0%), x illegal:   0 (  0.0%), o illegal:   0 (  0.0%)
+perfect          (x) vs random           (o). 100 games in 0.0s. x wins:  98 ( 98.0%), o wins:   0 (  0.0%), draws:   2 (  2.0%), x illegal:   0 (  0.0%), o illegal:   0 (  0.0%)
+perfect          (x) vs tabmcts_100k_10  (o). 100 games in 0.1s. x wins:  82 ( 82.0%), o wins:   0 (  0.0%), draws:  18 ( 18.0%), x illegal:   0 (  0.0%), o illegal:   0 (  0.0%)
+tabmcts_100k_10  (x) vs random           (o). 100 games in 0.1s. x wins:  95 ( 95.0%), o wins:   3 (  3.0%), draws:   2 (  2.0%), x illegal:   0 (  0.0%), o illegal:   0 (  0.0%)
+tabmcts_100k_10  (x) vs perfect          (o). 100 games in 0.1s. x wins:   0 (  0.0%), o wins:  65 ( 65.0%), draws:  35 ( 35.0%), x illegal:   0 (  0.0%), o illegal:   0 (  0.0%)
+
+Num boards:
+5468
+Num winning boards:
+822
+Average num symmetrics for 10 winning boards (should be 8):
+6.7
+Average num symmetrics for top 10 nearly winning boards (should be 8):
+6.7
+Symmetric values for top 10 nearly wins (should all be close to 1.0)
+['1.00', '1.00', '1.00', '1.00', '0.99', '0.97', '0.71']
+['1.00', '1.00', '1.00', '1.00', '1.00', '1.00', '1.00']
+['1.00', '1.00', '1.00', '1.00', '1.00', '1.00', '0.99']
+['1.00', '1.00', '1.00', '1.00', '0.96', '0.88', '0.50']
+['1.00', '1.00', '1.00', '1.00', '1.00', '0.91', '0.77']
+['1.00', '1.00', '1.00', '1.00', '1.00', '1.00', '1.00']
+['1.00', '1.00', '1.00', '1.00', '0.98', '0.85', '0.75']
+['1.00', '1.00', '1.00', '1.00', '0.99', '0.98', '0.96']
+['1.00', '1.00', '1.00', '1.00', '1.00', '0.77', '0.74']
+['1.00', '1.00', '1.00', '1.00']

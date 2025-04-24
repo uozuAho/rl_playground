@@ -5,7 +5,7 @@ import json
 import duckdb
 import numpy as np
 
-FILE = 'trained_models/tabmcts_10k_10lr.1'
+FILE = 'trained_models/tabmcts_100k_10'
 
 duckdb.sql('create table d (board text, value float)')
 
@@ -60,6 +60,15 @@ def table_quality_report():
     print("Symmetric values for top 10 nearly wins (should all be close to 1.0)")
     for b in top_nearly_wins:
         print([f'{v:0.2f}' for _,v in load_symmetrics(b)])
+
+    print("any missing symmetries in table for top 10 nearly wins:")
+    for b in top_nearly_wins:
+        db_syms = set(s[0] for s in load_symmetrics(b))
+        missing = set(symmetrics(b)) - db_syms
+        if len(missing) > 0:
+            print(missing)
+        else:
+            print("no")
 
 
 def print_bv_query(query: str):

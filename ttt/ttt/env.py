@@ -31,6 +31,24 @@ class FastEnv:
         self.board = [EMPTY] * 9
         self._step_count = 0
 
+    @staticmethod
+    def from_str(str: str):
+        env = FastEnv()
+        for i, c in enumerate(str.replace('|', '').lower()):
+            if c == 'x':
+                env.board[i] = X
+            elif c == 'o':
+                env.board[i] = O
+            elif c == '.':
+                env.board[i] = EMPTY
+            else:
+                raise ValueError(f'Invalid character in board string: {c}')
+        numx = sum(1 if c == X else 0 for c in env.board)
+        numo = sum(1 if c == O else 0 for c in env.board)
+        assert numx - numo == 1 or numx - numo == 0
+        env.current_player = O if numx > numo else X
+        return env
+
     def copy(self):
         env = FastEnv()
         env.board = self.board[:]
@@ -45,6 +63,10 @@ class FastEnv:
 
     def str1d(self):
         return ''.join('x' if c == X else 'o' if c == O else '.' for c in self.board)
+
+    def str2d(self):
+        b = self.str1d()
+        return f'{b[:3]}\n{b[3:6]}\n{b[6:]}'
 
     def step(self, action) -> tuple[Board, int, bool, bool, None]:
         """ Reward assumes player/agent is X """
