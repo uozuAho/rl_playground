@@ -5,6 +5,9 @@ from ttt.agents.agent import TttAgent
 import ttt.env as t3
 
 
+# Evaluate the current env state for the given player. Expected
+# to be a higher value for more favorable states for the given
+# player.
 type ValFunc = t.Callable[[t3.FastEnv, t3.Player], float]
 
 
@@ -21,16 +24,26 @@ def random_rollout_reward(env: t3.FastEnv, player: t3.Player):
 
 
 class MctsAgent(TttAgent):
-    def __init__(self, n_sims: int, valfn: ValFunc = random_rollout_reward):
+    def __init__(
+            self,
+            n_sims: int,
+            valfn: ValFunc = random_rollout_reward,
+            use_valfn_for_expand = False):
         self.n_sims = n_sims
         self._valfn = valfn
+        self._use_valfn_for_expand = use_valfn_for_expand
 
     def get_action(self, env: t3.FastEnv):
-        return _mcts_decision(env, self.n_sims, self._valfn)
+        return _mcts_decision(env, self.n_sims, self._valfn, self._use_valfn_for_expand)
 
 
-def _mcts_decision(env: t3.FastEnv, n_simulations: int, val_func: ValFunc):
-    root = _build_mcts_tree(env, n_simulations, val_func)
+def _mcts_decision(
+        env: t3.FastEnv,
+        n_simulations: int,
+        val_func: ValFunc,
+        use_val_func_for_expand: bool
+        ):
+    root = _build_mcts_tree(env, n_simulations, val_func, use_val_func_for_expand)
     best_move = max(root.children, key=lambda move: root.children[move].visits)
     return best_move
 
@@ -49,7 +62,8 @@ class _MCTSNode:
         return self.total_reward / self.visits + math.sqrt(2 * math.log(self.parent.visits) / self.visits)
 
     def __repr__(self):
-        return f'v{self.visits:3} t{self.total_reward:0.2f} u{self.ucb1():0.3f}'
+        pv = self.parent.visits if self.parent else 0
+        return f'v{self.visits:3} pv{pv:3} t{self.total_reward:5.2f} u{self.ucb1():5.2f}'
 
 
 def _max_ucb_child(node: _MCTSNode) -> _MCTSNode:
@@ -59,7 +73,8 @@ def _max_ucb_child(node: _MCTSNode) -> _MCTSNode:
 def _build_mcts_tree(
         env: t3.FastEnv,
         simulations: int,
-        val_func: ValFunc
+        val_func: ValFunc,
+        use_val_func_for_expand
         ):
     root = _MCTSNode(env, parent=None)
     player = env.current_player  # assume we're planning for the current player
@@ -72,18 +87,15 @@ def _build_mcts_tree(
 
         # expand: initialise child nodes of leaf
         if node.state.status() == t3.IN_PROGRESS:
-            env = node.state
-            for action in env.valid_actions():
-                temp_env = env.copy()
-                _, reward, _, _, _ = temp_env.step(action)
-                node.children[action] = _MCTSNode(temp_env, parent=node)
-            # ... and pick a random node to run the simulation step
-            node = random.choice(list(node.children.values()))
-            # todo: picking random node here seems to make tabmcts bad
-            # idea: add a child selection function parameter
-            #    - az: uses puct with 'prior'
-            #    - random: random
-            #    - tab: max tab value (save for perf?)
+            for action in node.state.valid_actions():
+                child_state = node.state.copy()
+                _, reward, _, _, _ = child_state.step(action)
+                node.children[action] = _MCTSNode(child_state, parent=node)
+            if use_val_func_for_expand:
+                node = max(node.children.values(),
+                           key=lambda c: val_func(c.state, node.state.current_player))
+            else:
+                node = random.choice(list(node.children.values()))
 
         # simulate/rollout. Standard MCTS does a full "rollout" here, ie. plays
         # to the end of the game. Instead, we just use the state value estimate

@@ -40,7 +40,7 @@ class TabMctsAgent(TttAgent):
         self._q_table.save(path)
 
     def _mcts_policy(self, env: t3.FastEnv, qtable: Qtable, n_sims: int):
-        return _mcts_decision(env, n_sims, self._val_estimate)
+        return _mcts_decision(env, n_sims, self._val_estimate, True)
 
     def _emcts_policy(self, env: t3.FastEnv, qtable: Qtable, n_sims: int, epsilon: float):
         random_num = random.uniform(0, 1)
