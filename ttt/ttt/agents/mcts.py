@@ -36,6 +36,12 @@ class MctsAgent(TttAgent):
     def get_action(self, env: t3.FastEnv):
         return _mcts_decision(env, self.n_sims, self._valfn, self._use_valfn_for_expand)
 
+    def print_tree(self, env: t3.FastEnv, n_sims=-1):
+        """ For debugging """
+        n_sims = n_sims if n_sims > 0 else self.n_sims
+        tree = _build_mcts_tree(env, n_sims, self._valfn, self._use_valfn_for_expand)
+        print_tree(tree)
+
 
 def _mcts_decision(
         env: t3.FastEnv,
@@ -57,13 +63,24 @@ class _MCTSNode:
         self.total_reward = 0.0  # sum of all rewards/estimates from all visited children
 
     def ucb1(self):
+        if not self.parent:
+            return float('NaN')
         if self.visits == 0:
             return float('inf')
         return self.total_reward / self.visits + math.sqrt(2 * math.log(self.parent.visits) / self.visits)
 
+    def __str__(self):
+        return f'{self.state.str1d()} vis{self.visits:3} tval{self.total_reward:5.2f} uct{self.ucb1():5.2f}'
+
     def __repr__(self):
         pv = self.parent.visits if self.parent else 0
         return f'v{self.visits:3} pv{pv:3} t{self.total_reward:5.2f} u{self.ucb1():5.2f}'
+
+
+def print_tree(root: _MCTSNode, action=-1, indent=0):
+    print(f'{" "*indent}{action}: {root}')
+    for action, node in root.children.items():
+        print_tree(node, action, indent + 4)
 
 
 def _max_ucb_child(node: _MCTSNode) -> _MCTSNode:
