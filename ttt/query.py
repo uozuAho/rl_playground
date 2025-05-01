@@ -5,7 +5,7 @@ import json
 import duckdb
 import numpy as np
 
-FILE = 'trained_models/tabmcts_100k_10'
+FILE = 'trained_models/tabmcts_100k_30'
 
 duckdb.sql('create table d (board text, value float)')
 
