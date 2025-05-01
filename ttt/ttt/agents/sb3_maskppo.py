@@ -10,7 +10,7 @@ class Sb3MaskPpoAgent(TttAgent):
     def __init__(self, model: MaskablePPO):
         self.model = model
 
-    def get_action(self, env: ttt.env.GymEnv):
+    def get_action(self, env: ttt.env.Env):
         # hack env internals to get obs
         obs = np.array(env.board).reshape((3,3))
         action, _ = self.model.predict(obs, action_masks=mask_fn(env))
@@ -45,6 +45,6 @@ def make_env(opponent):
     return ActionMasker(ttt.env.EnvWithOpponent(opponent=opponent), mask_fn)
 
 
-def mask_fn(env: ttt.env.GymEnv):
+def mask_fn(env: ttt.env.Env):
     valid_actions = list(env.valid_actions())
     return [a in valid_actions for a in range(9)]

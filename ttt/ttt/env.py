@@ -1,3 +1,5 @@
+from __future__ import annotations
+from abc import ABC, abstractmethod
 import typing as t
 import gymnasium as gym
 from gymnasium import spaces
@@ -21,7 +23,29 @@ ACTION_SPACE = spaces.Discrete(9)
 OBS_SPACE = spaces.Box(low=-1, high=1, shape=(3,3), dtype=np.int8)
 
 
-class FastEnv:
+class Env(ABC):
+    def __init__(self):
+        self.board = []
+        self.current_player = X
+
+    @abstractmethod
+    def reset(self):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def copy(self) -> Env:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def valid_actions(self) -> t.Iterable[int]:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def step(self, action) -> tuple[Board, int, bool, bool, None]:
+        raise NotImplementedError()
+
+
+class FastEnv(Env):
     """ Minimal, going for all out speed. TODO use this for Env """
     def __init__(self):
         self.reset()
@@ -81,7 +105,7 @@ class FastEnv:
         return self.board, reward, done, False, None
 
 
-class GymEnv(gym.Env):
+class GymEnv(gym.Env, Env):
     def __init__(self, invalid_action_response=INVALID_ACTION_THROW):
         self.reset()
         self.invalid_action_response = invalid_action_response

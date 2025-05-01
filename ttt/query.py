@@ -116,7 +116,7 @@ def to2d(board: str):
 def symmetrics(board: str):
     assert len(board) == 9
     nboard = np.array([ord(c) for c in board]).reshape((3,3))
-    symmetries = []
+    symmetries: list[np.ndarray] = []
 
     # Identity
     symmetries.append(nboard)
