@@ -30,7 +30,7 @@ class Sb3DqnAgent(TttAgent):
     def from_model(model):
         return Sb3DqnAgent(model)
 
-    def get_action(self, env: ttt.env.Env):
+    def get_action(self, env: ttt.env.GymEnv):
         # hack env internals to get obs
         obs = np.array(env.board).reshape((3,3))
         action, _ = self._model.predict(obs, deterministic=True)

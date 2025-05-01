@@ -11,7 +11,7 @@ class Sb3PpoAgent:
     def __init__(self, model: PPO):
         self.model = model
 
-    def get_action(self, env: ttt.env.Env):
+    def get_action(self, env: ttt.env.GymEnv):
         # hack env internals to get obs
         obs = np.array(env.board).reshape((3,3))
         action, _ = self.model.predict(obs)

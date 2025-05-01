@@ -81,7 +81,7 @@ class FastEnv:
         return self.board, reward, done, False, None
 
 
-class Env(gym.Env):
+class GymEnv(gym.Env):
     def __init__(self, invalid_action_response=INVALID_ACTION_THROW):
         self.reset()
         self.invalid_action_response = invalid_action_response
@@ -95,7 +95,7 @@ class Env(gym.Env):
 
     @staticmethod
     def from_str(str):
-        env = Env()
+        env = GymEnv()
         for i, c in enumerate(str.replace('|', '').lower()):
             if c == 'x':
                 env.board[i] = X
@@ -112,7 +112,7 @@ class Env(gym.Env):
         return env
 
     def copy(self):
-        env = Env()
+        env = GymEnv()
         env.board = self.board[:]
         env.current_player = self.current_player
         return env
@@ -157,7 +157,7 @@ class Env(gym.Env):
         return np.array(self.board).reshape((3,3))
 
 
-class EnvWithOpponent(Env):
+class EnvWithOpponent(GymEnv):
     def __init__(self, opponent, invalid_action_response=INVALID_ACTION_THROW):
         super().__init__(invalid_action_response)
         self.opponent = opponent

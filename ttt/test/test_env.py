@@ -6,7 +6,7 @@ import ttt.env
 
 
 def test_fuzz_full():
-    for env in [ttt.env.Env(), ttt.env.FastEnv()]:
+    for env in [ttt.env.GymEnv(), ttt.env.FastEnv()]:
         for _ in range(100):
             env.reset()
             done = False
@@ -20,7 +20,7 @@ def test_fuzz_full():
                 action = random.choice(va)
                 obs, reward, terminated, truncated, _ = env.step(action)
                 done = terminated or truncated
-                if isinstance(env, ttt.env.Env):
+                if isinstance(env, ttt.env.GymEnv):
                     assert np.array_equal(obs, np.array(env.board).reshape((3,3)))
                 numx = sum(1 if c == ttt.env.X else 0 for c in env.board)
                 numo = sum(1 if c == ttt.env.O else 0 for c in env.board)

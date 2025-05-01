@@ -126,7 +126,7 @@ class NnGreedyVAgent(TttAgent):
         self.nn = ConvNet(lr=1e-4, gamma=0.9, device=device).to(device)
         self.device = device
 
-    def get_action(self, env: t3.Env, epsilon=0.0):
+    def get_action(self, env: t3.GymEnv, epsilon=0.0):
         if random.random() < epsilon:
             return random.choice(list(env.valid_actions()))
         return self._greedy_action(env)
@@ -146,7 +146,7 @@ class NnGreedyVAgent(TttAgent):
         agent.train(opponent, n_eps)
         return agent
 
-    def state_val(self, env: t3.Env):
+    def state_val(self, env: t3.GymEnv):
         return self._nn_out(env.board)
 
     def board_val(self, board: t3.Board):
@@ -175,7 +175,7 @@ class NnGreedyVAgent(TttAgent):
                 callback(i)
         print('training done')
 
-    def action_vals(self, env: t3.Env):
+    def action_vals(self, env: t3.GymEnv):
         """ For debugging """
         vals = {}
         for a in env.valid_actions():
@@ -184,7 +184,7 @@ class NnGreedyVAgent(TttAgent):
             vals[str(temp)] = self.state_val(temp).item()
         return vals
 
-    def _greedy_action(self, env: t3.Env):
+    def _greedy_action(self, env: t3.GymEnv):
         def next_state(board, action, player):
             next_board = board[:]
             next_board[action] = player
@@ -212,7 +212,7 @@ class NnGreedyVAgent(TttAgent):
 
 
 def play_game(agent_x: NnGreedyVAgent, opponent_o: TttAgent, epsilon: float):
-    env = t3.Env()
+    env = t3.GymEnv()
     done = False
     while not done:
         state = env.board[:]
