@@ -104,7 +104,7 @@ def load_data():
     with open(FILE) as infile:
         data = json.load(infile)
 
-    duckdb.executemany(f"insert into d values (?, ?)",
+    duckdb.executemany("insert into d values (?, ?)",
                        [[b.replace('|', ''), v] for b,v in data.items()])
 
 
