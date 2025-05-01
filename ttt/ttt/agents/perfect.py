@@ -3,15 +3,15 @@ import ttt.env as t3
 
 
 class PerfectAgent(TttAgent):
-    def get_action(self, env: t3.FastEnv):
+    def get_action(self, env: t3.Env):
         return find_best_move(env, env.current_player)
 
 
-def player_won(env: t3.FastEnv, player: t3.Player):
+def player_won(env: t3.Env, player: t3.Player):
     return t3.winner(env.board) == player
 
 
-def find_best_move(env: t3.FastEnv, player=t3.X):
+def find_best_move(env: t3.Env, player=t3.X):
     opponent = t3.other_player(player)
 
     # make a winning move

@@ -75,7 +75,7 @@ class TabSarsaAgent(TttAgent):
         agent.train(env, opponent, n_eps)
         return agent
 
-    def get_action(self, env: t3.FastEnv):
+    def get_action(self, env: t3.Env):
         return greedy_policy(env, self._q_table, self.allow_invalid_actions)
 
     def save(self, path):
@@ -123,7 +123,7 @@ class TabSarsaAgent(TttAgent):
                 ep_callback(episode, epsilon)
 
 
-def greedy_policy(env: t3.FastEnv, qtable: QaTable, allow_invalid):
+def greedy_policy(env: t3.Env, qtable: QaTable, allow_invalid):
     # assumes qtable has been trained for playing X
     actions = list(range(9)) if allow_invalid else list(env.valid_actions())
     assert actions
@@ -133,7 +133,7 @@ def greedy_policy(env: t3.FastEnv, qtable: QaTable, allow_invalid):
         return min(actions, key=lambda a: qtable.value(envstate(env), a))
 
 
-def egreedy_policy(env: t3.FastEnv, qtable: QaTable, epsilon: float, allow_invalid):
+def egreedy_policy(env: t3.Env, qtable: QaTable, epsilon: float, allow_invalid):
     random_num = random.uniform(0, 1)
     if random_num > epsilon:
         action = greedy_policy(env, qtable, allow_invalid)
@@ -146,5 +146,5 @@ def egreedy_policy(env: t3.FastEnv, qtable: QaTable, epsilon: float, allow_inval
     return action
 
 
-def envstate(env: t3.FastEnv):
+def envstate(env: t3.Env):
     return ''.join(str(x) for x in env.board)

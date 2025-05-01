@@ -23,7 +23,10 @@ ACTION_SPACE = spaces.Discrete(9)
 OBS_SPACE = spaces.Box(low=-1, high=1, shape=(3,3), dtype=np.int8)
 
 
-class Env(ABC):
+ObsType = t.TypeVar('ObsType')
+
+
+class Env(ABC, t.Generic[ObsType]):
     def __init__(self):
         self.board = []
         self.current_player = X
@@ -37,15 +40,23 @@ class Env(ABC):
         raise NotImplementedError()
 
     @abstractmethod
+    def status(self) -> Status:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def str1d(self) -> str:
+        raise NotImplementedError()
+
+    @abstractmethod
     def valid_actions(self) -> t.Iterable[int]:
         raise NotImplementedError()
 
     @abstractmethod
-    def step(self, action) -> tuple[Board, int, bool, bool, None]:
+    def step(self, action) -> tuple[ObsType, int, bool, bool, t.Any]:
         raise NotImplementedError()
 
 
-class FastEnv(Env):
+class FastEnv(Env[Board]):
     """ Minimal, going for all out speed. TODO use this for Env """
     def __init__(self):
         self.reset()
@@ -105,7 +116,7 @@ class FastEnv(Env):
         return self.board, reward, done, False, None
 
 
-class GymEnv(gym.Env, Env):
+class GymEnv(gym.Env, Env[np.ndarray]):
     def __init__(self, invalid_action_response=INVALID_ACTION_THROW):
         self.reset()
         self.invalid_action_response = invalid_action_response
