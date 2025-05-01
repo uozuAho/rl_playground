@@ -24,6 +24,11 @@ def random_rollout_reward(env: t3.FastEnv, player: t3.Player):
 
 
 class MctsAgent(TttAgent):
+    """ Monte-carlo tree search agent.
+        Good visualisation here: https://vgarciasc.github.io/mcts-viz/
+        - https://github.com/vgarciasc/mcts-viz/
+        - my fork: https://github.com/uozuAho/mcts-viz
+    """
     def __init__(
             self,
             n_sims: int,
