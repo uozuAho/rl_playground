@@ -26,17 +26,17 @@ class TabQlearnAgent(TttAgent):
     @staticmethod
     def train_new(opponent: TttAgent, n_eps: int):
         agent = TabQlearnAgent()
-        agent.train(t3.Env(), opponent, n_eps)
+        agent.train(t3.FastEnv(), opponent, n_eps)
         return agent
 
-    def get_action(self, env: t3.Env):
+    def get_action(self, env: t3.FastEnv):
         return greedy_policy(env, self._q_table, self.allow_invalid_actions)
 
     def save(self, path):
         self._q_table.save(path)
 
     def train(self,
-            env: t3.Env,
+            env: t3.FastEnv,
             opponent: TttAgent,
             n_training_episodes,
             min_epsilon=0.001,     # epsilon: exploration rate
@@ -77,7 +77,7 @@ class TabQlearnAgent(TttAgent):
                 ep_callback(episode, epsilon)
 
 
-def greedy_policy(env: t3.Env, qtable: QaTable, allow_invalid):
+def greedy_policy(env: t3.FastEnv, qtable: QaTable, allow_invalid):
     best_value = -999999999.9
     best_action = None
     actions = range(9) if allow_invalid else (env.valid_actions())
@@ -89,7 +89,7 @@ def greedy_policy(env: t3.Env, qtable: QaTable, allow_invalid):
     return best_action
 
 
-def egreedy_policy(env: t3.Env, qtable: QaTable, epsilon: float, allow_invalid):
+def egreedy_policy(env: t3.FastEnv, qtable: QaTable, epsilon: float, allow_invalid):
     random_num = random.uniform(0, 1)
     if random_num > epsilon:
         action = greedy_policy(env, qtable, allow_invalid)
@@ -98,5 +98,5 @@ def egreedy_policy(env: t3.Env, qtable: QaTable, epsilon: float, allow_invalid):
     return action
 
 
-def envstate(env: t3.Env):
+def envstate(env: t3.FastEnv):
     return ''.join('x' if c == t3.X else 'o' if c == t3.O else '.' for c in env.board)

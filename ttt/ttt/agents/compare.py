@@ -10,7 +10,7 @@ type GameResult = t.Literal['O', 'X', 'draw', 'X-illegal', 'O-illegal']
 
 
 def play_game(agent_x: TttAgent, agent_o: TttAgent) -> GameResult:
-    game = t3.Env()
+    game = t3.FastEnv()
     done = False
     while not done:
         if game.current_player == t3.X:
