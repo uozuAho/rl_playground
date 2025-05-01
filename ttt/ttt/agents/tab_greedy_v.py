@@ -33,7 +33,7 @@ class Qtable:
 class TabGreedyVAgent(TttAgent):
     """
     Tabular greedy value learning agent. Stores a state q table. Trains against
-    itself (ie don't supply an opponent).
+    a random opponent (ie don't supply an opponent).
     """
     def __init__(
             self,
