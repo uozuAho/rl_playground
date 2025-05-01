@@ -50,7 +50,8 @@ def _mcts_decision(
         use_val_func_for_expand: bool
         ):
     root = _build_mcts_tree(env, n_simulations, val_func, use_val_func_for_expand)
-    best_move = max(root.children, key=lambda move: root.children[move].visits)
+    best_move = max(root.children, key=lambda move: (
+        root.children[move].visits, root.children[move].total_reward))
     return best_move
 
 
