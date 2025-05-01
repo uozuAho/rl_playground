@@ -46,15 +46,3 @@ def test_o_should_win():
     agent = mcts.MctsAgent(n_sims=30, valfn=mcts.random_rollout_reward)
     action = agent.get_action(env)
     assert action == 3
-
-# todo: get rid of this
-def test_ucb1():
-    for v in range(1, 4):
-        for pv in range(1, 4):
-            for t in range(-4, 4):
-                p = mcts._MCTSNode(None, None)
-                n = mcts._MCTSNode(None, p)
-                p.visits = pv
-                n.visits = v
-                n.total_reward = t
-                print(n)

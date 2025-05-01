@@ -62,6 +62,9 @@ class _MCTSNode:
         self.visits = 0
         self.total_reward = 0.0  # sum of all rewards/estimates from all visited children
 
+    def who_moved_last(self):
+        return t3.other_player(self.state.current_player)
+
     def ucb1(self):
         if not self.parent:
             return float('NaN')
@@ -94,7 +97,6 @@ def _build_mcts_tree(
         use_val_func_for_expand
         ):
     root = _MCTSNode(env, parent=None)
-    player = env.current_player  # assume we're planning for the current player
     for _ in range(simulations):
         node = root
 
@@ -117,12 +119,16 @@ def _build_mcts_tree(
         # simulate/rollout. Standard MCTS does a full "rollout" here, ie. plays
         # to the end of the game. Instead, we just use the state value estimate
         # todo: this should use the real reward for terminal states
-        reward = val_func(node.state, player)
+        rewarded_player = node.who_moved_last()
+        reward = val_func(node.state, node.who_moved_last())
 
         # propagate values back to root
         while node:
             node.visits += 1
-            node.total_reward += reward
+            if node.who_moved_last() == rewarded_player:
+                node.total_reward += reward
+            else:
+                node.total_reward -= reward
             node = node.parent
 
     return root
