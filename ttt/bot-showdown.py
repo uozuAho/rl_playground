@@ -35,8 +35,8 @@ def main():
         (RandomAgent(), "random"),
         # (MctsAgent(n_sims=1), "mctsrr1"),
         # (MctsAgent(n_sims=5), "mctsrr5"),
-        # (MctsAgent(n_sims=10), "mctsrr10"),
-        (MctsAgent(n_sims=30), "mctsrr30"),
+        (MctsAgent(n_sims=10), "mctsrr10"),
+        # (MctsAgent(n_sims=30), "mctsrr30"),
         # (MctsAgent(n_sims=100), "mctsrr100"),
         (PerfectAgent(), "perfect"),
     ]
@@ -47,22 +47,29 @@ def main():
         lambda: TabQlearnAgent.train_new(RandomAgent(), 100 if TRAIN_FAST else 5000))
     load_or_train_agent(agents, 'tabgreedyv-rng', TabGreedyVAgent,
         lambda: TabGreedyVAgent.train_new(100 if TRAIN_FAST else 5000))
-    load_or_train_agent(agents, 'tabmcts_20k_20', TabMctsAgent,
+    load_or_train_agent(agents,
+        'tabmcts_100_20' if TRAIN_FAST else 'tabmcts_20k_20', TabMctsAgent,
         train_fn=lambda: TabMctsAgent.train_new(100 if TRAIN_FAST else 20000, n_sims=20),
         load_fn=lambda: TabMctsAgent.load(TRAINED_MODELS_PATH/'tabmcts_20k_20', n_sims=20))
-    load_or_train_agent(agents, 'tabmcts_50k_5', TabMctsAgent,
+    load_or_train_agent(agents,
+        'tabmcts_100_5' if TRAIN_FAST else 'tabmcts_50k_5', TabMctsAgent,
         train_fn=lambda: TabMctsAgent.train_new(100 if TRAIN_FAST else 50000, n_sims=5),
         load_fn=lambda: TabMctsAgent.load(TRAINED_MODELS_PATH/'tabmcts_50k_5', n_sims=5))
-    load_or_train_agent(agents, 'tabmcts_100k_30', TabMctsAgent,
+    load_or_train_agent(agents,
+        'tabmcts_100_30' if TRAIN_FAST else 'tabmcts_100k_30', TabMctsAgent,
         train_fn=lambda: TabMctsAgent.train_new(100 if TRAIN_FAST else 100000, n_sims=30),  # 100k 30 takes 5min to train
         load_fn=lambda: TabMctsAgent.load(TRAINED_MODELS_PATH/'tabmcts_100k_30', n_sims=30))
-    load_or_train_agent(agents, 'sb3dqn-rng', Sb3DqnAgent,
+    load_or_train_agent(agents,
+        'sb3dqn-100-rng' if TRAIN_FAST else 'sb3dqn-50k-rng', Sb3DqnAgent,
         lambda: Sb3DqnAgent.train_new(opponent=RandomAgent(), steps=100 if TRAIN_FAST else 50000, verbose=VERBOSE))
-    load_or_train_agent(agents, 'sb3ppo-rng', Sb3PpoAgent,
+    load_or_train_agent(agents,
+        'sb3ppo-100-rng' if TRAIN_FAST else 'sb3ppo-100k-rng', Sb3PpoAgent,
         lambda: Sb3PpoAgent.train_new(opponent=RandomAgent(), steps=100 if TRAIN_FAST else 100000, verbose=VERBOSE))
-    load_or_train_agent(agents, 'sb3maskppo-rng', Sb3MaskPpoAgent,
+    load_or_train_agent(agents,
+        'sb3maskppo-100-rng' if TRAIN_FAST else 'sb3maskppo-50k-rng', Sb3MaskPpoAgent,
         lambda: Sb3MaskPpoAgent.train_new(opponent=RandomAgent(), steps=100 if TRAIN_FAST else 50000, verbose=VERBOSE))
-    load_or_train_agent(agents, 'nngreedyv-rng', NnGreedyVAgent,
+    load_or_train_agent(agents,
+        'nngreedyv-100-rng' if TRAIN_FAST else 'nngreedyv-5k-rng', NnGreedyVAgent,
         lambda: NnGreedyVAgent.train_new(RandomAgent(), 100 if TRAIN_FAST else 5000, DEVICE), DEVICE)
     load_or_train_agent(agents, 'nngreedymcts10', None, None, DEVICE,
         lambda: load_NnGreedyVMctsAgent('nngreedyv-rng', 10))
