@@ -13,7 +13,7 @@ PRINT_2D = True   # print boards in 2d
 # PRINT_2D = False
 
 def main():
-    load_data()
+    # load_data()
 
     # print_bv_query("""
     # select * from d
@@ -24,7 +24,17 @@ def main():
 
     # print_symmetrics("o.xxo..ox")
 
-    table_quality_report()
+    # table_quality_report()
+
+    gv = group_all_symmetry_values(FILE)
+    i = 0
+    for b, vs in gv.items():
+        i += 1
+        if i > 10: break
+        vs = sorted(vs)
+        avg = sum(vs)/len(vs)
+        maxdiff = abs(vs[0] - vs[-1])
+        print(b, [f'{x:6.3f}' for x in vs], f'avg: {avg:6.3f}  maxdiff: {maxdiff:6.3f}')
 
 
 def table_quality_report():
@@ -69,6 +79,23 @@ def table_quality_report():
             print(missing)
         else:
             print("no")
+
+
+def group_all_symmetry_values(path):
+    """ for all boards in a table, return:
+        {board: [values of all symmetries]}
+    """
+    with open(path) as infile:
+        data = json.load(infile)
+
+    asdf = {}
+    for b,v in data.items():
+        sym_values = [v]
+        for symb in symmetrics(b):
+            if symb in data:
+                sym_values.append(data[symb])
+        asdf[b] = sym_values
+    return asdf
 
 
 def print_bv_query(query: str):
