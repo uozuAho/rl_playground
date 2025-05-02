@@ -51,7 +51,7 @@ class QaTable:
             serdict = {f'{k[0]}-{k[1]}': v for k, v in self._table.items()}
             ofile.write(json.dumps(serdict, indent=2))
 
-    def _env2state(self, env: t3.Env):
+    def _env2state(self, env: t3.FastEnv):
         return ''.join(str(x) for x in env.board)
 
 
@@ -70,7 +70,7 @@ class TabSarsaAgent(TttAgent):
 
     @staticmethod
     def train_new(opponent: TttAgent, n_eps):
-        env = t3.Env()
+        env = t3.FastEnv()
         agent = TabSarsaAgent()
         agent.train(env, opponent, n_eps)
         return agent
@@ -82,7 +82,7 @@ class TabSarsaAgent(TttAgent):
         self._q_table.save(path)
 
     def train(self,
-            env: t3.Env,
+            env: t3.FastEnv,
             opponent: TttAgent,
             n_training_episodes: int,
             min_epsilon=0.001,     # epsilon: exploration rate

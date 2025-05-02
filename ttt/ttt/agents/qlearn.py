@@ -26,7 +26,7 @@ class TabQlearnAgent(TttAgent):
     @staticmethod
     def train_new(opponent: TttAgent, n_eps: int):
         agent = TabQlearnAgent()
-        agent.train(t3.Env(), opponent, n_eps)
+        agent.train(t3.FastEnv(), opponent, n_eps)
         return agent
 
     def get_action(self, env: t3.Env):

@@ -53,7 +53,7 @@ class TabGreedyVAgent(TttAgent):
     @staticmethod
     def train_new(n_eps: int):
         agent = TabGreedyVAgent()
-        agent.train(t3.Env(), n_eps)
+        agent.train(t3.FastEnv(), n_eps)
         return agent
 
     def get_action(self, env: t3.Env):
@@ -61,7 +61,7 @@ class TabGreedyVAgent(TttAgent):
 
     def action_values(self, board_str: str):
         """ For debugging """
-        env = t3.Env.from_str(board_str)
+        env = t3.FastEnv.from_str(board_str)
         values = {}
         for a in env.valid_actions():
             tempenv = env.copy()

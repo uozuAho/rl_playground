@@ -212,7 +212,7 @@ class NnGreedyVAgent(TttAgent):
 
 
 def play_game(agent_x: NnGreedyVAgent, opponent_o: TttAgent, epsilon: float):
-    env = t3.Env()
+    env = t3.FastEnv()
     done = False
     while not done:
         state = env.board[:]

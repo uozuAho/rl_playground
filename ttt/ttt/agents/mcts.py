@@ -8,10 +8,10 @@ import ttt.env as t3
 # Evaluate the current env state for the given player. Expected
 # to be a higher value for more favorable states for the given
 # player.
-type ValFunc = t.Callable[[t3.FastEnv, t3.Player], float]
+type ValFunc = t.Callable[[t3.Env, t3.Player], float]
 
 
-def random_rollout_reward(env: t3.FastEnv, player: t3.Player):
+def random_rollout_reward(env: t3.Env, player: t3.Player):
     """ Returns the given player's reward from a random rollout """
     s = env.status()
     if s == t3.IN_PROGRESS:
@@ -38,10 +38,10 @@ class MctsAgent(TttAgent):
         self._valfn = valfn
         self._use_valfn_for_expand = use_valfn_for_expand
 
-    def get_action(self, env: t3.FastEnv):
+    def get_action(self, env: t3.Env):
         return _mcts_decision(env, self.n_sims, self._valfn, self._use_valfn_for_expand)
 
-    def print_tree(self, env: t3.FastEnv, n_sims=-1):
+    def print_tree(self, env: t3.Env, n_sims=-1):
         """ For debugging """
         n_sims = n_sims if n_sims > 0 else self.n_sims
         tree = _build_mcts_tree(env, n_sims, self._valfn, self._use_valfn_for_expand)
@@ -49,7 +49,7 @@ class MctsAgent(TttAgent):
 
 
 def _mcts_decision(
-        env: t3.FastEnv,
+        env: t3.Env,
         n_simulations: int,
         val_func: ValFunc,
         use_val_func_for_expand: bool
@@ -61,7 +61,7 @@ def _mcts_decision(
 
 
 class _MCTSNode:
-    def __init__(self, state: t3.FastEnv, parent):
+    def __init__(self, state: t3.Env, parent):
         self.state = state
         self.parent: _MCTSNode = parent
         self.children: t.Dict[int, _MCTSNode] = {}  # action, node
@@ -97,7 +97,7 @@ def _max_ucb_child(node: _MCTSNode) -> _MCTSNode:
 
 
 def _build_mcts_tree(
-        env: t3.FastEnv,
+        env: t3.Env,
         simulations: int,
         val_func: ValFunc,
         use_val_func_for_expand
@@ -114,7 +114,7 @@ def _build_mcts_tree(
         if node.state.status() == t3.IN_PROGRESS:
             for action in node.state.valid_actions():
                 child_state = node.state.copy()
-                _, reward, _, _, _ = child_state.step(action)
+                child_state.step(action)
                 node.children[action] = _MCTSNode(child_state, parent=node)
             if use_val_func_for_expand:
                 node = max(node.children.values(),

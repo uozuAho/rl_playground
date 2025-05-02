@@ -33,16 +33,16 @@ class TabMctsAgent(TttAgent):
         agent.train(t3.FastEnv(), n_eps, n_sims=n_sims)
         return agent
 
-    def get_action(self, env: t3.FastEnv):
+    def get_action(self, env: t3.Env):
         return self._mcts_policy(env, self._q_table, self.n_sims)
 
     def save(self, path):
         self._q_table.save(path)
 
-    def _mcts_policy(self, env: t3.FastEnv, qtable: Qtable, n_sims: int):
+    def _mcts_policy(self, env: t3.Env, qtable: Qtable, n_sims: int):
         return _mcts_decision(env, n_sims, self._val_estimate, True)
 
-    def _emcts_policy(self, env: t3.FastEnv, qtable: Qtable, n_sims: int, epsilon: float):
+    def _emcts_policy(self, env: t3.Env, qtable: Qtable, n_sims: int, epsilon: float):
         random_num = random.uniform(0, 1)
         if random_num > epsilon:
             action = self._mcts_policy(env, qtable, n_sims)
@@ -50,12 +50,12 @@ class TabMctsAgent(TttAgent):
             action = random.choice(list(env.valid_actions()))
         return action
 
-    def _val_estimate(self, env: t3.FastEnv, player: t3.Player):
+    def _val_estimate(self, env: t3.Env, player: t3.Player):
         board_str = env.str1d()
         return self._q_table.value(board_str) * player
 
     def train(self,
-            env: t3.FastEnv,
+            env: t3.Env,
             n_training_episodes,
             eps_start=0.99,
             eps_end=0,

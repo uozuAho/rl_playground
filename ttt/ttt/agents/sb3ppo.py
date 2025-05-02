@@ -4,10 +4,11 @@ import numpy as np
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 
+from ttt.agents.agent import TttAgent
 import ttt.env
 
 
-class Sb3PpoAgent:
+class Sb3PpoAgent(TttAgent):
     def __init__(self, model: PPO):
         self.model = model
 
@@ -45,7 +46,4 @@ class Sb3PpoAgent:
 
 
 def make_env(opponent):
-    return ttt.env.EnvWithOpponent(
-        opponent=opponent,
-        invalid_action_response=ttt.env.INVALID_ACTION_GAME_OVER
-    )
+    return ttt.env.EnvWithOpponent(opponent=opponent)

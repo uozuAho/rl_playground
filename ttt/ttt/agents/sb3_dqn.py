@@ -79,7 +79,4 @@ class MyEvalCallback(BaseCallback):
 
 
 def make_env(opponent):
-    return ttt.env.EnvWithOpponent(
-        opponent=opponent,
-        invalid_action_response=ttt.env.INVALID_ACTION_GAME_OVER
-    )
+    return ttt.env.EnvWithOpponent(opponent=opponent)
