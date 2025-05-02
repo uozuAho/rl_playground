@@ -144,8 +144,8 @@ class GymEnv(gym.Env, Env[np.ndarray]):
         yield from self._env.valid_actions()
 
     def step(self, action) -> tuple[np.ndarray, int, bool, bool, dict]:
-        _, reward, term, trunc, info = self._env.step(action)
-        return self._obs(), reward, term, trunc, info
+        _, reward, term, trunc, _ = self._env.step(action)
+        return self._obs(), reward, term, trunc, {}
 
     def status(self):
         return self._env.status()
