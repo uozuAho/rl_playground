@@ -61,9 +61,10 @@ def _mcts_decision(
 
 
 class _MCTSNode:
-    def __init__(self, state: t3.Env, parent):
+    def __init__(self, state: t3.Env, parent, val_est: float | None = None):
         self.state = state
         self.parent: _MCTSNode = parent
+        self.val_est = val_est
         self.children: t.Dict[int, _MCTSNode] = {}  # action, node
         self.visits = 0
         self.total_reward = 0.0  # sum of all rewards/estimates from all visited children
@@ -117,10 +118,18 @@ def _build_mcts_tree(
             for action in node.state.valid_actions():
                 child_state = node.state.copy()
                 child_state.step(action)
-                node.children[action] = _MCTSNode(child_state, parent=node)
+                if use_val_func_for_expand:
+                    val = val_func(child_state, node.state.current_player)
+                else:
+                    val = None
+                node.children[action] = _MCTSNode(child_state, parent=node, val_est=val)
             if use_val_func_for_expand:
-                node = max(node.children.values(),
-                           key=lambda c: val_func(c.state, node.state.current_player))
+                maxval = -99999.0
+                for c in node.children.values():
+                    if c.val_est > maxval:  # type: ignore
+                        maxval = c.val_est  # type: ignore
+                        maxchild = c
+                node = c
             else:
                 node = random.choice(list(node.children.values()))
 
@@ -128,7 +137,7 @@ def _build_mcts_tree(
         # to the end of the game. Instead, we just use the state value estimate
         # todo: this should use the real reward for terminal states
         rewarded_player = node.who_moved_last()
-        reward = val_func(node.state, node.who_moved_last())
+        reward = node.val_est or val_func(node.state, node.who_moved_last())
 
         # propagate values back to root
         while node:
