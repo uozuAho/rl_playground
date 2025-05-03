@@ -17,8 +17,9 @@ type Status = t.Literal[-1, 1, 2, 3]
 type Board = list[int]
 
 
-ACTION_SPACE = spaces.Discrete(9)
-OBS_SPACE = spaces.Box(low=-1, high=1, shape=(3,3), dtype=np.int8)
+_ACTION_SPACE = spaces.Discrete(9)
+_OBS_SPACE = spaces.Box(low=-1, high=1, shape=(3,3), dtype=np.int8)
+_CHAR_LOOKUP = ['NO!', 'x', 'o']
 
 
 ObsType = t.TypeVar('ObsType')
@@ -95,7 +96,7 @@ class FastEnv(Env[Board]):
         return status(self.board)
 
     def str1d(self):
-        return ''.join('x' if c == X else 'o' if c == O else '.' for c in self.board)
+        return ''.join(['.' if c == 0 else _CHAR_LOOKUP[c] for c in self.board])
 
     def str2d(self):
         b = self.str1d()
@@ -117,8 +118,8 @@ class FastEnv(Env[Board]):
 class GymEnv(gym.Env, Env[np.ndarray]):
     def __init__(self):
         self._env = FastEnv()
-        self.action_space = ACTION_SPACE
-        self.observation_space = OBS_SPACE
+        self.action_space = _ACTION_SPACE
+        self.observation_space = _OBS_SPACE
 
     def reset(self, seed=None, options=None):
         self._env = FastEnv()

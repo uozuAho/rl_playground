@@ -1,4 +1,4 @@
-import math
+from math import log
 import random
 import typing as t
 from ttt.agents.agent import TttAgent
@@ -61,9 +61,10 @@ def _mcts_decision(
 
 
 class _MCTSNode:
-    def __init__(self, state: t3.Env, parent):
+    def __init__(self, state: t3.Env, parent, val_est: float | None = None):
         self.state = state
         self.parent: _MCTSNode = parent
+        self.val_est = val_est
         self.children: t.Dict[int, _MCTSNode] = {}  # action, node
         self.visits = 0
         self.total_reward = 0.0  # sum of all rewards/estimates from all visited children
@@ -72,11 +73,13 @@ class _MCTSNode:
         return t3.other_player(self.state.current_player)
 
     def ucb1(self):
-        if not self.parent:
-            return float('NaN')
-        if self.visits == 0:
-            return float('inf')
-        return self.total_reward / self.visits + math.sqrt(2 * math.log(self.parent.visits) / self.visits)
+        v = self.visits
+        p = self.parent
+        return (
+            float('nan') if p is None else
+            float('inf') if v == 0 else
+            self.total_reward / v + (2 * log(p.visits) / v) ** 0.5
+        )
 
     def __str__(self):
         return f'{self.state.str1d()} vis{self.visits:3} tval{self.total_reward:5.2f} uct{self.ucb1():5.2f}'
@@ -92,10 +95,6 @@ def print_tree(root: _MCTSNode, action=-1, indent=0):
         print_tree(node, action, indent + 4)
 
 
-def _max_ucb_child(node: _MCTSNode) -> _MCTSNode:
-    return max(node.children.values(), key=lambda node: node.ucb1())
-
-
 def _build_mcts_tree(
         env: t3.Env,
         simulations: int,
@@ -108,17 +107,31 @@ def _build_mcts_tree(
 
         # select (using tree policy): trace a path to a leaf node
         while node.children:
-            node = _max_ucb_child(node)
+            maxucb = -9999999
+            for c in node.children.values():
+                ucb = c.ucb1()
+                if ucb > maxucb:
+                    maxucb = ucb
+                    maxchild = c
+            node = maxchild
 
         # expand: initialise child nodes of leaf
         if node.state.status() == t3.IN_PROGRESS:
             for action in node.state.valid_actions():
                 child_state = node.state.copy()
                 child_state.step(action)
-                node.children[action] = _MCTSNode(child_state, parent=node)
+                if use_val_func_for_expand:
+                    val = val_func(child_state, node.state.current_player)
+                else:
+                    val = None
+                node.children[action] = _MCTSNode(child_state, parent=node, val_est=val)
             if use_val_func_for_expand:
-                node = max(node.children.values(),
-                           key=lambda c: val_func(c.state, node.state.current_player))
+                maxval = -99999.0
+                for c in node.children.values():
+                    if c.val_est > maxval:  # type: ignore
+                        maxval = c.val_est  # type: ignore
+                        maxchild = c
+                node = c
             else:
                 node = random.choice(list(node.children.values()))
 
@@ -126,7 +139,7 @@ def _build_mcts_tree(
         # to the end of the game. Instead, we just use the state value estimate
         # todo: this should use the real reward for terminal states
         rewarded_player = node.who_moved_last()
-        reward = val_func(node.state, node.who_moved_last())
+        reward = node.val_est or val_func(node.state, node.who_moved_last())
 
         # propagate values back to root
         while node:
