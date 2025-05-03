@@ -19,7 +19,7 @@ type Board = list[int]
 
 _ACTION_SPACE = spaces.Discrete(9)
 _OBS_SPACE = spaces.Box(low=-1, high=1, shape=(3,3), dtype=np.int8)
-_CHAR_LOOKUP = ['x', 'o']
+_CHAR_LOOKUP = ['NO!', 'x', 'o']
 
 
 ObsType = t.TypeVar('ObsType')
