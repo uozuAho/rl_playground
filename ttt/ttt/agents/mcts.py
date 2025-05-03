@@ -92,10 +92,6 @@ def print_tree(root: _MCTSNode, action=-1, indent=0):
         print_tree(node, action, indent + 4)
 
 
-def _max_ucb_child(node: _MCTSNode) -> _MCTSNode:
-    return max(node.children.values(), key=lambda node: node.ucb1())
-
-
 def _build_mcts_tree(
         env: t3.Env,
         simulations: int,
@@ -108,7 +104,13 @@ def _build_mcts_tree(
 
         # select (using tree policy): trace a path to a leaf node
         while node.children:
-            node = _max_ucb_child(node)
+            maxucb = -9999999
+            for c in node.children.values():
+                ucb = c.ucb1()
+                if ucb > maxucb:
+                    maxucb = ucb
+                    maxchild = c
+            node = maxchild
 
         # expand: initialise child nodes of leaf
         if node.state.status() == t3.IN_PROGRESS:
