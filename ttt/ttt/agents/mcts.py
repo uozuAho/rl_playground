@@ -1,4 +1,4 @@
-import math
+from math import log
 import random
 import typing as t
 from ttt.agents.agent import TttAgent
@@ -73,11 +73,13 @@ class _MCTSNode:
         return t3.other_player(self.state.current_player)
 
     def ucb1(self):
-        if not self.parent:
-            return float('NaN')
-        if self.visits == 0:
-            return float('inf')
-        return self.total_reward / self.visits + math.sqrt(2 * math.log(self.parent.visits) / self.visits)
+        v = self.visits
+        p = self.parent
+        return (
+            float('nan') if p is None else
+            float('inf') if v == 0 else
+            self.total_reward / v + (2 * log(p.visits) / v) ** 0.5
+        )
 
     def __str__(self):
         return f'{self.state.str1d()} vis{self.visits:3} tval{self.total_reward:5.2f} uct{self.ucb1():5.2f}'
