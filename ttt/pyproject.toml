@@ -28,3 +28,12 @@ dev = [
 [tool.ruff.lint]
 ignore = ["E701"]  # multiple statements per line
 
+[tool.mypy]
+files = [
+    "test",
+    "ttt",
+    "utils",
+]
+
+[tool.ruff]
+exclude = ["bot-showdown.py"]
