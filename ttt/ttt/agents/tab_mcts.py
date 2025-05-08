@@ -28,9 +28,9 @@ class TabMctsAgent(TttAgent):
         return agent
 
     @staticmethod
-    def train_new(n_eps: int, n_sims):
+    def train_new(n_eps: int, n_sims: int, use_symmetries=False):
         agent = TabMctsAgent(n_sims)
-        agent.train(t3.FastEnv(), n_eps, n_sims=n_sims)
+        agent.train(t3.FastEnv(), n_eps, n_sims=n_sims, use_symmetries=use_symmetries)
         return agent
 
     def get_action(self, env: t3.Env):
@@ -62,6 +62,7 @@ class TabMctsAgent(TttAgent):
             learning_rate=0.5,
             gamma=0.95,
             n_sims=20,
+            use_symmetries=False,  # cheat by learning all symmetrical boards
             ep_callback: t.Optional[EpCallback]=None
             ):
         eps_gen = epsfuncs.exp_decay_gen(eps_start, eps_end, n_training_episodes)
@@ -77,15 +78,21 @@ class TabMctsAgent(TttAgent):
                 next_state = env
                 done = terminated or truncated
 
-                q = self._q_table.value(state.str1d())
-                q_next = 0 if done else self._q_table.value(next_state.str1d())
+                state_str = state.str1d()
+                next_state_str = next_state.str1d()
+                q = self._q_table.value(state_str)
+                q_next = 0 if done else self._q_table.value(next_state_str)
                 q = q + learning_rate * (reward + gamma * q_next - q)
-                self._q_table.set_value(state.str1d(), q)
-
-                state = next_state.copy()
+                if use_symmetries:
+                    for sym in t3.symmetrics(state_str):
+                        self._q_table.set_value(sym, q)
+                else:
+                    self._q_table.set_value(state_str, q)
 
                 if done:
-                    self._q_table.set_value(state.str1d(), reward)
+                    self._q_table.set_value(next_state_str, reward)
+
+                state = next_state.copy()
 
             if ep_callback:
                 ep_callback(episode)

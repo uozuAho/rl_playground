@@ -116,7 +116,7 @@ class SimpleConv(nn.Module):
         super(SimpleConv, self).__init__()
         self.device = device
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=8, kernel_size=3, padding=0)
-        self.activation = nn.ReLU
+        self.activation = nn.ReLU()
         self.flatten = nn.Flatten()
         self.fc1 = nn.Linear(8, 10)
         self.fc2 = nn.Linear(10, 1)
@@ -248,16 +248,15 @@ nets: list[nn.Module] = [
     # SimpleConv(DEVICE),
     MidConv(DEVICE).to(DEVICE)
 ]
-tab_agent = TabGreedyVAgent.load('trained_models/tabgreedyv-rng')
+tab_agent = TabGreedyVAgent.load('trained_models/tmcts_sym_100k_30')
 q_table = tab_agent._q_table
 all_vals = list(q_table.values())[:NUM_VALS_TO_LEARN]
-
-print(f'Fitting net to {len(all_vals)} values. Batch size: {BATCH_SIZE}.')
-input("press any key to start, ctrl+c to stop")
 
 for net in nets:
     # mypy is wrong
     net.print_summary(BATCH_SIZE)  # type: ignore
+    print(f'Fitting net to {len(all_vals)} values. Batch size: {BATCH_SIZE}.')
+    input("press any key to start, ctrl+c to stop")
     start = time.time()
     t_prev = time.time()
     for i in range(1 if TEST else 99999999999999999):

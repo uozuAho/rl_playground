@@ -215,3 +215,25 @@ def valid_actions(board: Board):
 
 def other_player(player: Player):
     return X if player == O else O
+
+
+def symmetrics(board: str):
+    assert len(board) == 9
+    nboard = np.array([ord(c) for c in board]).reshape((3,3))
+    symmetries: list[np.ndarray] = []
+
+    # Identity
+    symmetries.append(nboard)
+
+    # Rotations
+    for k in range(1, 4):
+        symmetries.append(np.rot90(nboard, k))
+
+    # Reflections
+    symmetries.append(np.fliplr(nboard))                # Horizontal reflection
+    symmetries.append(np.flipud(nboard))                # Vertical reflection
+    symmetries.append(np.transpose(nboard))             # Diagonal (main)
+    symmetries.append(np.fliplr(np.transpose(nboard)))  # Diagonal (anti)
+
+    for s in symmetries:
+        yield ''.join(chr(i) for i in s.reshape(9,))
