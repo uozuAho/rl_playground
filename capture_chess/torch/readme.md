@@ -31,10 +31,6 @@ uv run simple_conv.py    # read the script, alter params as u like
 
 
 # todo
-- WIP: split into file per method, eg linear, conv, policy gradients etc.
-    - DONE: linear
-    - DONE: conv
-    - move get_nn_move to chessnet?
 - print net details
 - print time taken by training
 - eval model after training

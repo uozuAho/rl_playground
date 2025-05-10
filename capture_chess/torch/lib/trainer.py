@@ -103,7 +103,6 @@ def optimise_net(
     return loss.item()
 
 
-# todo: move this to ChessNet?
 def get_nn_move(net: nn.Module, board: Board, device) -> chess.Move:
     """Assumes a net with a 1x4096 (64x64) output, which represents a
     move from (64) -> to (64)

@@ -16,7 +16,6 @@ def main():
     print(f"Using device: {device}")
     policy_net = LinearFCQNet().to(device)
     target_net = LinearFCQNet().to(device)
-    # todo: show net shape
     train(policy_net, target_net, n_episodes=1000, device=device, batch_size=64)
 
 

@@ -1,10 +1,11 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 import torch
 import torch.nn as nn
 
 
 class ChessNet(nn.Module, ABC):
-    pass
+    def print_summary(self):
+        print("TODO")
 
 
 class LinearFCQNet(ChessNet):
@@ -29,7 +30,7 @@ class LinearFCQNet(ChessNet):
         return x
 
 
-class ConvQNet(nn.Module):
+class ConvQNet(ChessNet):
     """Dunno if this is correct, I just got chat gpt to convert from TF to torch:
     https://github.com/arjangroen/RLC/blob/e54eb7380875f64fd06106c59aa376b426d9e5ca/RLC/capture_chess/agent.py#L73
 
