@@ -44,8 +44,8 @@ def play_random_game():
 for i in range(1):
     a, b, r, p = play_random_game()
     if sum(r) > 39:
-        print(f'{len(r)} rewards. sum = {sum(r)}')
-        print(','.join(str(int(x)) for x in r if x > 0))
-        print('captured:', ','.join(str(x) for x in p))
+        print(f"{len(r)} rewards. sum = {sum(r)}")
+        print(",".join(str(int(x)) for x in r if x > 0))
+        print("captured:", ",".join(str(x) for x in p))
         print(b[-1])
         break

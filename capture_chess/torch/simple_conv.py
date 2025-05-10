@@ -60,25 +60,21 @@ from RLC.capture_chess.environment import Board  # type: ignore
 
 def main():
     device = torch.device(
-        "cuda" if torch.cuda.is_available() else
-        "mps" if torch.backends.mps.is_available() else
-        "cpu"
+        "cuda"
+        if torch.cuda.is_available()
+        else "mps"
+        if torch.backends.mps.is_available()
+        else "cpu"
     )
     # device = 'cpu'
-    print(f'Using device: {device}')
+    print(f"Using device: {device}")
     # show_board_model_shapes_types()
     # policy_net = LinearFC().to(device)
     # target_net = LinearFC().to(device)
     policy_net = ConvNet().to(device)
     target_net = ConvNet().to(device)
     # play_game(net, board)
-    train(
-        policy_net,
-        target_net,
-        n_episodes=1000,
-        device=device,
-        batch_size=64
-    )
+    train(policy_net, target_net, n_episodes=1000, device=device, batch_size=64)
 
 
 @dataclass
@@ -104,7 +100,8 @@ class ReplayMemory(object):
 
 
 class LinearFC(nn.Module):
-    """ Fully connected linear/sequential NN """
+    """Fully connected linear/sequential NN"""
+
     def __init__(self):
         super(LinearFC, self).__init__()
         self.flatten = nn.Flatten()
@@ -116,9 +113,7 @@ class LinearFC(nn.Module):
         # ...
         # 4094: move 63 to 62
         # 4095: move 63 to 63
-        self.stack = nn.Sequential(
-            nn.Linear(8*8*8, 64*64, dtype=torch.float64)
-        )
+        self.stack = nn.Sequential(nn.Linear(8 * 8 * 8, 64 * 64, dtype=torch.float64))
 
     def forward(self, x: torch.Tensor):
         x = self.flatten(x)
@@ -127,18 +122,23 @@ class LinearFC(nn.Module):
 
 
 class ConvNet(nn.Module):
-    """ Dunno if this is correct, I just got chat gpt to convert from TF to torch:
-        https://github.com/arjangroen/RLC/blob/e54eb7380875f64fd06106c59aa376b426d9e5ca/RLC/capture_chess/agent.py#L73
+    """Dunno if this is correct, I just got chat gpt to convert from TF to torch:
+    https://github.com/arjangroen/RLC/blob/e54eb7380875f64fd06106c59aa376b426d9e5ca/RLC/capture_chess/agent.py#L73
 
-        This trains much quicker than the liner FC net, as the conv layers reduce
-        dimensionality by 8 (I think)
+    This trains much quicker than the liner FC net, as the conv layers reduce
+    dimensionality by 8 (I think)
     """
+
     def __init__(self):
         super(ConvNet, self).__init__()
 
         # 1x1 conv layers used to blend input layers
-        self.conv1 = nn.Conv2d(in_channels=8, out_channels=1, kernel_size=1, dtype=torch.float64)
-        self.conv2 = nn.Conv2d(in_channels=8, out_channels=1, kernel_size=1, dtype=torch.float64)
+        self.conv1 = nn.Conv2d(
+            in_channels=8, out_channels=1, kernel_size=1, dtype=torch.float64
+        )
+        self.conv2 = nn.Conv2d(
+            in_channels=8, out_channels=1, kernel_size=1, dtype=torch.float64
+        )
 
     def forward(self, x):
         x1 = self.conv1(x)
@@ -151,8 +151,8 @@ class ConvNet(nn.Module):
 
 
 def get_nn_move(net: nn.Module, board: Board, device) -> chess.Move:
-    """ Assumes a net with a 1x4096 (64x64) output, which represents a
-        move from (64) -> to (64)
+    """Assumes a net with a 1x4096 (64x64) output, which represents a
+    move from (64) -> to (64)
     """
     nn_input = torch.from_numpy(board.layer_board).unsqueeze(0).to(device)
     with torch.no_grad():
@@ -162,8 +162,11 @@ def get_nn_move(net: nn.Module, board: Board, device) -> chess.Move:
     action_values = torch.multiply(action_values, legal_mask)
     move_from = torch.argmax(action_values) // 64
     move_to = torch.argmax(action_values) % 64
-    moves = [x for x in board.board.generate_legal_moves()
-                if x.from_square == move_from and x.to_square == move_to]
+    moves = [
+        x
+        for x in board.board.generate_legal_moves()
+        if x.from_square == move_from and x.to_square == move_to
+    ]
     if len(moves) == 0:
         # If all legal moves have negative action value, explore
         move = board.get_random_action()
@@ -180,7 +183,7 @@ def play_game(net: LinearFC, board: Board):
     i = 0
     while not done:
         with torch.no_grad():
-            action = get_nn_move(net, board, 'cpu')
+            action = get_nn_move(net, board, "cpu")
         done, reward = board.step(action)
         i += 1
         if i > 200:
@@ -190,14 +193,14 @@ def play_game(net: LinearFC, board: Board):
 
 def show_board_net_shapes_types():
     board = Board()
-    net = LinearFC('cpu')
+    net = LinearFC("cpu")
     print(board.board)
     # each piece type is on a different layer
-    print(board.layer_board[0,::-1,:].astype(int))
+    print(board.layer_board[0, ::-1, :].astype(int))
     print(board.layer_board.shape)
     print(torch.from_numpy(board.layer_board).shape)
     print(nn.Flatten(0)(torch.from_numpy(board.layer_board)).shape)
-    action = get_nn_move(net, board, 'cpu')
+    action = get_nn_move(net, board, "cpu")
     print(action)
 
 
@@ -206,20 +209,25 @@ def is_endstate(layer_board: np.ndarray):
 
 
 def optimise_net(
-        policy_net: LinearFC,
-        target_net: LinearFC,
-        transitions: t.List[Transition],
-        optimiser: optim.Optimizer,
-        device: str,
-        gamma=0.99):
-    """ Update NN weights using a batch of transitions. Returns loss """
+    policy_net: LinearFC,
+    target_net: LinearFC,
+    transitions: t.List[Transition],
+    optimiser: optim.Optimizer,
+    device: str,
+    gamma=0.99,
+):
+    """Update NN weights using a batch of transitions. Returns loss"""
 
     batch_size = len(transitions)
     states = torch.stack([torch.from_numpy(t.state) for t in transitions]).to(device)
     moves_list = [(t.move[0] * 64 + t.move[1]) for t in transitions]
     moves = torch.tensor(moves_list, dtype=torch.long, device=device)
-    rewards = torch.tensor([t.reward for t in transitions], dtype=torch.float64, device=device)
-    next_states = torch.stack([torch.from_numpy(t.next_state) for t in transitions]).to(device)
+    rewards = torch.tensor(
+        [t.reward for t in transitions], dtype=torch.float64, device=device
+    )
+    next_states = torch.stack([torch.from_numpy(t.next_state) for t in transitions]).to(
+        device
+    )
 
     qs = policy_net(states)
     qsa = qs.gather(1, moves.unsqueeze(1)).squeeze(1)
@@ -248,32 +256,32 @@ def optimise_net(
 
 
 def update_target(policy_net: LinearFC, target_net: LinearFC, tau=1.0):
-    """ (Soft) Update the target network. Tau = hardness. If Tau = 1.0, it's a
-        hard update, ie the target net is set to equal the policy net.
+    """(Soft) Update the target network. Tau = hardness. If Tau = 1.0, it's a
+    hard update, ie the target net is set to equal the policy net.
     """
     target_net_state_dict = target_net.state_dict()
     policy_net_state_dict = policy_net.state_dict()
     for key in policy_net_state_dict:
-        target_net_state_dict[key] = \
-            policy_net_state_dict[key]*tau + \
-            target_net_state_dict[key]*(1-tau)
+        target_net_state_dict[key] = policy_net_state_dict[
+            key
+        ] * tau + target_net_state_dict[key] * (1 - tau)
     target_net.load_state_dict(target_net_state_dict)
 
 
 def epsilon(eps_start, eps_end, n_total_ep, ep):
-    return eps_end + (eps_start - eps_end) * math.exp(-6. * ep / n_total_ep)
+    return eps_end + (eps_start - eps_end) * math.exp(-6.0 * ep / n_total_ep)
 
 
 def train(
-        policy_net: LinearFC,
-        target_net: LinearFC,
-        n_episodes: int,
-        device: str,
-        n_episode_action_limit=25,
-        batch_size=32,
-        target_net_update_eps=10,
-        target_net_update_tau=1.0
-        ):
+    policy_net: LinearFC,
+    target_net: LinearFC,
+    n_episodes: int,
+    device: str,
+    n_episode_action_limit=25,
+    batch_size=32,
+    target_net_update_eps=10,
+    target_net_update_tau=1.0,
+):
     board = Board()
     optimiser = optim.SGD(policy_net.parameters(), lr=1e-4)
     episode = 0
@@ -282,14 +290,14 @@ def train(
     replay_mem = ReplayMemory(1000)
     for ep in range(n_episodes):
         try:
-            print(f'{ep}/{n_episodes}')
+            print(f"{ep}/{n_episodes}")
             if ep % target_net_update_eps == 0:
                 update_target(policy_net, target_net, target_net_update_tau)
             losses: list[float] = []
             rewards: list[float] = []
             board.reset()
             game_over = False
-            eps = epsilon(.99, .01, n_episodes, ep)
+            eps = epsilon(0.99, 0.01, n_episodes, ep)
             while not game_over and len(rewards) < n_episode_action_limit:
                 state = board.layer_board
                 if np.random.uniform(0, 1) < eps:
@@ -304,12 +312,14 @@ def train(
                 rewards.append(reward)
                 episode += 1
 
-                replay_mem.push(Transition(
-                    state,
-                    (action.from_square, action.to_square),
-                    next_state,
-                    reward
-                ))
+                replay_mem.push(
+                    Transition(
+                        state,
+                        (action.from_square, action.to_square),
+                        next_state,
+                        reward,
+                    )
+                )
 
                 if len(replay_mem) >= batch_size:
                     loss = optimise_net(
@@ -317,16 +327,17 @@ def train(
                         target_net,
                         replay_mem.sample(batch_size),
                         optimiser,
-                        device)
+                        device,
+                    )
                     losses.append(loss)
             ep_losses.append(sum(losses))
             ep_rewards.append(sum(rewards))
         except KeyboardInterrupt:
             break
     x = list(range(len(ep_rewards)))
-    plt.xlabel('episodes')
-    plt.plot(x, ep_losses, label='loss')
-    plt.plot(x, ep_rewards, label='reward')
+    plt.xlabel("episodes")
+    plt.plot(x, ep_losses, label="loss")
+    plt.plot(x, ep_rewards, label="reward")
     plt.legend()
     plt.show()
 
