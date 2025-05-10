@@ -13,10 +13,11 @@ combination of python + tensorflow + other dependencies.
 # quick start
 ```sh
 uv sync
-uv run envtest.py      # check the chess env works as expected
-uv run linear_net.py   # q-learning with FC NN, trains slowly, doesn't do well
-uv run simple_conv.py  # read the script, alter params as u like
-./precommit.sh         # lint, format etc
+uv run envtest.py        # check the chess env works as expected
+uv run linear_qlearn.py  # q-learning with FC NN, trains slowly, doesn't do well
+uv run conv_qlearn.py    # q-learning with convolutional net. Does better than linear
+uv run simple_conv.py    # read the script, alter params as u like
+./precommit.sh           # lint, format etc
 ```
 
 # notes
@@ -32,7 +33,7 @@ uv run simple_conv.py  # read the script, alter params as u like
 # todo
 - WIP: split into file per method, eg linear, conv, policy gradients etc.
     - DONE: linear
-    - conv
+    - DONE: conv
     - move get_nn_move to chessnet?
 - print net details
 - print time taken by training
