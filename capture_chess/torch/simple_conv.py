@@ -258,46 +258,49 @@ def train(
     ep_rewards = []
     replay_mem = ReplayMemory(1000)
     for ep in range(n_episodes):
-        print(f'{ep}/{n_episodes}')
-        if ep % target_net_update_eps == 0:
-            update_target(policy_net, target_net, target_net_update_tau)
-        losses = []
-        rewards = []
-        board.reset()
-        game_over = False
-        eps = epsilon(.99, .01, n_episodes, ep)
-        while not game_over and len(rewards) < n_episode_action_limit:
-            state = board.layer_board
-            if np.random.uniform(0, 1) < eps:
-                action = board.get_random_action()
-            else:
-                action = get_nn_move(policy_net, board, device)
-            game_over, reward = board.step(action)
-            # hack pawn promotion reward (don't want reward for pawn promotion)
-            if reward % 2 == 0:  # reward should only be 1,3,5,9
-                reward = 0
-            next_state = board.layer_board
-            rewards.append(reward)
-            episode += 1
+        try:
+            print(f'{ep}/{n_episodes}')
+            if ep % target_net_update_eps == 0:
+                update_target(policy_net, target_net, target_net_update_tau)
+            losses = []
+            rewards = []
+            board.reset()
+            game_over = False
+            eps = epsilon(.99, .01, n_episodes, ep)
+            while not game_over and len(rewards) < n_episode_action_limit:
+                state = board.layer_board
+                if np.random.uniform(0, 1) < eps:
+                    action = board.get_random_action()
+                else:
+                    action = get_nn_move(policy_net, board, device)
+                game_over, reward = board.step(action)
+                # hack pawn promotion reward (don't want reward for pawn promotion)
+                if reward % 2 == 0:  # reward should only be 1,3,5,9
+                    reward = 0
+                next_state = board.layer_board
+                rewards.append(reward)
+                episode += 1
 
-            replay_mem.push(Transition(
-                state,
-                (action.from_square, action.to_square),
-                next_state,
-                reward
-            ))
+                replay_mem.push(Transition(
+                    state,
+                    (action.from_square, action.to_square),
+                    next_state,
+                    reward
+                ))
 
-            if len(replay_mem) >= batch_size:
-                loss = optimise_net(
-                    policy_net,
-                    target_net,
-                    replay_mem.sample(batch_size),
-                    optimiser,
-                    device)
-                losses.append(loss)
-        ep_losses.append(sum(losses))
-        ep_rewards.append(sum(rewards))
-    episode = list(range(n_episodes))
+                if len(replay_mem) >= batch_size:
+                    loss = optimise_net(
+                        policy_net,
+                        target_net,
+                        replay_mem.sample(batch_size),
+                        optimiser,
+                        device)
+                    losses.append(loss)
+            ep_losses.append(sum(losses))
+            ep_rewards.append(sum(rewards))
+        except KeyboardInterrupt:
+            break
+    episode = list(range(len(ep_rewards)))
     plt.xlabel('episodes')
     plt.plot(episode, ep_losses, label='loss')
     plt.plot(episode, ep_rewards, label='reward')
@@ -322,7 +325,7 @@ target_net = ConvNet().to(device)
 train(
     policy_net,
     target_net,
-    n_episodes=10,
+    n_episodes=1000,
     device=device,
     batch_size=64
 )
