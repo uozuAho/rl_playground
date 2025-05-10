@@ -14,6 +14,7 @@ combination of python + tensorflow + other dependencies.
 ```sh
 uv sync
 uv run simple_conv.py  # read the script, alter params as u like
+./precommit.sh         # lint, format etc
 ```
 
 # notes
@@ -25,8 +26,8 @@ uv run simple_conv.py  # read the script, alter params as u like
 - simple training, linear model: loss appears to slowly increase after 5000 eps.
   no noticeable change in reward.
 
+
 # todo
-- add ruff mypy etc
 - split into file per method, eg linear, conv, policy gradients etc.
 - print net details
 - print time taken by training
