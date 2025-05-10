@@ -141,7 +141,7 @@ def train(
     target_net_update_eps=10,
     target_net_update_tau=1.0,
 ):
-    """ Returns [losses], [rewards]. One value per episode. """
+    """Returns [losses], [rewards]. One value per episode."""
     board = Board()
     optimiser = optim.SGD(policy_net.parameters(), lr=1e-4)
     episode = 0

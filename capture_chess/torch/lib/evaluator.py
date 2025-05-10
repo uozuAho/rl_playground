@@ -4,7 +4,7 @@ from lib.nets import ChessNet
 
 
 def play_game(player: ChessNet, device: str):
-    """ Note that the opponent is built into the environment. It makes random
+    """Note that the opponent is built into the environment. It makes random
     moves."""
     board = Board()
     done = False
@@ -21,5 +21,4 @@ def play_games(player: ChessNet, num_games: int, device: str):
     for i in range(num_games):
         reward = play_game(player, device)
         rewards.append(reward)
-    return sum(rewards)/len(rewards)
-
+    return sum(rewards) / len(rewards)
