@@ -55,7 +55,30 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import matplotlib.pyplot as plt
-from RLC.capture_chess.environment import Board
+from RLC.capture_chess.environment import Board  # type: ignore
+
+
+def main():
+    device = torch.device(
+        "cuda" if torch.cuda.is_available() else
+        "mps" if torch.backends.mps.is_available() else
+        "cpu"
+    )
+    # device = 'cpu'
+    print(f'Using device: {device}')
+    # show_board_model_shapes_types()
+    # policy_net = LinearFC().to(device)
+    # target_net = LinearFC().to(device)
+    policy_net = ConvNet().to(device)
+    target_net = ConvNet().to(device)
+    # play_game(net, board)
+    train(
+        policy_net,
+        target_net,
+        n_episodes=1000,
+        device=device,
+        batch_size=64
+    )
 
 
 @dataclass
@@ -156,12 +179,12 @@ def play_game(net: LinearFC, board: Board):
     done = False
     i = 0
     while not done:
-        with torch.no_grad:
+        with torch.no_grad():
             action = get_nn_move(net, board, 'cpu')
         done, reward = board.step(action)
         i += 1
         if i > 200:
-            raise "too many actions"
+            raise Exception("too many actions")
     print("done")
 
 
@@ -193,16 +216,16 @@ def optimise_net(
 
     batch_size = len(transitions)
     states = torch.stack([torch.from_numpy(t.state) for t in transitions]).to(device)
-    moves = [(t.move[0] * 64 + t.move[1]) for t in transitions]
-    moves = torch.tensor(moves, dtype=torch.long, device=device)
+    moves_list = [(t.move[0] * 64 + t.move[1]) for t in transitions]
+    moves = torch.tensor(moves_list, dtype=torch.long, device=device)
     rewards = torch.tensor([t.reward for t in transitions], dtype=torch.float64, device=device)
     next_states = torch.stack([torch.from_numpy(t.next_state) for t in transitions]).to(device)
 
     qs = policy_net(states)
     qsa = qs.gather(1, moves.unsqueeze(1)).squeeze(1)
 
-    non_final_mask = [not is_endstate(t.next_state) for t in transitions]
-    non_final_mask = torch.tensor(non_final_mask, dtype=torch.bool, device=device)
+    non_final_mask_list = [not is_endstate(t.next_state) for t in transitions]
+    non_final_mask = torch.tensor(non_final_mask_list, dtype=torch.bool, device=device)
     non_final_next_states = next_states[non_final_mask]
     max_qnext = torch.zeros(batch_size, dtype=torch.float64, device=device)
 
@@ -262,8 +285,8 @@ def train(
             print(f'{ep}/{n_episodes}')
             if ep % target_net_update_eps == 0:
                 update_target(policy_net, target_net, target_net_update_tau)
-            losses = []
-            rewards = []
+            losses: list[float] = []
+            rewards: list[float] = []
             board.reset()
             game_over = False
             eps = epsilon(.99, .01, n_episodes, ep)
@@ -300,32 +323,13 @@ def train(
             ep_rewards.append(sum(rewards))
         except KeyboardInterrupt:
             break
-    episode = list(range(len(ep_rewards)))
+    x = list(range(len(ep_rewards)))
     plt.xlabel('episodes')
-    plt.plot(episode, ep_losses, label='loss')
-    plt.plot(episode, ep_rewards, label='reward')
+    plt.plot(x, ep_losses, label='loss')
+    plt.plot(x, ep_rewards, label='reward')
     plt.legend()
     plt.show()
 
 
-device = torch.device(
-    "cuda" if torch.cuda.is_available() else
-    "mps" if torch.backends.mps.is_available() else
-    "cpu"
-)
-# device = 'cpu'
-print(f'Using device: {device}')
-# show_board_model_shapes_types()
-board = Board()
-# policy_net = LinearFC().to(device)
-# target_net = LinearFC().to(device)
-policy_net = ConvNet().to(device)
-target_net = ConvNet().to(device)
-# play_game(net, board)
-train(
-    policy_net,
-    target_net,
-    n_episodes=1000,
-    device=device,
-    batch_size=64
-)
+if __name__ == "__main__":
+    main()

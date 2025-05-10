@@ -3,7 +3,9 @@
 Attempting this: https://github.com/arjangroen/RLC , but redoing everything
 with uv & torch, to keep track of dependencies and not have to use tensorflow.
 
-Kaggle page: https://www.kaggle.com/code/arjanso/reinforcement-learning-chess-4-policy-gradients
+Kaggle pages
+- q learning: https://www.kaggle.com/arjanso/reinforcement-learning-chess-3-q-networks
+- policy gradients: https://www.kaggle.com/code/arjanso/reinforcement-learning-chess-4-policy-gradients
 
 I couldn't get the original code working as I couldn't find a compatible
 combination of python + tensorflow + other dependencies.
@@ -22,3 +24,18 @@ uv run simple_conv.py  # read the script, alter params as u like
     - loss & reward drop at about 3600 eps ... why?
 - simple training, linear model: loss appears to slowly increase after 5000 eps.
   no noticeable change in reward.
+
+# todo
+- add ruff mypy etc
+- split into file per method, eg linear, conv, policy gradients etc.
+- print net details
+- print time taken by training
+- eval model after training
+- https://tqdm.github.io/ progress bar?
+- add simple_conv details to readme
+    - add training time estimate to readme
+- add more params to simple_conv script, print config & details on start
+- maybe
+    - can i get ok performance?
+    - add periodic eval to train?
+    - does sb3 do better?

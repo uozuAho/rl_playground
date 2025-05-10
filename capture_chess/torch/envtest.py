@@ -1,6 +1,5 @@
-from RLC.capture_chess.environment import Board
+from RLC.capture_chess.environment import Board  # type: ignore
 import chess
-import typing as t
 
 
 def play_random_game():
@@ -8,7 +7,7 @@ def play_random_game():
     done = False
     # print(board.board)
     actions = []
-    boards: t.List[chess.Board] = []
+    boards: list[chess.Board] = []  # type: ignore
     rewards = []
     pieces_captured = []
     total_reward = 0
