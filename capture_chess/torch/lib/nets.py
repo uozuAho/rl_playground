@@ -1,12 +1,40 @@
 from abc import ABC
+import chess
 import torch
 import torch.nn as nn
 import torchinfo
+from RLC.capture_chess.environment import Board  # type: ignore
 
 
 class ChessNet(nn.Module, ABC):
     def print_summary(self):
         torchinfo.summary(self, input_size=(8, 8, 8), dtypes=[torch.float64])
+
+    def get_action(self, board: Board, device: str) -> chess.Move:
+        """Assumes a net with a 1x4096 (64x64) output, which represents a
+        move from (64) -> to (64)
+        """
+        nn_input = torch.from_numpy(board.layer_board).unsqueeze(0).to(device)
+        with torch.no_grad():
+            nn_output = self(nn_input)
+        action_values = torch.reshape(nn_output, (64, 64))
+        legal_mask = torch.from_numpy(board.project_legal_moves()).to(device)
+        action_values = torch.multiply(action_values, legal_mask)
+        move_from = torch.argmax(action_values) // 64
+        move_to = torch.argmax(action_values) % 64
+        moves = [
+            x
+            for x in board.board.generate_legal_moves()
+            if x.from_square == move_from and x.to_square == move_to
+        ]
+        if len(moves) == 0:
+            print(action_values)
+            print(move_from)
+            print(move_to)
+            print(board.board)
+            raise Exception("no valid moves")
+        else:
+            return moves[0]
 
 
 class LinearFCQNet(ChessNet):

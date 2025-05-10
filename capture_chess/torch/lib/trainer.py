@@ -7,7 +7,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import matplotlib.pyplot as plt
+
 
 from RLC.capture_chess.environment import Board  # type: ignore
 from lib.nets import ChessNet
@@ -141,6 +141,7 @@ def train(
     target_net_update_eps=10,
     target_net_update_tau=1.0,
 ):
+    """ Returns [losses], [rewards]. One value per episode. """
     board = Board()
     optimiser = optim.SGD(policy_net.parameters(), lr=1e-4)
     episode = 0
@@ -193,9 +194,4 @@ def train(
             ep_rewards.append(sum(rewards))
         except KeyboardInterrupt:
             break
-    x = list(range(len(ep_rewards)))
-    plt.xlabel("episodes")
-    plt.plot(x, ep_losses, label="loss")
-    plt.plot(x, ep_rewards, label="reward")
-    plt.legend()
-    plt.show()
+    return ep_losses, ep_rewards

@@ -31,7 +31,8 @@ uv run simple_conv.py    # read the script, alter params as u like
 
 
 # todo
-- print time taken by training
+- extract plot from train
+- save/load trained nets
 - eval model after training
 - https://tqdm.github.io/ progress bar?
 - add simple_conv details to readme
