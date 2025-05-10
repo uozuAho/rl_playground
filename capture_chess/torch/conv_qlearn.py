@@ -9,7 +9,13 @@ from lib.trainer import train
 
 def main():
     device = torch_utils.find_device()
-    # device = 'cpu'
+    # policy_net = traino(device)
+    policy_net = ConvQNet.load('trained_models/convq', device)
+    avg_reward = play_games(policy_net, 100, device)
+    print(f'avg. reward over 100 games: {avg_reward}')
+
+
+def traino(device):
     print(f"Using device: {device}")
     policy_net = ConvQNet().to(device)
     target_net = ConvQNet().to(device)
@@ -27,6 +33,7 @@ def main():
     input("Press enter to continue, ctrl+c to stop training...")
     start = time.time()
     losses, rewards = train(policy_net, target_net, device=device, **params)
+    policy_net.save('trained_models/convq')
     print(f"trained for {time.time()-start}")
 
     x = list(range(len(losses)))
@@ -36,8 +43,7 @@ def main():
     plt.legend()
     plt.show()
 
-    avg_reward = play_games(policy_net, 100, device)
-    print(f'avg. reward over 100 games: {avg_reward}')
+    return policy_net
 
 
 if __name__ == "__main__":

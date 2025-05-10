@@ -31,9 +31,8 @@ uv run simple_conv.py    # read the script, alter params as u like
 
 
 # todo
-- extract plot from train
-- save/load trained nets
 - eval model after training
+    - WIP: debug 'no valid moves'
 - https://tqdm.github.io/ progress bar?
 - add simple_conv details to readme
     - add training time estimate to readme

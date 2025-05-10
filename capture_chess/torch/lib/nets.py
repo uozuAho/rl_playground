@@ -10,6 +10,9 @@ class ChessNet(nn.Module, ABC):
     def print_summary(self):
         torchinfo.summary(self, input_size=(8, 8, 8), dtypes=[torch.float64])
 
+    def save(self, path):
+        torch.save(self.state_dict(), path)
+
     def get_action(self, board: Board, device: str) -> chess.Move:
         """Assumes a net with a 1x4096 (64x64) output, which represents a
         move from (64) -> to (64)
@@ -86,3 +89,9 @@ class ConvQNet(ChessNet):
         output = torch.bmm(x1_flat, x2_flat)
         output = output.view(output.size(0), -1)
         return output
+
+    @staticmethod
+    def load(path: str, device: str):
+        net = ConvQNet().to(device)
+        net.load_state_dict(torch.load(path, weights_only=True))
+        return net
