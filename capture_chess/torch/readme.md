@@ -14,6 +14,7 @@ combination of python + tensorflow + other dependencies.
 ```sh
 uv sync
 uv run envtest.py      # check the chess env works as expected
+uv run linear_net.py   # q-learning with FC NN, trains slowly, doesn't do well
 uv run simple_conv.py  # read the script, alter params as u like
 ./precommit.sh         # lint, format etc
 ```
@@ -29,7 +30,10 @@ uv run simple_conv.py  # read the script, alter params as u like
 
 
 # todo
-- split into file per method, eg linear, conv, policy gradients etc.
+- WIP: split into file per method, eg linear, conv, policy gradients etc.
+    - DONE: linear
+    - conv
+    - move get_nn_move to chessnet?
 - print net details
 - print time taken by training
 - eval model after training
