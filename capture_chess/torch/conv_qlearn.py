@@ -1,7 +1,7 @@
 import torch
 
-from nets.nets import ConvQNet
-from training.trainer import train
+from lib.nets import ConvQNet
+from lib.trainer import train
 
 
 def main():

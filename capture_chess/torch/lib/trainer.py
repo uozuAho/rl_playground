@@ -10,7 +10,7 @@ import torch.optim as optim
 import matplotlib.pyplot as plt
 
 from RLC.capture_chess.environment import Board  # type: ignore
-from nets.nets import ChessNet
+from lib.nets import ChessNet
 
 
 @dataclass

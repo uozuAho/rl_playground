@@ -1,7 +1,7 @@
 import torch
 
-from nets.nets import LinearFCQNet
-from training.trainer import train
+from lib.nets import LinearFCQNet
+from lib.trainer import train
 
 
 def main():
