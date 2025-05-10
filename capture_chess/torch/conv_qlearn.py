@@ -27,7 +27,7 @@ def main():
     for k,v in params.items():
         print(f'  {k}: {v}')
     print()
-    input("Press enter to continue...")
+    input("Press enter to continue, ctrl+c to stop training...")
     train(policy_net, target_net, device=device, **params)
 
 

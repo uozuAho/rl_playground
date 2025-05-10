@@ -31,7 +31,6 @@ uv run simple_conv.py    # read the script, alter params as u like
 
 
 # todo
-- print net details
 - print time taken by training
 - eval model after training
 - https://tqdm.github.io/ progress bar?

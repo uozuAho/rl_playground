@@ -1,15 +1,16 @@
 from abc import ABC, abstractmethod
 import torch
 import torch.nn as nn
+import torchinfo
 
 
 class ChessNet(nn.Module, ABC):
     def print_summary(self):
-        print("TODO")
+        torchinfo.summary(self, input_size=(8, 8, 8), dtypes=[torch.float64])
 
 
 class LinearFCQNet(ChessNet):
-    """Fully connected linear/sequential NN. output = 64x64"""
+    """Fully connected linear/sequential NN"""
 
     def __init__(self):
         super(LinearFCQNet, self).__init__()
