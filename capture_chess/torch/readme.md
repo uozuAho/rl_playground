@@ -13,6 +13,7 @@ combination of python + tensorflow + other dependencies.
 # quick start
 ```sh
 uv sync
+uv run envtest.py      # check the chess env works as expected
 uv run simple_conv.py  # read the script, alter params as u like
 ./precommit.sh         # lint, format etc
 ```
@@ -40,3 +41,4 @@ uv run simple_conv.py  # read the script, alter params as u like
     - can i get ok performance?
     - add periodic eval to train?
     - does sb3 do better?
+    - why does envtest sometimes fail with > 39 reward?

@@ -49,3 +49,6 @@ for i in range(1):
         print("captured:", ",".join(str(x) for x in p))
         print(b[-1])
         break
+
+
+print("if nothing printed above, we're all good")
