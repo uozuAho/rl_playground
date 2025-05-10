@@ -1,14 +1,14 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 import torch
 import torch.nn as nn
 
 
-class ChessNet(ABC):
+class ChessNet(nn.Module, ABC):
     pass
 
 
-class LinearFCQNet(nn.Module, ChessNet):
-    """Fully connected linear/sequential NN. output = 64x64 """
+class LinearFCQNet(ChessNet):
+    """Fully connected linear/sequential NN. output = 64x64"""
 
     def __init__(self):
         super(LinearFCQNet, self).__init__()
@@ -27,7 +27,6 @@ class LinearFCQNet(nn.Module, ChessNet):
         x = self.flatten(x)
         x = self.stack(x)
         return x
-
 
 
 class ConvQNet(nn.Module):
