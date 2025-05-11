@@ -31,11 +31,10 @@ uv run simple_conv.py    # read the script, alter params as u like
 
 
 # todo
-- eval model after training
-    - WIP: debug 'no valid moves'
+- remove simple_conv
+    - add simple_conv details to readme
+        - add training time estimate to readme
 - https://tqdm.github.io/ progress bar?
-- add simple_conv details to readme
-    - add training time estimate to readme
 - add more params to simple_conv script, print config & details on start
 - maybe
     - can i get ok performance?

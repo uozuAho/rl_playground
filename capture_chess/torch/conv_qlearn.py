@@ -1,21 +1,27 @@
+from pathlib import Path
 import time
 import matplotlib.pyplot as plt
 
 from lib import torch_utils
-from lib.evaluator import play_games
+from lib.evaluator import evaluate
 from lib.nets import ConvQNet
-from lib.trainer import train
+import lib.trainer
+
+
+TRAINED_MODEL_PATH = Path("./trained_models/convq")
+FORCE_TRAIN = False
 
 
 def main():
     device = torch_utils.find_device()
-    # policy_net = traino(device)
-    policy_net = ConvQNet.load("trained_models/convq", device)
-    avg_reward = play_games(policy_net, 100, device)
-    print(f"avg. reward over 100 games: {avg_reward}")
+    if not FORCE_TRAIN and TRAINED_MODEL_PATH.exists():
+        policy_net = ConvQNet.load(TRAINED_MODEL_PATH, device)
+    else:
+        policy_net = train(device)
+    evaluate("ConvQNet", policy_net, 100, device)
 
 
-def traino(device):
+def train(device):
     print(f"Using device: {device}")
     policy_net = ConvQNet().to(device)
     target_net = ConvQNet().to(device)
@@ -32,9 +38,9 @@ def traino(device):
     print()
     input("Press enter to continue, ctrl+c to stop training...")
     start = time.time()
-    losses, rewards = train(policy_net, target_net, device=device, **params)
-    policy_net.save("trained_models/convq")
-    print(f"trained for {time.time() - start}")
+    losses, rewards = lib.trainer.train(policy_net, target_net, device=device, **params)
+    policy_net.save(TRAINED_MODEL_PATH)
+    print(f"trained for {time.time() - start:0.1f}s")
 
     x = list(range(len(losses)))
     plt.xlabel("episodes")
