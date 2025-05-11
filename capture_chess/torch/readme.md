@@ -69,9 +69,7 @@ pgn = R.learn(iters=750)
 
 # todo
 - limit moves in eval
-    - extract game class?
-        - fix pawn promotion reward
-        - game move limit
+    - use CapChess everywhere
 - plot periodic eval scores
 - add more params to conv script, print config & details on start
 - train faster: cpu/gpu/other perf tricks?
