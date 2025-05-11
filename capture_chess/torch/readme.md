@@ -24,7 +24,7 @@ Capture chess rules:
 # quick start
 ```sh
 uv sync
-uv run envtest.py        # check the chess env works as expected
+uv run pytest
 uv run linear_qlearn.py  # q-learning with FC NN, trains slowly, doesn't do well
 uv run conv_qlearn.py    # q-learning with convolutional net. Does better than linear.
                          # Trains from 1000 episodes in ~90 seconds.
@@ -81,4 +81,3 @@ pgn = R.learn(iters=750)
     - https://tqdm.github.io/ progress bar to training and eval
     - perf: chess is slow. multiproc?
     - does sb3 do better?
-    - why does envtest sometimes fail with > 39 reward?
