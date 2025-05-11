@@ -25,10 +25,8 @@ Capture chess rules:
 ```sh
 uv sync
 uv run pytest
-uv run linear_qlearn.py  # q-learning with FC NN, trains slowly, doesn't do well
-uv run conv_qlearn.py    # q-learning with convolutional net. Does better than linear.
-                         # Trains from 1000 episodes in ~90 seconds.
-./precommit.sh           # lint, format etc
+uv run qlearn.py  # test various q-learning agents. tweak params, run
+./precommit.sh    # lint, format etc
 ```
 
 # notes
@@ -69,9 +67,6 @@ pgn = R.learn(iters=750)
 
 
 # todo
-- WIP: consolidate linear & conv scripts
-    - convqnet training fails when run after linear
-    - print_summary should take batch size?
 - plot periodic eval scores
 - add more params to conv script, print config & details on start
 - train faster: cpu/gpu/other perf tricks?

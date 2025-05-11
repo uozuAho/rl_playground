@@ -59,7 +59,7 @@ class LinearFCQNet(ChessNet):
         self.stack = nn.Sequential(nn.Linear(8 * 8 * 8, 64 * 64, dtype=torch.float64))
 
     def print_summary(self):
-        torchinfo.summary(self, input_size=(1,8,8,8), dtypes=[torch.float64])
+        torchinfo.summary(self, input_size=(1, 8, 8, 8), dtypes=[torch.float64])
 
     def forward(self, x: torch.Tensor):
         x = self.flatten(x)
