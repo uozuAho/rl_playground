@@ -147,12 +147,12 @@ def train(
     target_net_update_tau=1.0,
     ep_callback: t.Optional[EpCallback] = None,
 ):
-    """Returns [losses], [rewards]. One value per episode."""
+    """Returns [avg ep loss], [sum ep rewards]. One value per episode."""
     board = CaptureChess(action_limit=n_episode_action_limit)
     optimiser = optim.SGD(policy_net.parameters(), lr=1e-4)
     episode = 0
-    ep_losses = []
-    ep_rewards = []
+    ep_avg_loss = []
+    ep_total_rewards = []
     replay_mem = ReplayMemory(1000)
     for ep in range(n_episodes):
         try:
@@ -193,11 +193,13 @@ def train(
                         device,
                     )
                     losses.append(loss)
-            ep_losses.append(sum(losses))
-            ep_rewards.append(sum(rewards))
+            if losses:
+                ep_avg_loss.append(sum(losses)/len(losses))
+            ep_total_rewards.append(sum(rewards))
 
             if ep_callback:
                 ep_callback(ep)
         except KeyboardInterrupt:
             break
-    return ep_losses, ep_rewards
+    minlen = min(len(ep_avg_loss), len(ep_total_rewards))
+    return ep_avg_loss[:minlen], ep_total_rewards[:minlen]

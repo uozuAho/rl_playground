@@ -12,7 +12,8 @@ import lib.trainer
 
 TRAINED_MODEL_DIR = Path("./trained_models")
 FORCE_TRAIN = True
-DEVICE = torch_utils.find_device()
+# DEVICE = torch_utils.find_device()
+DEVICE = 'cpu'
 
 
 # path, device -> None (loads agent nets to agent object)
@@ -75,7 +76,7 @@ def main():
             assert agent.policy_net
             assert agent.target_net
 
-            agent.policy_net.print_summary()
+            agent.policy_net.print_summary(agent.device)
 
             print(f"Training {agent.label} with params:")
             for k, v in agent.train_params.items():
@@ -122,8 +123,8 @@ def train(agent: Agent):
     ep_x = list(range(len(losses)))
     plt.title(f"{agent.label} training")
     plt.xlabel("episodes")
-    plt.plot(ep_x, losses, label="loss")
-    plt.plot(ep_x, rewards, label="reward")
+    plt.plot(ep_x, losses, label="avg ep loss")
+    plt.plot(ep_x, rewards, label="sum ep reward")
 
     ev_x = list(x * eval_period_ep for x in range(len(eval_rewards)))
     plt.plot(ev_x, eval_rewards, label="avg eval reward")

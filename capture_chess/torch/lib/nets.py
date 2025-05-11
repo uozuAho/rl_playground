@@ -9,7 +9,7 @@ from lib.env import CaptureChess
 
 class ChessNet(nn.Module, ABC):
     @abstractmethod
-    def print_summary(self):
+    def print_summary(self, device: str):
         raise NotImplementedError()
 
     def save(self, path):
@@ -58,8 +58,8 @@ class LinearFCQNet(ChessNet):
         # 4095: move 63 to 63
         self.stack = nn.Sequential(nn.Linear(8 * 8 * 8, 64 * 64, dtype=torch.float64))
 
-    def print_summary(self):
-        torchinfo.summary(self, input_size=(1, 8, 8, 8), dtypes=[torch.float64])
+    def print_summary(self, device):
+        torchinfo.summary(self, input_size=(1, 8, 8, 8), dtypes=[torch.float64], device=device)
 
     def forward(self, x: torch.Tensor):
         x = self.flatten(x)
@@ -86,8 +86,8 @@ class ConvQNet(ChessNet):
             in_channels=8, out_channels=1, kernel_size=1, dtype=torch.float64
         )
 
-    def print_summary(self):
-        torchinfo.summary(self, input_size=(1, 8, 8, 8), dtypes=[torch.float64])
+    def print_summary(self, device):
+        torchinfo.summary(self, input_size=(1, 8, 8, 8), dtypes=[torch.float64], device=device)
 
     def forward(self, x):
         x1 = self.conv1(x)
