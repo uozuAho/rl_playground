@@ -26,7 +26,8 @@ Capture chess rules:
 uv sync
 uv run envtest.py        # check the chess env works as expected
 uv run linear_qlearn.py  # q-learning with FC NN, trains slowly, doesn't do well
-uv run conv_qlearn.py    # q-learning with convolutional net. Does better than linear
+uv run conv_qlearn.py    # q-learning with convolutional net. Does better than linear.
+                         # Trains from 1000 episodes in ~90 seconds.
 ./precommit.sh           # lint, format etc
 ```
 
@@ -67,10 +68,11 @@ pgn = R.learn(iters=750)
 
 
 # todo
-- remove simple_conv
-    - add simple_conv details to readme
-        - add training time estimate to readme
-- add periodic eval to train
+- limit moves in eval
+    - extract game class?
+        - fix pawn promotion reward
+        - game move limit
+- plot periodic eval scores
 - add more params to conv script, print config & details on start
 - train faster: cpu/gpu/other perf tricks?
 - can i get ok agent performance

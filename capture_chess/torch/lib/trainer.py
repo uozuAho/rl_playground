@@ -1,3 +1,5 @@
+import typing as t
+
 import chess
 from collections import deque
 from dataclasses import dataclass
@@ -11,6 +13,9 @@ import torch.optim as optim
 
 from RLC.capture_chess.environment import Board  # type: ignore
 from lib.nets import ChessNet
+
+
+type EpCallback = t.Callable[[int], None]  # func(ep_number)
 
 
 @dataclass
@@ -140,6 +145,7 @@ def train(
     batch_size=32,
     target_net_update_eps=10,
     target_net_update_tau=1.0,
+    ep_callback: t.Optional[EpCallback] = None
 ):
     """Returns [losses], [rewards]. One value per episode."""
     board = Board()
@@ -192,6 +198,9 @@ def train(
                     losses.append(loss)
             ep_losses.append(sum(losses))
             ep_rewards.append(sum(rewards))
+
+            if ep_callback:
+                ep_callback(ep)
         except KeyboardInterrupt:
             break
     return ep_losses, ep_rewards

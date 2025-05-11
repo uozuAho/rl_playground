@@ -8,8 +8,8 @@ from lib.nets import ConvQNet
 import lib.trainer
 
 
-TRAINED_MODEL_PATH = Path("./trained_models/convq")
-FORCE_TRAIN = False
+TRAINED_MODEL_PATH = Path("./trained_models/convq2")
+FORCE_TRAIN = True
 
 
 def main():
@@ -25,6 +25,14 @@ def train(device):
     print(f"Using device: {device}")
     policy_net = ConvQNet().to(device)
     target_net = ConvQNet().to(device)
+
+    def interim_eval(ep_num: int):
+        if ep_num > 64 and ep_num % 50 == 0:
+            try:
+                evaluate("adsf", policy_net, 5, device)
+            except Exception as e:
+                print(f'nonfatal: eval error: {e}')
+
     policy_net.print_summary()
     params = {
         "n_episodes": 1000,
@@ -37,9 +45,11 @@ def train(device):
         print(f"  {k}: {v}")
     print()
     input("Press enter to continue, ctrl+c to stop training...")
+
     start = time.time()
-    losses, rewards = lib.trainer.train(policy_net, target_net, device=device, **params)
+    losses, rewards = lib.trainer.train(policy_net, target_net, device=device, ep_callback=interim_eval, **params)
     policy_net.save(TRAINED_MODEL_PATH)
+
     print(f"trained for {time.time() - start:0.1f}s")
 
     x = list(range(len(losses)))
