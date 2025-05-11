@@ -67,10 +67,7 @@ pgn = R.learn(iters=750)
 
 
 # todo
-- add more params to conv script, print config & details on start
-- train faster: cpu/gpu/other perf tricks?
-- can i get ok agent performance
-    - does fc do ok at all?
+- do policy gradients
 - maybe
     - https://tqdm.github.io/ progress bar to training and eval
     - perf: chess is slow. multiproc?

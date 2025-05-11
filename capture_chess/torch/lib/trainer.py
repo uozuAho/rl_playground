@@ -145,6 +145,10 @@ def train(
     batch_size=32,
     target_net_update_eps=10,
     target_net_update_tau=1.0,
+    epsilon_start=0.99,
+    epsilon_end=0.0,
+    gamma=0.99,
+    replay_buffer_size=100,
     ep_callback: t.Optional[EpCallback] = None,
 ):
     """Returns [avg ep loss], [sum ep rewards]. One value per episode."""
@@ -153,7 +157,7 @@ def train(
     episode = 0
     ep_avg_loss = []
     ep_total_rewards = []
-    replay_mem = ReplayMemory(1000)
+    replay_mem = ReplayMemory(replay_buffer_size)
     for ep in range(n_episodes):
         try:
             print(f"{ep}/{n_episodes}")
@@ -163,8 +167,8 @@ def train(
             rewards: list[float] = []
             board.reset()
             game_over = False
-            eps = epsilon(0.99, 0.01, n_episodes, ep)
-            while not game_over and len(rewards) < n_episode_action_limit:
+            eps = epsilon(epsilon_start, epsilon_end, n_episodes, ep)
+            while not game_over:
                 state = board.layer_board
                 if np.random.uniform(0, 1) < eps:
                     action = board.get_random_action()
@@ -191,6 +195,7 @@ def train(
                         replay_mem.sample(batch_size),
                         optimiser,
                         device,
+                        gamma
                     )
                     losses.append(loss)
             if losses:

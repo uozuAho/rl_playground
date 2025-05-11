@@ -51,15 +51,19 @@ AGENTS = [
     # q-learning with convolutional net. Does better than linear.
     # Trains from 1000 episodes in ~90 seconds.
     Agent(
-        label="ConvQNet",
+        label="ConvQNet3",
         device=DEVICE,
         policy_net=ConvQNet().to(DEVICE),
         target_net=ConvQNet().to(DEVICE),
         train_params={
             "n_episodes": 1000,
-            "batch_size": 64,
+            "batch_size": 32,
+            "replay_buffer_size": 96,
             "target_net_update_eps": 10,
-            "target_net_update_tau": 1.0,
+            "target_net_update_tau": 0.5,
+            "epsilon_start": 0.9,
+            "epsilon_end": 0.0,
+            "gamma": 0.9,
         },
         load_fn=ConvQNet.load,
     ),
