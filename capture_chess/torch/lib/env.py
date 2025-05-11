@@ -11,8 +11,18 @@ class CaptureChess:
     def board(self):
         return self._board.board
 
+    @property
+    def layer_board(self):
+        return self._board.layer_board
+
     def get_random_action(self):
         return self._board.get_random_action()
+
+    def reset(self):
+        return self._board.reset()
+
+    def project_legal_moves(self):
+        return self._board.project_legal_moves()
 
     def step(self, action: chess.Move):
         done, reward = self._board.step(action)

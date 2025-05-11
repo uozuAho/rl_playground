@@ -1,13 +1,13 @@
 import time
-from RLC.capture_chess.environment import Board  # type: ignore
 
+from lib.env import CaptureChess
 from lib.nets import ChessNet
 
 
 def play_game(player: ChessNet, device: str):
     """Note that the opponent is built into the environment. It makes random
     moves."""
-    board = Board()
+    board = CaptureChess(action_limit=25)
     done = False
     total_reward = 0
     while not done:

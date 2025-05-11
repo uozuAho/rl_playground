@@ -11,7 +11,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 
-from RLC.capture_chess.environment import Board  # type: ignore
+from lib.env import CaptureChess
 from lib.nets import ChessNet
 
 
@@ -108,7 +108,7 @@ def optimise_net(
     return loss.item()
 
 
-def get_nn_move(net: nn.Module, board: Board, device) -> chess.Move:
+def get_nn_move(net: nn.Module, board: CaptureChess, device) -> chess.Move:
     """Assumes a net with a 1x4096 (64x64) output, which represents a
     move from (64) -> to (64)
     """
@@ -148,7 +148,7 @@ def train(
     ep_callback: t.Optional[EpCallback] = None,
 ):
     """Returns [losses], [rewards]. One value per episode."""
-    board = Board()
+    board = CaptureChess(action_limit=n_episode_action_limit)
     optimiser = optim.SGD(policy_net.parameters(), lr=1e-4)
     episode = 0
     ep_losses = []

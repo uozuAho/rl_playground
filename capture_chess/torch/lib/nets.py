@@ -3,7 +3,8 @@ import chess
 import torch
 import torch.nn as nn
 import torchinfo
-from RLC.capture_chess.environment import Board  # type: ignore
+
+from lib.env import CaptureChess
 
 
 class ChessNet(nn.Module, ABC):
@@ -13,7 +14,7 @@ class ChessNet(nn.Module, ABC):
     def save(self, path):
         torch.save(self.state_dict(), path)
 
-    def get_action(self, board: Board, device: str) -> chess.Move:
+    def get_action(self, board: CaptureChess, device: str) -> chess.Move:
         """Assumes a net with a 1x4096 (64x64) output, which represents a
         move from (64) -> to (64)
         """

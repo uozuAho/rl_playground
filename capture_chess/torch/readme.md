@@ -68,8 +68,7 @@ pgn = R.learn(iters=750)
 
 
 # todo
-- limit moves in eval
-    - use CapChess everywhere
+- consolidate linear & conv scripts
 - plot periodic eval scores
 - add more params to conv script, print config & details on start
 - train faster: cpu/gpu/other perf tricks?
