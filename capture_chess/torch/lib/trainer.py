@@ -194,7 +194,7 @@ def train(
                     )
                     losses.append(loss)
             if losses:
-                ep_avg_loss.append(sum(losses)/len(losses))
+                ep_avg_loss.append(sum(losses) / len(losses))
             ep_total_rewards.append(sum(rewards))
 
             if ep_callback:

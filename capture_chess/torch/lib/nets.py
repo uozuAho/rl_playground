@@ -59,7 +59,9 @@ class LinearFCQNet(ChessNet):
         self.stack = nn.Sequential(nn.Linear(8 * 8 * 8, 64 * 64, dtype=torch.float64))
 
     def print_summary(self, device):
-        torchinfo.summary(self, input_size=(1, 8, 8, 8), dtypes=[torch.float64], device=device)
+        torchinfo.summary(
+            self, input_size=(1, 8, 8, 8), dtypes=[torch.float64], device=device
+        )
 
     def forward(self, x: torch.Tensor):
         x = self.flatten(x)
@@ -87,7 +89,9 @@ class ConvQNet(ChessNet):
         )
 
     def print_summary(self, device):
-        torchinfo.summary(self, input_size=(1, 8, 8, 8), dtypes=[torch.float64], device=device)
+        torchinfo.summary(
+            self, input_size=(1, 8, 8, 8), dtypes=[torch.float64], device=device
+        )
 
     def forward(self, x):
         x1 = self.conv1(x)

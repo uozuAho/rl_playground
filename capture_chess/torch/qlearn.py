@@ -4,16 +4,15 @@ import time
 import typing as t
 import matplotlib.pyplot as plt
 
-from lib import torch_utils
 from lib.evaluator import evaluate
-from lib.nets import ChessNet, ConvQNet, LinearFCQNet
+from lib.nets import ChessNet, ConvQNet
 import lib.trainer
 
 
 TRAINED_MODEL_DIR = Path("./trained_models")
 FORCE_TRAIN = True
 # DEVICE = torch_utils.find_device()
-DEVICE = 'cpu'
+DEVICE = "cpu"
 
 
 # path, device -> None (loads agent nets to agent object)
