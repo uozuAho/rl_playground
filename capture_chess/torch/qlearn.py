@@ -48,7 +48,6 @@ AGENTS = [
             "n_episodes": 1000,
         },
     ),
-
     # q-learning with convolutional net. Does better than linear.
     # Trains from 1000 episodes in ~90 seconds.
     Agent(
