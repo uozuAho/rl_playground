@@ -1,4 +1,3 @@
-
 import chess
 
 from lib.env import CaptureChess
@@ -37,8 +36,10 @@ def play_random_game(action_limit):
 def test_play_random_games():
     action_limit = 25
     for i in range(50):
-        actions, boards, rewards, pieces_captured = play_random_game(action_limit=action_limit)
+        actions, boards, rewards, pieces_captured = play_random_game(
+            action_limit=action_limit
+        )
         for x in rewards:
             # no promotion awards, only piece captures:
-            assert x in [0,1,3,5,9]
+            assert x in [0, 1, 3, 5, 9]
             assert len(actions) <= action_limit

@@ -19,9 +19,13 @@ class CaptureChess:
 
         # no pawn promotion reward:
         if action.promotion:
-            val = (3 if action.promotion in [chess.KNIGHT, chess.BISHOP]
-                   else 5 if action.promotion == chess.ROOK
-                   else 9)
+            val = (
+                3
+                if action.promotion in [chess.KNIGHT, chess.BISHOP]
+                else 5
+                if action.promotion == chess.ROOK
+                else 9
+            )
             reward = reward + 1 - val
 
         # limit game length
