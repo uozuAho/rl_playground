@@ -171,9 +171,6 @@ def train(
                 else:
                     action = get_nn_move(policy_net, board, device)
                 game_over, reward = board.step(action)
-                # hack pawn promotion reward (don't want reward for pawn promotion)
-                if reward % 2 == 0:  # reward should only be 1,3,5,9
-                    reward = 0
                 next_state = board.layer_board
                 rewards.append(reward)
                 episode += 1

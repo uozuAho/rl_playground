@@ -34,8 +34,9 @@ uv run conv_qlearn.py    # q-learning with convolutional net. Does better than l
 # notes
 - conv net training, 5000eps:
     - loss creeps up, peaks at 800 at about 800 eps
-    - reward starts growing after this peak, seems to hit a max of ~40
-      after about 1000 eps (39 is top score without any pawn promotions)
+    - reward starts growing after this peak, seems to hit a max of ~40 after
+      about 1000 eps (39 is top score without any pawn promotions or capturing
+      promoted pieces)
     - loss & reward drop at about 3600 eps ... why?
 - simple training, linear model: loss appears to slowly increase after 5000 eps.
   no noticeable change in reward.

@@ -28,7 +28,7 @@ def play_random_game(action_limit):
             #     print(f, t)
             #     print(reward)
             #     print(env.board)
-            #     raise Exception("en passant?")
+            #     raise Exception("probably en passant")
         rewards.append(reward)
     return actions, boards, rewards, pieces_captured
 
