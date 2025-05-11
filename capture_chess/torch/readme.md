@@ -69,7 +69,9 @@ pgn = R.learn(iters=750)
 
 
 # todo
-- consolidate linear & conv scripts
+- WIP: consolidate linear & conv scripts
+    - convqnet training fails when run after linear
+    - print_summary should take batch size?
 - plot periodic eval scores
 - add more params to conv script, print config & details on start
 - train faster: cpu/gpu/other perf tricks?

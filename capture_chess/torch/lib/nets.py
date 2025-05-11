@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 import chess
 import torch
 import torch.nn as nn
@@ -8,8 +8,9 @@ from lib.env import CaptureChess
 
 
 class ChessNet(nn.Module, ABC):
+    @abstractmethod
     def print_summary(self):
-        torchinfo.summary(self, input_size=(8, 8, 8), dtypes=[torch.float64])
+        raise NotImplementedError()
 
     def save(self, path):
         torch.save(self.state_dict(), path)
@@ -57,6 +58,9 @@ class LinearFCQNet(ChessNet):
         # 4095: move 63 to 63
         self.stack = nn.Sequential(nn.Linear(8 * 8 * 8, 64 * 64, dtype=torch.float64))
 
+    def print_summary(self):
+        torchinfo.summary(self, input_size=(1,8,8,8), dtypes=[torch.float64])
+
     def forward(self, x: torch.Tensor):
         x = self.flatten(x)
         x = self.stack(x)
@@ -81,6 +85,9 @@ class ConvQNet(ChessNet):
         self.conv2 = nn.Conv2d(
             in_channels=8, out_channels=1, kernel_size=1, dtype=torch.float64
         )
+
+    def print_summary(self):
+        torchinfo.summary(self, input_size=(1, 8, 8, 8), dtypes=[torch.float64])
 
     def forward(self, x):
         x1 = self.conv1(x)
