@@ -34,10 +34,11 @@ uv run simple_conv.py    # read the script, alter params as u like
 - remove simple_conv
     - add simple_conv details to readme
         - add training time estimate to readme
-- https://tqdm.github.io/ progress bar?
-- add more params to simple_conv script, print config & details on start
+- add periodic eval to train
+- add more params to conv script, print config & details on start
+- can i get ok agent performance
 - maybe
-    - can i get ok performance?
-    - add periodic eval to train?
+    - https://tqdm.github.io/ progress bar to training and eval
+    - perf: chess is slow. multiproc?
     - does sb3 do better?
     - why does envtest sometimes fail with > 39 reward?

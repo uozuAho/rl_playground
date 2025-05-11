@@ -18,7 +18,7 @@ def main():
         policy_net = ConvQNet.load(TRAINED_MODEL_PATH, device)
     else:
         policy_net = train(device)
-    evaluate("ConvQNet", policy_net, 100, device)
+    evaluate("ConvQNet", policy_net, 10, device)
 
 
 def train(device):
