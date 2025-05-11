@@ -67,7 +67,6 @@ pgn = R.learn(iters=750)
 
 
 # todo
-- plot periodic eval scores
 - add more params to conv script, print config & details on start
 - train faster: cpu/gpu/other perf tricks?
 - can i get ok agent performance

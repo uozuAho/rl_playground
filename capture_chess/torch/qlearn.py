@@ -39,15 +39,15 @@ class Agent:
 
 AGENTS = [
     # q-learning with FC NN, trains slowly, doesn't do well
-    Agent(
-        label="LinearFC",
-        device=DEVICE,
-        policy_net=LinearFCQNet().to(DEVICE),
-        target_net=LinearFCQNet().to(DEVICE),
-        train_params={
-            "n_episodes": 1000,
-        },
-    ),
+    # Agent(
+    #     label="LinearFC",
+    #     device=DEVICE,
+    #     policy_net=LinearFCQNet().to(DEVICE),
+    #     target_net=LinearFCQNet().to(DEVICE),
+    #     train_params={
+    #         "n_episodes": 1000,
+    #     },
+    # ),
     # q-learning with convolutional net. Does better than linear.
     # Trains from 1000 episodes in ~90 seconds.
     Agent(
@@ -95,12 +95,17 @@ def main():
 
 
 def train(agent: Agent):
+    eval_period_ep = 50
+    eval_rewards = []
+
     def interim_eval(ep_num: int):
-        if ep_num > 64 and ep_num % 50 == 0:
+        if ep_num % eval_period_ep == 0:
             try:
-                evaluate(agent.label, agent.policy_net, 5, agent.device)
+                avg_reward = evaluate(agent.label, agent.policy_net, 5, agent.device)
+                eval_rewards.append(avg_reward)
             except Exception as e:
                 print(f"nonfatal: eval error: {e}")
+                eval_rewards.append(0)
 
     start = time.time()
     losses, rewards = lib.trainer.train(
@@ -114,11 +119,14 @@ def train(agent: Agent):
 
     print(f"{agent.label} trained for {time.time() - start:0.1f}s")
 
-    x = list(range(len(losses)))
+    ep_x = list(range(len(losses)))
     plt.title(f"{agent.label} training")
     plt.xlabel("episodes")
-    plt.plot(x, losses, label="loss")
-    plt.plot(x, rewards, label="reward")
+    plt.plot(ep_x, losses, label="loss")
+    plt.plot(ep_x, rewards, label="reward")
+
+    ev_x = list(x * eval_period_ep for x in range(len(eval_rewards)))
+    plt.plot(ev_x, eval_rewards, label="avg eval reward")
     plt.legend()
     plt.show()
 
