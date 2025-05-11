@@ -31,7 +31,7 @@ def train(device):
             try:
                 evaluate("adsf", policy_net, 5, device)
             except Exception as e:
-                print(f'nonfatal: eval error: {e}')
+                print(f"nonfatal: eval error: {e}")
 
     policy_net.print_summary()
     params = {
@@ -47,7 +47,9 @@ def train(device):
     input("Press enter to continue, ctrl+c to stop training...")
 
     start = time.time()
-    losses, rewards = lib.trainer.train(policy_net, target_net, device=device, ep_callback=interim_eval, **params)
+    losses, rewards = lib.trainer.train(
+        policy_net, target_net, device=device, ep_callback=interim_eval, **params
+    )
     policy_net.save(TRAINED_MODEL_PATH)
 
     print(f"trained for {time.time() - start:0.1f}s")

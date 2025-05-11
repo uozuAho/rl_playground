@@ -26,10 +26,12 @@ def play_games(player: ChessNet, num_games: int, device: str):
 
 
 def evaluate(description: str, player: ChessNet, num_games: int, device: str):
-    print(f'evaluating {description} over {num_games} games...')
+    print(f"evaluating {description} over {num_games} games...")
     start = time.time()
     avg_reward = play_games(player, num_games, device)
     duration_s = time.time() - start
-    print(f"played {num_games} games in {duration_s:0.1f}s ({num_games/duration_s:0.2f} games/s)")
+    print(
+        f"played {num_games} games in {duration_s:0.1f}s ({num_games / duration_s:0.2f} games/s)"
+    )
     print(f"avg. reward: {avg_reward}")
     return avg_reward

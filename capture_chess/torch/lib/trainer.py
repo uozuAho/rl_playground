@@ -145,7 +145,7 @@ def train(
     batch_size=32,
     target_net_update_eps=10,
     target_net_update_tau=1.0,
-    ep_callback: t.Optional[EpCallback] = None
+    ep_callback: t.Optional[EpCallback] = None,
 ):
     """Returns [losses], [rewards]. One value per episode."""
     board = Board()
