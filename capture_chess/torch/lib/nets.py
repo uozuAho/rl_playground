@@ -43,7 +43,9 @@ class ChessNet(nn.Module, ABC):
 
 
 class LinearFCQNet(ChessNet):
-    """Fully connected linear/sequential NN"""
+    """Fully connected linear/sequential NN. Corresponds to
+    https://github.com/arjangroen/RLC/blob/e54eb7380875f64fd06106c59aa376b426d9e5ca/RLC/capture_chess/agent.py#L60
+    """
 
     def __init__(self):
         super(LinearFCQNet, self).__init__()
