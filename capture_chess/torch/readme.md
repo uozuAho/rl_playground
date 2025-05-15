@@ -79,7 +79,7 @@ pgn = R.learn(iters=750)
 
 # todo
 - WIP: do policy gradients
-    - understand RLC policy gradient code
+    - agent doesn't improve with training. why
 - maybe
     - https://tqdm.github.io/ progress bar to training and eval
     - perf: chess is slow. multiproc?

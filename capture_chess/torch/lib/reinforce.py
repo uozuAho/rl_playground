@@ -58,8 +58,8 @@ class ConvPolicyNet(nn.Module):
 
 
 class PolicyGradientTrainer:
-    def __init__(self, lr=0.01, gamma=0.99):
-        self.model = ConvPolicyNet()
+    def __init__(self, lr=0.01, gamma=0.99, device='cpu'):
+        self.model = ConvPolicyNet().to(device)
         self.optimizer = optim.SGD(self.model.parameters(), lr=lr)
         self.gamma = gamma
         self.long_term_mean = []
@@ -70,14 +70,18 @@ class PolicyGradientTrainer:
         return eps_end + (eps_start - eps_end) * math.exp(-6.0 * ep / n_total_ep)
 
     @staticmethod
-    def train_new_net(n_episodes=1):
-        trainer = PolicyGradientTrainer()
+    def train_new_net(n_episodes=1, device='cpu'):
+        trainer = PolicyGradientTrainer(device=device)
+        ep_avg_losses = []
+        ep_total_rewards = []
         for _ in range(n_episodes):
-            states, actions, rewards, action_spaces = trainer.play_game()
-            trainer.policy_gradient_update(states, actions, rewards, action_spaces)
-        return trainer.model
+            states, actions, rewards, action_spaces = trainer.play_game(device)
+            loss = trainer.policy_gradient_update(states, actions, rewards, action_spaces, device)
+            ep_avg_losses.append(loss)
+            ep_total_rewards.append(sum(rewards))
+        return trainer.model, ep_avg_losses, ep_total_rewards
 
-    def play_game(self):
+    def play_game(self, device: str):
         game = CaptureChess(action_limit=25)
         done = False
 
@@ -95,14 +99,14 @@ class PolicyGradientTrainer:
             with torch.no_grad():
                 action_probs = self.model(
                     # np.expand_dims(state, axis=0),
-                    torch.from_numpy(state).unsqueeze(0),
-                    torch.from_numpy(legal_move_mask.reshape(1, 4096)),
+                    torch.from_numpy(state).unsqueeze(0).to(device),
+                    torch.from_numpy(legal_move_mask.reshape(1, 4096)).to(device),
                 )
             # self.action_value_mem.append(action_probs)
             action_probs = action_probs / action_probs.sum()
-            move: int = np.random.choice(range(4096), p=np.squeeze(action_probs))  # type: ignore
-            move_from = move // 64
-            move_to = move % 64
+            move_idx: int = np.random.choice(range(4096), p=np.squeeze(action_probs.cpu()))  # type: ignore
+            move_from = move_idx // 64
+            move_to = move_idx % 64
             moves = [
                 x
                 for x in game.board.generate_legal_moves()
@@ -133,6 +137,7 @@ class PolicyGradientTrainer:
         actions: list[tuple[int, int]],
         rewards: list[float],
         legal_moves: list[np.ndarray],
+        device: str
     ):
         """
         Update the network with data from a full episode.
@@ -146,7 +151,7 @@ class PolicyGradientTrainer:
         self.model.train()
         n_steps = len(states)
         returns = []
-        targets = torch.zeros((n_steps, 4096))
+        targets = torch.zeros((n_steps, 4096)).to(device)
 
         for t in range(n_steps):
             move_from, move_to = actions[t]
@@ -155,7 +160,7 @@ class PolicyGradientTrainer:
             r = sum([r * (self.gamma**i) for i, r in enumerate(rewards[t:])])
             returns.append(r)
 
-        returns_t = torch.tensor(returns, dtype=torch.float64)
+        returns_t = torch.tensor(returns, dtype=torch.float64).to(device)
         mean_return = returns_t.mean().item()
         self.long_term_mean.append(mean_return)
         baseline = sum(self.long_term_mean) / len(self.long_term_mean)
@@ -163,7 +168,7 @@ class PolicyGradientTrainer:
 
         # states_t = torch.tensor(states, dtype=torch.float64)
         # stack? concat? I never remember
-        states_t = torch.stack([torch.from_numpy(s) for s in states])
+        states_t = torch.stack([torch.from_numpy(s) for s in states]).to(device)
 
         # todo: confirm this is right. Add types
         # convert from TensorFlow (and Keras) : (batch_size, height, width, channels)
@@ -172,7 +177,7 @@ class PolicyGradientTrainer:
 
         action_spaces_tensor = torch.tensor(
             np.concatenate(legal_moves, axis=0), dtype=torch.float64
-        )
+        ).to(device)
 
         self.optimizer.zero_grad()
         probs = self.model(states_t, action_spaces_tensor)
@@ -180,3 +185,5 @@ class PolicyGradientTrainer:
         loss = -torch.mean(train_returns * log_probs)
         loss.backward()
         self.optimizer.step()
+
+        return loss.item()
