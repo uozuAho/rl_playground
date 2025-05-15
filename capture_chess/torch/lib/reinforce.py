@@ -4,27 +4,41 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import torchinfo
 
 from lib.env import CaptureChess
 from lib.nets import ChessNet
 
 
+# todo: this prolly isn't a ChessNet. Needs its own getaction
 class ConvPolicyNet(ChessNet):
     def __init__(self):
-        self.conv1 = nn.Conv2d(in_channels=8, out_channels=1, kernel_size=1)
-        self.conv2 = nn.Conv2d(in_channels=8, out_channels=1, kernel_size=1)
+        super(ConvPolicyNet, self).__init__()
+        self.conv1 = nn.Conv2d(
+            in_channels=8, out_channels=1, kernel_size=1, dtype=torch.float64
+        )
+        self.conv2 = nn.Conv2d(
+            in_channels=8, out_channels=1, kernel_size=1, dtype=torch.float64
+        )
 
-    def forward(self, x, legal_moves):
+    def print_summary(self, device):
+        input_data = {
+            'x': torch.ones((1, 8, 8, 8), dtype=torch.float64),
+            'legal_moves': torch.ones((1,4096), dtype=torch.float64)
+        }
+        torchinfo.summary(
+            self, input_data=input_data, dtypes=[torch.float64], device=device
+        )
+
+    def forward(self, x: torch.Tensor, legal_moves: torch.Tensor):
         x1 = self.conv1(x)
         x2 = self.conv2(x)
-
-        x1_flat = x1.view(-1, 1, 64)
-        x2_flat = x2.view(-1, 64, 1)
-
-        dot = torch.bmm(x1_flat, x2_flat).view(-1, 4096)
-        softmaxed = F.softmax(dot, dim=1)
+        x1_flat = x1.view(x1.size(0), 64, 1)
+        x2_flat = x2.view(x2.size(0), 1, 64)
+        cross = torch.bmm(x1_flat, x2_flat)
+        cross = cross.view(cross.size(0), -1)
+        softmaxed = F.softmax(cross, dim=1)
         masked = softmaxed * legal_moves
-
         return masked
 
 
@@ -40,10 +54,13 @@ class PolicyGradientTrainer:
     def epsilon(eps_start, eps_end, n_total_ep, ep):
         return eps_end + (eps_start - eps_end) * math.exp(-6.0 * ep / n_total_ep)
 
-    def train(self, n_episodes=1):
+    @staticmethod
+    def train_new_net(n_episodes=1):
+        trainer = PolicyGradientTrainer()
         for _ in range(n_episodes):
-            states, actions, rewards, action_spaces = self.play_game()
-            self.policy_gradient_update(states, actions, rewards, action_spaces)
+            states, actions, rewards, action_spaces = trainer.play_game()
+            trainer.policy_gradient_update(states, actions, rewards, action_spaces)
+        return trainer.model
 
     def play_game(self):
         game = CaptureChess(action_limit=25)
@@ -62,11 +79,9 @@ class PolicyGradientTrainer:
             legal_move_mask = game.project_legal_moves()
             with torch.no_grad():
                 action_probs = self.model(
-                    [
-                        np.expand_dims(state, axis=0),
-                        np.zeros((1, 1)),
-                        legal_move_mask.reshape(1, 4096),
-                    ]
+                    # np.expand_dims(state, axis=0),
+                    torch.from_numpy(state).unsqueeze(0),
+                    torch.from_numpy(legal_move_mask.reshape(1, 4096)),
                 )
             # self.action_value_mem.append(action_probs)
             action_probs = action_probs / action_probs.sum()
@@ -125,25 +140,27 @@ class PolicyGradientTrainer:
             r = sum([r * (self.gamma**i) for i, r in enumerate(rewards[t:])])
             returns.append(r)
 
-        returns_t = torch.tensor(returns, dtype=torch.float32)
+        returns_t = torch.tensor(returns, dtype=torch.float64)
         mean_return = returns_t.mean().item()
         self.long_term_mean.append(mean_return)
         baseline = sum(self.long_term_mean) / len(self.long_term_mean)
-        train_returns = returns - baseline
+        train_returns = returns_t - baseline
 
-        states_tensor = torch.tensor(states, dtype=torch.float32)
+        # states_t = torch.tensor(states, dtype=torch.float64)
+        # stack? concat? I never remember
+        states_t = torch.stack([torch.from_numpy(s) for s in states])
 
         # todo: confirm this is right. Add types
         # convert from TensorFlow (and Keras) : (batch_size, height, width, channels)
         # to PyTorch                            (batch_size, channels, height, width)
-        states_tensor = states_tensor.permute(0, 3, 1, 2)
+        states_t = states_t.permute(0, 3, 1, 2)
 
         action_spaces_tensor = torch.tensor(
-            np.concatenate(legal_moves, axis=0), dtype=torch.float32
+            np.concatenate(legal_moves, axis=0), dtype=torch.float64
         )
 
         self.optimizer.zero_grad()
-        probs = self.model(states_tensor, action_spaces_tensor)
+        probs = self.model(states_t, action_spaces_tensor)
         log_probs = torch.log(torch.sum(probs * targets, dim=1) + 1e-10)
         loss = -torch.mean(train_returns * log_probs)
         loss.backward()
