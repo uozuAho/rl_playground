@@ -78,7 +78,7 @@ pgn = R.learn(iters=750)
     - loss = [modified_crossentropy](https://github.com/arjangroen/RLC/blob/e54eb7380875f64fd06106c59aa376b426d9e5ca/RLC/capture_chess/agent.py#L9)
 
 # todo
-- do policy gradients
+- WIP: do policy gradients
     - understand RLC policy gradient code
 - maybe
     - https://tqdm.github.io/ progress bar to training and eval

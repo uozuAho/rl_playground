@@ -195,7 +195,7 @@ def train(
                         replay_mem.sample(batch_size),
                         optimiser,
                         device,
-                        gamma
+                        gamma,
                     )
                     losses.append(loss)
             if losses:
