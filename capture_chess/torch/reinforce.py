@@ -19,7 +19,7 @@ def train(n_episodes, device):
     print(f"trained for {time.time() - start:0.1f}s")
 
     ep_x = list(range(len(losses)))
-    plt.title(f"REINFORCE training")
+    plt.title("REINFORCE training")
     plt.xlabel("episodes")
     plt.plot(ep_x, losses, label="avg ep loss")
     plt.plot(ep_x, rewards, label="sum ep reward")

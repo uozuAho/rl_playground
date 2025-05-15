@@ -21,8 +21,8 @@ class ConvPolicyNet(nn.Module):
 
     def print_summary(self, device):
         input_data = {
-            'x': torch.ones((1, 8, 8, 8), dtype=torch.float64),
-            'legal_moves': torch.ones((1,4096), dtype=torch.float64)
+            "x": torch.ones((1, 8, 8, 8), dtype=torch.float64),
+            "legal_moves": torch.ones((1, 4096), dtype=torch.float64),
         }
         torchinfo.summary(
             self, input_data=input_data, dtypes=[torch.float64], device=device
@@ -42,7 +42,9 @@ class ConvPolicyNet(nn.Module):
     # todo: dedupe this and train. Train selects move probabilistically
     def get_action(self, game: CaptureChess, device: str):
         nn_input = torch.from_numpy(game.layer_board).unsqueeze(0).to(device)
-        legal_moves = torch.from_numpy(game.project_legal_moves()).reshape((1,4096)).to(device)
+        legal_moves = (
+            torch.from_numpy(game.project_legal_moves()).reshape((1, 4096)).to(device)
+        )
         with torch.no_grad():
             nn_output: torch.Tensor = self(nn_input, legal_moves)
         move_idx = nn_output.argmax().item()
@@ -58,7 +60,7 @@ class ConvPolicyNet(nn.Module):
 
 
 class PolicyGradientTrainer:
-    def __init__(self, lr=0.01, gamma=0.99, device='cpu'):
+    def __init__(self, lr=0.01, gamma=0.99, device="cpu"):
         self.model = ConvPolicyNet().to(device)
         self.optimizer = optim.SGD(self.model.parameters(), lr=lr)
         self.gamma = gamma
@@ -70,13 +72,15 @@ class PolicyGradientTrainer:
         return eps_end + (eps_start - eps_end) * math.exp(-6.0 * ep / n_total_ep)
 
     @staticmethod
-    def train_new_net(n_episodes=1, device='cpu'):
+    def train_new_net(n_episodes=1, device="cpu"):
         trainer = PolicyGradientTrainer(device=device)
         ep_avg_losses = []
         ep_total_rewards = []
         for _ in range(n_episodes):
             states, actions, rewards, action_spaces = trainer.play_game(device)
-            loss = trainer.policy_gradient_update(states, actions, rewards, action_spaces, device)
+            loss = trainer.policy_gradient_update(
+                states, actions, rewards, action_spaces, device
+            )
             ep_avg_losses.append(loss)
             ep_total_rewards.append(sum(rewards))
         return trainer.model, ep_avg_losses, ep_total_rewards
@@ -104,7 +108,9 @@ class PolicyGradientTrainer:
                 )
             # self.action_value_mem.append(action_probs)
             action_probs = action_probs / action_probs.sum()
-            move_idx: int = np.random.choice(range(4096), p=np.squeeze(action_probs.cpu()))  # type: ignore
+            move_idx: int = np.random.choice(
+                range(4096), p=np.squeeze(action_probs.cpu())
+            )  # type: ignore
             move_from = move_idx // 64
             move_to = move_idx % 64
             moves = [
@@ -137,7 +143,7 @@ class PolicyGradientTrainer:
         actions: list[tuple[int, int]],
         rewards: list[float],
         legal_moves: list[np.ndarray],
-        device: str
+        device: str,
     ):
         """
         Update the network with data from a full episode.

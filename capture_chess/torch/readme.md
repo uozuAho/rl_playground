@@ -79,7 +79,7 @@ pgn = R.learn(iters=750)
 
 # todo
 - WIP: do policy gradients
-    - agent doesn't improve with training. why
+    - agent doesn't improve with training. why. check todos
 - maybe
     - https://tqdm.github.io/ progress bar to training and eval
     - perf: chess is slow. multiproc?
