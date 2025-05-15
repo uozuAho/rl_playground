@@ -7,11 +7,9 @@ import torch.optim as optim
 import torchinfo
 
 from lib.env import CaptureChess
-from lib.nets import ChessNet
 
 
-# todo: this prolly isn't a ChessNet. Needs its own getaction
-class ConvPolicyNet(ChessNet):
+class ConvPolicyNet(nn.Module):
     def __init__(self):
         super(ConvPolicyNet, self).__init__()
         self.conv1 = nn.Conv2d(
@@ -40,6 +38,23 @@ class ConvPolicyNet(ChessNet):
         softmaxed = F.softmax(cross, dim=1)
         masked = softmaxed * legal_moves
         return masked
+
+    # todo: dedupe this and train. Train selects move probabilistically
+    def get_action(self, game: CaptureChess, device: str):
+        nn_input = torch.from_numpy(game.layer_board).unsqueeze(0).to(device)
+        legal_moves = torch.from_numpy(game.project_legal_moves()).reshape((1,4096)).to(device)
+        with torch.no_grad():
+            nn_output: torch.Tensor = self(nn_input, legal_moves)
+        move_idx = nn_output.argmax().item()
+        move_from = move_idx // 64
+        move_to = move_idx % 64
+        moves = [
+            x
+            for x in game.board.generate_legal_moves()
+            if x.from_square == move_from and x.to_square == move_to
+        ]
+        assert len(moves) > 0
+        return moves[0]
 
 
 class PolicyGradientTrainer:
