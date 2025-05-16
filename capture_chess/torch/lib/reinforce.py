@@ -3,6 +3,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.distributions import Categorical
 import torch.optim as optim
 import torchinfo
 
@@ -122,11 +123,13 @@ class PolicyGradientTrainer:
                     torch.from_numpy(state).unsqueeze(0).to(device),
                     torch.from_numpy(legal_move_mask.reshape(1, 4096)).to(device),
                 )
+                dist = Categorical(action_probs)
+                move_idx = dist.sample().item()
             # self.action_value_mem.append(action_probs)
-            action_probs = action_probs / action_probs.sum()
-            move_idx: int = np.random.choice(
-                range(4096), p=np.squeeze(action_probs.cpu())
-            )  # type: ignore
+            # action_probs = action_probs / action_probs.sum()
+            # move_idx: int = np.random.choice(
+            #     range(4096), p=np.squeeze(action_probs.cpu())
+            # )  # type: ignore
             move_from = move_idx // 64
             move_to = move_idx % 64
             moves = [
@@ -149,7 +152,7 @@ class PolicyGradientTrainer:
             states.append(state)
             actions.append((move_from, move_to))
             rewards.append(reward)
-            legal_moves.append(legal_move_mask.reshape(1, 4096))
+            legal_moves.append(legal_move_mask.reshape(4096,))
 
         return states, actions, rewards, legal_moves
 
@@ -195,7 +198,7 @@ class PolicyGradientTrainer:
         # todo: confirm this is right. Add types
         # convert from TensorFlow (and Keras) : (batch_size, height, width, channels)
         # to PyTorch                            (batch_size, channels, height, width)
-        states_t = states_t.permute(0, 3, 1, 2)
+        # states_t = states_t.permute(0, 3, 1, 2)
 
         # action_spaces_tensor = torch.tensor(
         #     np.concatenate(legal_moves, axis=0), dtype=torch.float64

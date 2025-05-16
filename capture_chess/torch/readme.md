@@ -25,8 +25,9 @@ Capture chess rules:
 ```sh
 uv sync
 uv run pytest
-uv run qlearn.py  # test various q-learning agents. tweak params, run
-./precommit.sh    # lint, format etc
+uv run qlearn.py    # test various q-learning agents. tweak params, run
+uv run reinforce.py # train an agent using reinforce (broken?)
+./precommit.sh      # lint, format etc
 ```
 
 # notes
@@ -78,11 +79,8 @@ pgn = R.learn(iters=750)
     - loss = [modified_crossentropy](https://github.com/arjangroen/RLC/blob/e54eb7380875f64fd06106c59aa376b426d9e5ca/RLC/capture_chess/agent.py#L9)
 
 # todo
-- WIP: do policy gradients
-    - agent doesn't improve with training
-        - DONE overfit small sample, debug
-        - compare chatgpt cartpole to my reinforce, esp. loss
-        - check todos
+- understand and fix reinforce.py
+- do the actor critic example from RLC part 4
 - maybe
     - https://tqdm.github.io/ progress bar to training and eval
     - perf: chess is slow. multiproc?

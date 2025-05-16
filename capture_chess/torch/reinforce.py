@@ -1,3 +1,13 @@
+"""
+I think this is broken. I ported the code from RLC using chatGPT. I don't have a
+great understanding of tensorflow, torch or the reinforce algortihm, so it's
+very likely I've done something wrong.
+
+The loss is very noisy, however average game rewards do seem to increase after
+~2000 episodes.
+"""
+
+
 import time
 
 from matplotlib import pyplot as plt
@@ -10,7 +20,7 @@ from lib.reinforce import PolicyGradientTrainer
 def main():
     device = "cpu"
     # train_dbg(device)
-    net = train(100, device)
+    net = train(3000, device)
     net.print_summary(device)
     evaluate("policy gradient", net, 10, device)
 
