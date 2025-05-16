@@ -9,7 +9,7 @@ def play_game(player: ChessNet, device: str):
     moves."""
     board = CaptureChess(action_limit=25)
     done = False
-    total_reward = 0
+    total_reward = 0.0
     while not done:
         action = player.get_action(board, device)
         done, reward = board.step(action)
