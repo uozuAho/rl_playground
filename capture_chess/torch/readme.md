@@ -79,7 +79,10 @@ pgn = R.learn(iters=750)
 
 # todo
 - WIP: do policy gradients
-    - agent doesn't improve with training. why. check todos
+    - agent doesn't improve with training
+        - DONE overfit small sample, debug
+        - compare chatgpt cartpole to my reinforce, esp. loss
+        - check todos
 - maybe
     - https://tqdm.github.io/ progress bar to training and eval
     - perf: chess is slow. multiproc?

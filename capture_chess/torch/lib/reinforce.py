@@ -72,6 +72,22 @@ class PolicyGradientTrainer:
         return eps_end + (eps_start - eps_end) * math.exp(-6.0 * ep / n_total_ep)
 
     @staticmethod
+    def train_known_sample(
+        states: list[np.ndarray],
+        actions: list[tuple[int, int]],
+        rewards: list[float],
+        legal_moves: list[np.ndarray],
+        n_steps: int,
+        device: str
+    ):
+        """ For debugging """
+        trainer = PolicyGradientTrainer(device=device)
+        for _ in range(n_steps):
+            loss = trainer.policy_gradient_update(states, actions, rewards, legal_moves, device)
+            print(loss)
+        return trainer.model
+
+    @staticmethod
     def train_new_net(n_episodes=1, device="cpu"):
         trainer = PolicyGradientTrainer(device=device)
         ep_avg_losses = []
@@ -152,7 +168,7 @@ class PolicyGradientTrainer:
             - states: list of board states (8x8x8 array)
             - actions: list of move (from, to)
             - rewards: list of rewards
-            - legal_moves: list of legal move masks (1x4096 array)
+            - legal_moves: list of legal move masks (4096 element array)
         """
         self.model.train()
         n_steps = len(states)
@@ -181,12 +197,14 @@ class PolicyGradientTrainer:
         # to PyTorch                            (batch_size, channels, height, width)
         states_t = states_t.permute(0, 3, 1, 2)
 
-        action_spaces_tensor = torch.tensor(
-            np.concatenate(legal_moves, axis=0), dtype=torch.float64
-        ).to(device)
+        # action_spaces_tensor = torch.tensor(
+        #     np.concatenate(legal_moves, axis=0), dtype=torch.float64
+        # ).to(device)
+
+        legal_moves_t = torch.stack([torch.from_numpy(x) for x in legal_moves]).to(device)
 
         self.optimizer.zero_grad()
-        probs = self.model(states_t, action_spaces_tensor)
+        probs = self.model(states_t, legal_moves_t)
         log_probs = torch.log(torch.sum(probs * targets, dim=1) + 1e-10)
         loss = -torch.mean(train_returns * log_probs)
         loss.backward()
