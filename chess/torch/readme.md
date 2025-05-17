@@ -9,7 +9,7 @@ uv sync
 ```
 
 # todo
-- fix test_mcts hangs
+- mcts perf: don't copy. use undo + move history
 - make & train small net
 - evaluate vs opponents
     - random
@@ -18,7 +18,6 @@ uv sync
     - (maybe) mcts with random rollout
     - (maybe) alphazero
 - make & train big net
-- maybe: perf: don't copy board in mcts, use undo + move history
 - (maybe): mcts improvement: save previous game tree?
 
 
