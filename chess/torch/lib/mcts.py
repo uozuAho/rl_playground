@@ -11,15 +11,21 @@ from lib.agent import ChessAgent
 type ValFunc = t.Callable[[env.ChessGame, env.Player], float]
 
 
-def random_rollout_reward(env: env.ChessGame, player: env.Player):
+def random_rollout_reward(env: env.ChessGame, player: env.Player, max_depth=50):
     """ Returns the given player's reward from a random rollout """
+    winner = env.winner()
     if not env.is_game_over():
+        done = False
         tempenv = env.copy()
-        while not tempenv.is_game_over():
+        i = 0
+        while not done:
+            i += 1
+            if i >= max_depth:
+                break
             move = random.choice(list(tempenv.legal_moves()))
-            tempenv.step(move)
-        w = tempenv.winner()
-    return 0 if not w else 1 if w == player else -1
+            done, _ = tempenv.step(move)
+        winner = tempenv.winner()
+    return 0 if not winner else 1 if winner == player else -1
 
 
 class MctsAgent(ChessAgent):
@@ -40,6 +46,7 @@ class MctsAgent(ChessAgent):
         self._use_valfn_for_expand = use_valfn_for_expand
 
     def get_action(self, env: env.ChessGame):
+        assert env.turn == self.player
         return _mcts_decision(env, self.n_sims, self._valfn, self._use_valfn_for_expand)
 
     def print_tree(self, env: env.ChessGame, n_sims=-1):
