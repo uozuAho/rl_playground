@@ -11,6 +11,7 @@ def make_env():
 
 
 def train(name, steps):
+    print(f"training for {steps} steps...")
     env = make_vec_env(lambda: make_env(), n_envs=1)
 
     model = MaskablePPO(
@@ -19,7 +20,7 @@ def train(name, steps):
         gamma=0.99,
         learning_rate=0.01,
         env = env,
-        verbose=1
+        verbose=1,
     )
     model.learn(total_timesteps=steps, log_interval=1)
     model.save(name)
@@ -65,11 +66,21 @@ def play_game(agent: Agent, env: ccenv.CaptureChess, interactive=False):
     return total_reward
 
 
+def evaluate(agent: Agent, n_episodes=100):
+    print(f"evaluating over {n_episodes} games...")
+    rewards = []
+    for _ in range(n_episodes):
+        reward = play_game(agent, make_env(), False)
+        rewards.append(reward)
+    print(f'avg reward: {sum(rewards)/len(rewards):0.1f}')
+
+
 try:
     model = train("maskppo", 100_000)
     agent = TrainedAgent(model)
     # play_game(RandomAgent(), make_env(), interactive=True)
-    play_game(agent, make_env(), interactive=True)
+    # play_game(agent, make_env(), interactive=True)
+    evaluate(agent)
 except ccenv.IllegalActionError as e:
     print("Illegal move attempted")
     print(e.move)
