@@ -1,7 +1,7 @@
 from math import log
 import random
 import typing as t
-import env
+import lib.env as env
 from lib.agent import ChessAgent
 
 
