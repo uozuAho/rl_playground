@@ -21,8 +21,8 @@ class ChessGame:
         self._board = Board(None, fen, capture_reward_factor)
 
     @property
-    def turn(self):
-        return self._board.board.turn
+    def turn(self) -> Player:
+        return _color_to_player[self._board.board.turn]
 
     def copy(self):
         return ChessGame(self._board.board.fen(), self._board.capture_reward_factor)

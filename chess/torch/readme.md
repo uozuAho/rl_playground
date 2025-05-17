@@ -9,7 +9,7 @@ uv sync
 ```
 
 # todo
-- add mcts from ttt
+- fix test_mcts hangs
 - make & train small net
 - evaluate vs opponents
     - random

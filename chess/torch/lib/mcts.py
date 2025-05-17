@@ -22,7 +22,7 @@ def random_rollout_reward(env: env.ChessGame, player: env.Player):
     return 0 if not w else 1 if w == player else -1
 
 
-class MctsChessAgent(ChessAgent):
+class MctsAgent(ChessAgent):
     """ Monte-carlo tree search agent.
         Good visualisation here: https://vgarciasc.github.io/mcts-viz/
         - https://github.com/vgarciasc/mcts-viz/
@@ -30,9 +30,11 @@ class MctsChessAgent(ChessAgent):
     """
     def __init__(
             self,
+            player: env.Player,
             n_sims: int,
             valfn: ValFunc = random_rollout_reward,
             use_valfn_for_expand = False):
+        self.player = player
         self.n_sims = n_sims
         self._valfn = valfn
         self._use_valfn_for_expand = use_valfn_for_expand
