@@ -1,6 +1,8 @@
 from math import log
 import random
 import typing as t
+
+import chess
 import lib.env as env
 from lib.agent import ChessAgent
 
@@ -53,7 +55,7 @@ class MctsAgent(ChessAgent):
         """ For debugging """
         n_sims = n_sims if n_sims > 0 else self.n_sims
         tree = _build_mcts_tree(env, n_sims, self._valfn, self._use_valfn_for_expand)
-        print_tree(tree)
+        print_tree(tree, None)
 
 
 def _mcts_decision(
@@ -73,7 +75,7 @@ class _MCTSNode:
         self.state = state
         self.parent: _MCTSNode = parent
         self.val_est = val_est
-        self.children: t.Dict[int, _MCTSNode] = {}  # action, node
+        self.children: t.Dict[chess.Move, _MCTSNode] = {}  # action, node
         self.visits = 0
         self.total_reward = 0.0  # sum of all rewards/estimates from all visited children
 
@@ -90,14 +92,14 @@ class _MCTSNode:
         )
 
     def __str__(self):
-        return f'{self.state.str1d()} vis{self.visits:3} tval{self.total_reward:5.2f} uct{self.ucb1():5.2f}'
+        return f'{self.state} vis{self.visits:3} tval{self.total_reward:5.2f} uct{self.ucb1():5.2f}'
 
     def __repr__(self):
         pv = self.parent.visits if self.parent else 0
         return f'v{self.visits:3} pv{pv:3} t{self.total_reward:5.2f} u{self.ucb1():5.2f}'
 
 
-def print_tree(root: _MCTSNode, action=-1, indent=0):
+def print_tree(root: _MCTSNode, action: chess.Move | None, indent=0):
     print(f'{" "*indent}{action}: {root}')
     for action, node in root.children.items():
         print_tree(node, action, indent + 4)
@@ -116,6 +118,7 @@ def _build_mcts_tree(
         # select (using tree policy): trace a path to a leaf node
         while node.children:
             maxucb = -9999999
+            maxchild = node
             for c in node.children.values():
                 ucb = c.ucb1()
                 if ucb > maxucb:
@@ -135,11 +138,12 @@ def _build_mcts_tree(
                 node.children[action] = _MCTSNode(child_state, parent=node, val_est=val)
             if use_val_func_for_expand:
                 maxval = -99999.0
+                maxchild = node
                 for c in node.children.values():
                     if c.val_est > maxval:  # type: ignore
                         maxval = c.val_est  # type: ignore
                         maxchild = c
-                node = c
+                node = maxchild
             else:
                 node = random.choice(list(node.children.values()))
 
