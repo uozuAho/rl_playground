@@ -112,6 +112,7 @@ def _build_mcts_tree(
         use_val_func_for_expand
         ):
     root = _MCTSNode(env, parent=None)
+    fen_start = env.fen()
     for _ in range(simulations):
         node = root
 
@@ -161,5 +162,7 @@ def _build_mcts_tree(
             else:
                 node.total_reward -= reward
             node = node.parent
+
+    assert root.state.fen() == fen_start
 
     return root
