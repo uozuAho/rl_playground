@@ -9,8 +9,8 @@ uv sync
 ```
 
 # todo
-- mcts perf: don't copy. use undo + move history
 - make & train small net
+- maybe: add small reward for piece captures
 - evaluate vs opponents
     - random
     - greedy

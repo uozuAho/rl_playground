@@ -72,7 +72,7 @@ def _mcts_decision(
 
 class _MCTSNode:
     def __init__(self, state: env.ChessGame, parent, val_est: float | None = None):
-        self.state = state
+        self.turn: env.Player = state.turn
         self.parent: _MCTSNode = parent
         self.val_est = val_est
         self.children: t.Dict[chess.Move, _MCTSNode] = {}  # action, node
@@ -80,7 +80,7 @@ class _MCTSNode:
         self.total_reward = 0.0  # sum of all rewards/estimates from all visited children
 
     def who_moved_last(self):
-        return env.other_player(self.state.turn)
+        return env.other_player(self.turn)
 
     def ucb1(self):
         v = self.visits
@@ -90,13 +90,6 @@ class _MCTSNode:
             float('inf') if v == 0 else
             self.total_reward / v + (2 * log(p.visits) / v) ** 0.5
         )
-
-    def __str__(self):
-        return f'{self.state} vis{self.visits:3} tval{self.total_reward:5.2f} uct{self.ucb1():5.2f}'
-
-    def __repr__(self):
-        pv = self.parent.visits if self.parent else 0
-        return f'v{self.visits:3} pv{pv:3} t{self.total_reward:5.2f} u{self.ucb1():5.2f}'
 
 
 def print_tree(root: _MCTSNode, action: chess.Move | None, indent=0):
@@ -112,46 +105,58 @@ def _build_mcts_tree(
         use_val_func_for_expand
         ):
     root = _MCTSNode(env, parent=None)
+    fen_start = env.fen()
     for _ in range(simulations):
         node = root
+        temp_state = env  # state that corresponds to node
 
         # select (using tree policy): trace a path to a leaf node
         while node.children:
             maxucb = -9999999
             maxchild = node
-            for c in node.children.values():
-                ucb = c.ucb1()
+            maxmove = None
+            for move, cnode in node.children.items():
+                ucb = cnode.ucb1()
                 if ucb > maxucb:
                     maxucb = ucb
-                    maxchild = c
+                    maxchild = cnode
+                    maxmove = move
             node = maxchild
+            assert maxmove is not None
+            temp_state.step(maxmove)
 
         # expand: initialise child nodes of leaf
-        if not node.state.is_game_over():
-            for action in node.state.legal_moves():
-                child_state = node.state.copy()
-                child_state.step(action)
+        if not temp_state.is_game_over():
+            for move in temp_state.legal_moves():
+                temp_state.step(move)
                 if use_val_func_for_expand:
-                    val = val_func(child_state, node.state.turn)
+                    val = val_func(temp_state, node.turn)
                 else:
                     val = None
-                node.children[action] = _MCTSNode(child_state, parent=node, val_est=val)
+                node.children[move] = _MCTSNode(temp_state, parent=node, val_est=val)
+                temp_state.undo()
             if use_val_func_for_expand:
                 maxval = -99999.0
                 maxchild = node
-                for c in node.children.values():
-                    if c.val_est > maxval:  # type: ignore
-                        maxval = c.val_est  # type: ignore
-                        maxchild = c
+                maxmove = None
+                for cmove, cnode in node.children.items():
+                    if cnode.val_est > maxval:  # type: ignore
+                        maxval = cnode.val_est  # type: ignore
+                        maxchild = cnode
+                        maxmove = cmove
                 node = maxchild
+                assert maxmove is not None
+                temp_state.step(maxmove)
             else:
-                node = random.choice(list(node.children.values()))
+                randmove, randnode = random.choice(list(node.children.items()))
+                node = randnode
+                temp_state.step(randmove)
 
         # simulate/rollout. Standard MCTS does a full "rollout" here, ie. plays
         # to the end of the game. Instead, we just use the state value estimate
         # todo: this should use the real reward for terminal states
         rewarded_player = node.who_moved_last()
-        reward = node.val_est or val_func(node.state, node.who_moved_last())
+        reward = node.val_est or val_func(temp_state, node.who_moved_last())
 
         # propagate values back to root
         while node:
@@ -161,5 +166,11 @@ def _build_mcts_tree(
             else:
                 node.total_reward -= reward
             node = node.parent
+            if node:
+                temp_state.undo()
+
+        assert temp_state.fen() == fen_start
+
+    assert env.fen() == fen_start
 
     return root
