@@ -9,9 +9,8 @@ uv sync
 ```
 
 # todo
-- WIP: mcts perf: don't copy. use undo + move history
-    - get rid of layer_board updates. use `chess` directly, not RLC Board
 - make & train small net
+- maybe: add small reward for piece captures
 - evaluate vs opponents
     - random
     - greedy
