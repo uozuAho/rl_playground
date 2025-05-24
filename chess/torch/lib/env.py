@@ -8,7 +8,7 @@ type Player = t.Literal[-1, 1]
 BLACK: Player = -1  # chess.BLACK = False
 WHITE: Player = 1   # chess.WHITE = True
 
-_color_to_player = {chess.BLACK: BLACK, chess.WHITE: WHITE}
+_color_to_player: dict[chess.Color, Player] = {chess.BLACK: BLACK, chess.WHITE: WHITE}
 
 
 def other_player(player: Player):
@@ -30,11 +30,18 @@ class ChessGame:
     def step(self, move: chess.Move) -> tuple[bool, float]:
         return self._board.step(move)
 
+    def undo(self):
+        self._board.board.pop()
+        self._board.init_layer_board()
+
     def is_game_over(self):
         return self._board.board.is_game_over()
 
     def legal_moves(self):
         return self._board.board.generate_legal_moves()
+
+    def fen(self):
+        return self._board.board.fen()
 
     def winner(self) -> Player | None:
         outcome = self._board.board.outcome()
