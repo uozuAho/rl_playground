@@ -15,7 +15,10 @@ uv run bot_showdown.py    # vs all bots against each other
     - plan
         - DONE write implementation plan
         - DONE do human parts first
-        - check plan with claude
+        - check plan with claude. Prompt
+
+I want to write a machine learning agent to play chess. I want to start small, and work incrementally towards an agent that uses mcts and modern best practices for machine learning. My implementation plan for doing this is in impl_plan.md. Read my plan, and add any suggestions, corrections etc at the end of the plan.
+
         - execute plan
             - feed plan to claude in chunks
 - maybe: add small reward for piece captures

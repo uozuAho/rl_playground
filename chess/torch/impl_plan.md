@@ -1,5 +1,7 @@
 - implement a greedy agent:
-    - has a small neural network for fast training
+    - it has a small neural network for fast training. The network estimates the
+      value of the chess board state, which corresponds to the probability of
+      winning from that state.
     - makes greedy moves based on the output of the network
     - updates the network using random-sampled minibatches
     - uses double learning with soft updates
