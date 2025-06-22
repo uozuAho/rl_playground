@@ -14,7 +14,7 @@ uv run bot_showdown.py    # vs all bots against each other
 - make & train small net
     - plan
         - DONE write implementation plan
-        - do human parts first
+        - DONE do human parts first
         - check plan with claude
         - execute plan
             - feed plan to claude in chunks

@@ -1,4 +1,3 @@
-- HUMAN: add layer_board to chess env: https://github.com/arjangroen/RLC/blob/master/RLC/real_chess/environment.py
 - implement a greedy agent:
     - has a small neural network for fast training
     - makes greedy moves based on the output of the network
@@ -15,9 +14,3 @@
     - check: does it approximate a fixed value function better than the smaller
       network?
 - use the larger neural net with the mcts agent
-
-
-- maybe? use TTT as reference
-    - **todo** copy these files to ./reference/
-    - tab mcts for mcts usage
-    - nn greedy for nn training (needs double learning, not implemented)
