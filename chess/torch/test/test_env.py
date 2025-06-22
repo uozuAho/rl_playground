@@ -1,4 +1,6 @@
 import random
+
+import numpy as np
 from lib.agent import RandomAgent
 import lib.env as env
 
@@ -21,3 +23,11 @@ def test_random_agent():
         agent = agents[game.turn]
         move = agent.get_action(game)
         game.step(move)
+
+
+def test_initial_state():
+    game = env.ChessGame()
+    state = game.state_np()
+    assert state.shape == (8,8,8)
+    assert np.all(state[0, 1, :] == 1)  # white pawns on row 1
+    assert np.all(state[0, 6, :] == -1)  # black pawns on row 7

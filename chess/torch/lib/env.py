@@ -1,6 +1,7 @@
 import typing as t
 
 import chess
+import numpy as np
 
 
 type Player = t.Literal[-1, 1]
@@ -58,3 +59,40 @@ class ChessGame:
         if not outcome.winner:
             return None
         return _color_to_player[outcome.winner]
+
+    def state_np(self):
+        state = np.zeros(shape=(8, 8, 8), dtype=np.float32)
+        for i in range(64):
+            row = i // 8
+            col = i % 8
+            piece = self._board.piece_at(i)
+            if piece is None:
+                continue
+            elif piece.symbol().isupper():
+                sign = 1  # FEN: upper = white
+            else:
+                sign = -1 # FEN: lower = black
+            layer = piece_layer[piece.symbol()]
+            state[layer, row, col] = sign
+            state[6, :, :] = 1 / self._board.fullmove_number
+        if self._board.turn:
+            state[6, 0, :] = 1
+        else:
+            state[6, 0, :] = -1
+        state[7, :, :] = 1
+        return state
+
+
+piece_layer = {}
+piece_layer["p"] = 0
+piece_layer["r"] = 1
+piece_layer["n"] = 2
+piece_layer["b"] = 3
+piece_layer["q"] = 4
+piece_layer["k"] = 5
+piece_layer["P"] = 0
+piece_layer["R"] = 1
+piece_layer["N"] = 2
+piece_layer["B"] = 3
+piece_layer["Q"] = 4
+piece_layer["K"] = 5
