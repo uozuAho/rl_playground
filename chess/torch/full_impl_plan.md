@@ -1,4 +1,4 @@
-- implement a greedy chess agent with the following attributes:
+- DONE: implement a greedy chess agent with the following attributes:
     - uses ChessBoard.state_np as input to the neural network
     - has a small simple value neural network for fast training. The network
       estimates the value of the chess board state, which corresponds to the

@@ -9,7 +9,7 @@ import torch.nn.functional as F
 import chess
 
 from lib.agent import ChessAgent
-from lib.env import WHITE, ChessGame, Player
+from lib.env import BLACK, WHITE, ChessGame, Player
 
 
 class ValueNetwork(nn.Module):
@@ -106,6 +106,20 @@ class GreedyChessAgent(ChessAgent):
     def _update_target_network(self):
         for target_param, param in zip(self.target_net.parameters(), self.value_net.parameters()):
             target_param.data.copy_(self.tau * param.data + (1.0 - self.tau) * target_param.data)
+
+    def train_against(self, opponent: ChessAgent, n_episodes: int):
+        for _ in range(n_episodes):
+            game = ChessGame()
+            done = False
+            players: dict[Player, ChessAgent] = {
+                WHITE: self,
+                BLACK: opponent
+            }
+            while not done:
+                move = players[game.turn].get_action(game)
+                done, reward = game.step(move)
+                self.add_experience(game.state_np(), reward)
+                self.train_step()
 
     def train_step(self):
         if len(self.replay_buffer) < self.batch_size:
