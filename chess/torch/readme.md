@@ -17,8 +17,8 @@ uv run bot_showdown.py    # vs all bots against each other
         - DONE do human parts first
         - DONE: check plan with claude
         - DONE re-check updated plan with claude
-        - WIP execute plan
-            - clean up code in greedy_agent.py
+        - WIP execute plan: implement a greedy chess agent
+            - do todos in  greedy_agent.py
             - claude "follow the instructions in plan_do_this_next.md"
 - maybe: add small reward for piece captures
 - evaluate vs opponents

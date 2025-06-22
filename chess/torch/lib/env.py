@@ -25,6 +25,9 @@ class ChessGame:
         return _color_to_player[self._board.turn]
 
     def copy(self):
+        """ Return a copy of this state. Expensive! Prefer using the same state
+            + undo() where possible
+        """
         return ChessGame(self.fen(), self.capture_reward_factor)
 
     def step(self, move: chess.Move) -> tuple[bool, float]:

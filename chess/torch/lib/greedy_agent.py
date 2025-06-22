@@ -1,6 +1,7 @@
 import random
 import collections
 from typing import Deque
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -8,7 +9,7 @@ import torch.nn.functional as F
 import chess
 
 from lib.agent import ChessAgent
-from lib.env import ChessGame, Player
+from lib.env import WHITE, ChessGame, Player
 
 
 class ValueNetwork(nn.Module):
@@ -54,6 +55,7 @@ class ExperienceReplay:
 
 class GreedyChessAgent(ChessAgent):
     def __init__(self, player: Player, lr=1e-3, gamma=0.99, tau=0.001, batch_size=32):
+        assert player == WHITE
         self.player = player
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -75,6 +77,7 @@ class GreedyChessAgent(ChessAgent):
         self.max_grad_norm = 1.0
 
     def get_action(self, env: ChessGame) -> chess.Move:
+        assert self.player == WHITE
         assert env.turn == self.player
         legal_moves = list(env.legal_moves())
 
@@ -84,8 +87,9 @@ class GreedyChessAgent(ChessAgent):
         best_move = None
         best_value = float('-inf') if self.player == 1 else float('inf')
 
+        # todo: do this in a batch
         for move in legal_moves:
-            # Make a copy and simulate the move
+            # todo: avoid copy
             env_copy = env.copy()
             env_copy.step(move)
 
@@ -94,48 +98,33 @@ class GreedyChessAgent(ChessAgent):
             with torch.no_grad():
                 value = self.value_net(state_tensor).item()
 
-            # For WHITE (player=1), we want to maximize value
-            # For BLACK (player=-1), we want to minimize value
-            if self.player == 1:  # WHITE
-                if value > best_value:
-                    best_value = value
-                    best_move = move
-            else:  # BLACK
-                if value < best_value:
-                    best_value = value
-                    best_move = move
+            if value > best_value:
+                best_value = value
+                best_move = move
 
         return best_move if best_move else legal_moves[0]
 
-    def _state_to_tensor(self, state_array):
-        """Convert numpy state array to torch tensor"""
+    def _state_to_tensor(self, state_array: np.ndarray):
         return torch.tensor(state_array, dtype=torch.float32).unsqueeze(0).to(self.device)
 
-    def update_target_network(self):
-        """Soft update of target network"""
+    def _update_target_network(self):
         for target_param, param in zip(self.target_net.parameters(), self.value_net.parameters()):
             target_param.data.copy_(self.tau * param.data + (1.0 - self.tau) * target_param.data)
 
     def train_step(self):
-        """Perform one training step using experience replay"""
         if len(self.replay_buffer) < self.batch_size:
             return
 
-        # Sample batch from replay buffer
         batch = self.replay_buffer.sample(self.batch_size)
         states, rewards = zip(*batch)
 
-        # Convert to tensors
-        state_batch = torch.stack([torch.tensor(s, dtype=torch.float32) for s in states]).to(self.device)
-        reward_batch = torch.tensor(rewards, dtype=torch.float32).to(self.device)
+        states_t = torch.stack([torch.tensor(s, dtype=torch.float32) for s in states]).to(self.device)
+        rewards_t = torch.tensor(rewards, dtype=torch.float32).to(self.device)
 
-        # Get current values
-        current_values = self.value_net(state_batch).squeeze()
+        current_values = self.value_net(states_t).squeeze()
 
-        # Compute loss (MSE between predicted value and actual reward)
-        loss = F.mse_loss(current_values, reward_batch)
+        loss = F.mse_loss(current_values, rewards_t)
 
-        # Optimize
         self.optimizer.zero_grad()
         loss.backward()
 
@@ -144,13 +133,11 @@ class GreedyChessAgent(ChessAgent):
 
         self.optimizer.step()
 
-        # Update target network
-        self.update_target_network()
+        self._update_target_network()
 
         return loss.item()
 
     def add_experience(self, state, reward):
-        """Add experience to replay buffer"""
         self.replay_buffer.push(state, reward)
 
     def save_model(self, path):
