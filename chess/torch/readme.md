@@ -16,7 +16,7 @@ uv run bot_showdown.py    # vs all bots against each other
         - DONE write implementation plan
         - DONE do human parts first
         - DONE: check plan with claude
-        - re-check updated plan with claude
+        - DONE re-check updated plan with claude
         - execute plan
             - feed plan to claude in chunks
 - maybe: add small reward for piece captures
