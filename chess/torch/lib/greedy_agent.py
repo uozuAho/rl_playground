@@ -89,18 +89,18 @@ class GreedyChessAgent(ChessAgent):
 
         # todo: do this in a batch
         for move in legal_moves:
-            # todo: avoid copy
-            env_copy = env.copy()
-            env_copy.step(move)
+            env.step(move)
 
             # Get the value of the resulting position
-            state_tensor = self._state_to_tensor(env_copy.state_np())
+            state_tensor = self._state_to_tensor(env.state_np())
             with torch.no_grad():
                 value = self.value_net(state_tensor).item()
 
             if value > best_value:
                 best_value = value
                 best_move = move
+
+            env.undo()
 
         return best_move if best_move else legal_moves[0]
 
