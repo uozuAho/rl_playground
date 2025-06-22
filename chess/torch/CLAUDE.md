@@ -4,7 +4,7 @@ Uv is used for python and dependency management.
 
 Use libraries already installed:
 - torch for machine learning
-- pytest for testing
+- pytest for testing. Tests go in ./tests
 
 Use existing code:
 - ChessGame in ./lib/env for the chess implementation
