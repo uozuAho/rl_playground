@@ -131,11 +131,6 @@ wheels = [
 ]
 
 [[package]]
-name = "rlc"
-version = "0.3"
-source = { git = "https://github.com/arjangroen/RLC.git#e54eb7380875f64fd06106c59aa376b426d9e5ca" }
-
-[[package]]
 name = "ruff"
 version = "0.11.10"
 source = { registry = "https://pypi.org/simple" }
@@ -169,7 +164,6 @@ dependencies = [
     { name = "mypy" },
     { name = "numpy" },
     { name = "pytest" },
-    { name = "rlc" },
     { name = "ruff" },
 ]
 
@@ -179,7 +173,6 @@ requires-dist = [
     { name = "mypy", specifier = ">=1.15.0" },
     { name = "numpy", specifier = ">=2.2.5" },
     { name = "pytest", specifier = ">=8.3.5" },
-    { name = "rlc", git = "https://github.com/arjangroen/RLC.git" },
     { name = "ruff", specifier = ">=0.11.10" },
 ]
 

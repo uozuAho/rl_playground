@@ -15,7 +15,6 @@ def other_player(player: Player):
 
 
 class ChessGame:
-    """ Wraps RLC env """
     def __init__(self, fen=None, capture_reward_factor=0.01):
         self._board = chess.Board(fen) if fen else chess.Board()
         self.capture_reward_factor = capture_reward_factor
