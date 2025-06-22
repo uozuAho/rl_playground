@@ -12,7 +12,12 @@ uv run bot_showdown.py    # vs all bots against each other
 
 # todo
 - make & train small net
-    - use TTT as reference
+    - plan
+        - DONE write implementation plan
+        - do human parts first
+        - check plan with claude
+        - execute plan
+            - feed plan to claude in chunks
 - maybe: add small reward for piece captures
 - evaluate vs opponents
     - random
