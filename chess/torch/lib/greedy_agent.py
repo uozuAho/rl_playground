@@ -84,25 +84,21 @@ class GreedyChessAgent(ChessAgent):
         if not legal_moves:
             raise ValueError("No legal moves available")
 
-        best_move = None
-        best_value = float('-inf') if self.player == 1 else float('inf')
-
-        # todo: do this in a batch
+        resulting_states = []
         for move in legal_moves:
             env.step(move)
-
-            # Get the value of the resulting position
-            state_tensor = self._state_to_tensor(env.state_np())
-            with torch.no_grad():
-                value = self.value_net(state_tensor).item()
-
-            if value > best_value:
-                best_value = value
-                best_move = move
-
+            resulting_states.append(env.state_np())
             env.undo()
 
-        return best_move if best_move else legal_moves[0]
+        state_tensors = torch.stack([
+            torch.tensor(state, dtype=torch.float32) for state in resulting_states
+        ]).to(self.device)
+
+        with torch.no_grad():
+            values = self.value_net(state_tensors).squeeze()
+
+        best_idx = int(torch.argmax(values).item())
+        return legal_moves[best_idx]
 
     def _state_to_tensor(self, state_array: np.ndarray):
         return torch.tensor(state_array, dtype=torch.float32).unsqueeze(0).to(self.device)
