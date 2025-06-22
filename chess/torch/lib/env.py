@@ -28,17 +28,18 @@ class ChessGame:
         return ChessGame(self.fen(), self.capture_reward_factor)
 
     def step(self, move: chess.Move) -> tuple[bool, float]:
+        """ Returns: (game_over: bool, reward: float)"""
         self._board.push(move)
         outcome = self._board.outcome()
         reward = 0.0
-        done = False
+        game_over = False
         if outcome:
-            done = True
+            game_over = True
             if outcome.winner == chess.WHITE:
                 reward = 1.0
             elif outcome.winner == chess.BLACK:
                 reward = -1.0
-        return done, reward
+        return game_over, reward
 
     def undo(self):
         self._board.pop()
