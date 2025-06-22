@@ -1,5 +1,5 @@
 [project]
-name = "torch"
+name = "woz_torch_chess"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -10,4 +10,5 @@ dependencies = [
     "numpy>=2.2.5",
     "pytest>=8.3.5",
     "ruff>=0.11.10",
+    "torch>=2.7.1",
 ]
