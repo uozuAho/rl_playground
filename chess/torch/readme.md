@@ -18,8 +18,11 @@ uv run bot_showdown.py    # vs all bots against each other
         - DONE: check plan with claude
         - DONE re-check updated plan with claude
         - WIP execute plan: implement a greedy chess agent
-            - check training. experience replay doesnt use next states. Is this
-              correct? Check ttt
+            - WIP check training. experience replay doesnt use next states. Is this
+              correct?
+                - DONE claude modify
+                - Check ttt & tweak
+                - change next state to be state after step?
             - claude "follow the instructions in impl_plan_next.md"
 - maybe: add small reward for piece captures
 - evaluate vs opponents

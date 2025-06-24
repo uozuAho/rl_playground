@@ -43,8 +43,8 @@ class ExperienceReplay:
     def __init__(self, capacity=10000):
         self.buffer: Deque = collections.deque(maxlen=capacity)
 
-    def push(self, state, reward):
-        self.buffer.append((state, reward))
+    def push(self, state, next_state, reward):
+        self.buffer.append((state, next_state, reward))
 
     def sample(self, batch_size):
         return random.sample(self.buffer, min(len(self.buffer), batch_size))
@@ -115,10 +115,18 @@ class GreedyChessAgent(ChessAgent):
                 WHITE: self,
                 BLACK: opponent
             }
+            prev_state = None
             while not done:
+                current_state = game.state_np()
                 move = players[game.turn].get_action(game)
                 done, reward = game.step(move)
-                self.add_experience(game.state_np(), reward)
+
+                if prev_state is not None and game.turn != self.player:
+                    self.add_experience(prev_state, current_state, reward)
+
+                if game.turn == self.player:
+                    prev_state = current_state
+
                 self.train_step()
 
     def train_step(self):
@@ -126,14 +134,19 @@ class GreedyChessAgent(ChessAgent):
             return
 
         batch = self.replay_buffer.sample(self.batch_size)
-        states, rewards = zip(*batch)
+        states, next_states, rewards = zip(*batch)
 
         states_t = torch.stack([torch.tensor(s, dtype=torch.float32) for s in states]).to(self.device)
+        next_states_t = torch.stack([torch.tensor(s, dtype=torch.float32) for s in next_states]).to(self.device)
         rewards_t = torch.tensor(rewards, dtype=torch.float32).to(self.device)
 
         current_values = self.value_net(states_t).squeeze()
 
-        loss = F.mse_loss(current_values, rewards_t)
+        with torch.no_grad():
+            next_values = self.target_net(next_states_t).squeeze()
+            target_values = rewards_t + self.gamma * next_values
+
+        loss = F.mse_loss(current_values, target_values)
 
         self.optimizer.zero_grad()
         loss.backward()
@@ -147,8 +160,8 @@ class GreedyChessAgent(ChessAgent):
 
         return loss.item()
 
-    def add_experience(self, state, reward):
-        self.replay_buffer.push(state, reward)
+    def add_experience(self, state, next_state, reward):
+        self.replay_buffer.push(state, next_state, reward)
 
     def save_model(self, path):
         """Save the trained model"""
