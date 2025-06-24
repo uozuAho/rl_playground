@@ -163,18 +163,3 @@ class GreedyChessAgent(ChessAgent):
 
     def add_experience(self, state, next_state, reward):
         self.replay_buffer.push(state, next_state, reward)
-
-    def save_model(self, path):
-        """Save the trained model"""
-        torch.save({
-            'value_net_state_dict': self.value_net.state_dict(),
-            'target_net_state_dict': self.target_net.state_dict(),
-            'optimizer_state_dict': self.optimizer.state_dict(),
-        }, path)
-
-    def load_model(self, path):
-        """Load a trained model"""
-        checkpoint = torch.load(path, map_location=self.device)
-        self.value_net.load_state_dict(checkpoint['value_net_state_dict'])
-        self.target_net.load_state_dict(checkpoint['target_net_state_dict'])
-        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
