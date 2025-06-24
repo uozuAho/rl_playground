@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import chess
+import matplotlib.pyplot as plt
 
 from lib.agent import ChessAgent
 from lib.env import BLACK, WHITE, ChessGame, Player
@@ -76,6 +77,12 @@ class GreedyChessAgent(ChessAgent):
         # Gradient clipping
         self.max_grad_norm = 1.0
 
+        # Training metrics
+        self.episode_wins: list[int] = []
+        self.episode_game_lengths: list[int] = []
+        self.episode_losses: list[float] = []
+        self.episode_count = 0
+
     def get_action(self, env: ChessGame) -> chess.Move:
         assert self.player == WHITE
         assert env.turn == self.player
@@ -108,7 +115,7 @@ class GreedyChessAgent(ChessAgent):
             target_param.data.copy_(self.tau * param.data + (1.0 - self.tau) * target_param.data)
 
     def train_against(self, opponent: ChessAgent, n_episodes: int):
-        for _ in range(n_episodes):
+        for episode in range(n_episodes):
             game = ChessGame()
             done = False
             players: dict[Player, ChessAgent] = {
@@ -116,11 +123,14 @@ class GreedyChessAgent(ChessAgent):
                 BLACK: opponent
             }
             prev_state = game.state_np()
+            game_length = 0
+            episode_losses = []
 
             while not done:
                 move = players[game.turn].get_action(game)
                 done, reward = game.step(move)
                 state = game.state_np()
+                game_length += 1
 
                 if game.turn != self.player:
                     self.add_experience(prev_state, state, reward)
@@ -128,11 +138,21 @@ class GreedyChessAgent(ChessAgent):
                 if game.turn == self.player:
                     prev_state = state
 
-                self.train_step()
+                loss = self.train_step()
+                if loss is not None:
+                    episode_losses.append(loss)
+
+            # Track metrics for this episode
+            self.episode_count += 1
+            winner = game.winner()
+            self.episode_wins.append(1 if winner == WHITE else 0)
+            self.episode_game_lengths.append(game_length)
+            avg_loss = sum(episode_losses) / len(episode_losses) if episode_losses else 0.0
+            self.episode_losses.append(avg_loss)
 
     def train_step(self):
         if len(self.replay_buffer) < self.batch_size:
-            return
+            return None
 
         batch = self.replay_buffer.sample(self.batch_size)
         states, next_states, rewards = zip(*batch)
@@ -163,3 +183,61 @@ class GreedyChessAgent(ChessAgent):
 
     def add_experience(self, state, next_state, reward):
         self.replay_buffer.push(state, next_state, reward)
+
+    def plot_training_metrics(self, window_size=100):
+        if not self.episode_wins:
+            print("No training data to plot")
+            return
+
+        episodes = list(range(1, len(self.episode_wins) + 1))
+
+        # Calculate rolling averages
+        def rolling_average(data, window):
+            if len(data) < window:
+                return data
+            return [sum(data[i:i+window])/window for i in range(len(data)-window+1)]
+
+        win_rate_rolling = rolling_average(self.episode_wins, window_size)
+        game_length_rolling = rolling_average(self.episode_game_lengths, window_size)
+        loss_rolling = rolling_average(self.episode_losses, window_size)
+
+        # Create subplots
+        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 10))
+
+        # Win rate plot
+        ax1.plot(episodes[-len(win_rate_rolling):], win_rate_rolling, 'b-', linewidth=2)
+        ax1.set_ylabel('Win Rate')
+        ax1.set_title(f'Training Performance (Rolling Average, Window={window_size})')
+        ax1.grid(True, alpha=0.3)
+        ax1.set_ylim(0, 1)
+
+        # Average game length plot
+        ax2.plot(episodes[-len(game_length_rolling):], game_length_rolling, 'g-', linewidth=2)
+        ax2.set_ylabel('Average Game Length')
+        ax2.grid(True, alpha=0.3)
+
+        # Evaluation loss plot
+        ax3.plot(episodes[-len(loss_rolling):], loss_rolling, 'r-', linewidth=2)
+        ax3.set_xlabel('Episode')
+        ax3.set_ylabel('Evaluation Loss')
+        ax3.grid(True, alpha=0.3)
+
+        plt.tight_layout()
+        plt.show()
+
+    def get_training_stats(self):
+        if not self.episode_wins:
+            return {}
+
+        recent_episodes = min(100, len(self.episode_wins))
+        recent_wins = self.episode_wins[-recent_episodes:]
+        recent_lengths = self.episode_game_lengths[-recent_episodes:]
+        recent_losses = self.episode_losses[-recent_episodes:]
+
+        return {
+            'total_episodes': len(self.episode_wins),
+            'recent_win_rate': sum(recent_wins) / len(recent_wins),
+            'recent_avg_game_length': sum(recent_lengths) / len(recent_lengths),
+            'recent_avg_loss': sum(recent_losses) / len(recent_losses),
+            'overall_win_rate': sum(self.episode_wins) / len(self.episode_wins)
+        }
