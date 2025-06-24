@@ -15,11 +15,15 @@ def test_greedy_agent():
     game = ChessGame()
     assert game.turn == WHITE
 
+    prev_state = game.state_np()
+
     for _ in range(agent.batch_size * 2):
         move = players[game.turn].get_action(game)
         game_over, reward = game.step(move)
+        state = game.state_np()
         assert not game_over
-        if game.turn == WHITE:
-            agent.add_experience(game.state_np(), reward)
+        if game.turn == BLACK:
+            agent.add_experience(prev_state, state, reward)
+        prev_state = state
 
     agent.train_step()
