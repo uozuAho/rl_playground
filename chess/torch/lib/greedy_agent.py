@@ -114,7 +114,7 @@ class GreedyChessAgent(ChessAgent):
         for target_param, param in zip(self.target_net.parameters(), self.value_net.parameters()):
             target_param.data.copy_(self.tau * param.data + (1.0 - self.tau) * target_param.data)
 
-    def train_against(self, opponent: ChessAgent, n_episodes: int):
+    def train_against(self, opponent: ChessAgent, n_episodes: int, plot=False):
         for episode in range(n_episodes):
             game = ChessGame()
             done = False
@@ -149,6 +149,8 @@ class GreedyChessAgent(ChessAgent):
             self.episode_game_lengths.append(game_length)
             avg_loss = sum(episode_losses) / len(episode_losses) if episode_losses else 0.0
             self.episode_losses.append(avg_loss)
+        if plot:
+            self.plot_training_metrics()
 
     def train_step(self):
         if len(self.replay_buffer) < self.batch_size:
@@ -201,22 +203,18 @@ class GreedyChessAgent(ChessAgent):
         game_length_rolling = rolling_average(self.episode_game_lengths, window_size)
         loss_rolling = rolling_average(self.episode_losses, window_size)
 
-        # Create subplots
         fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 10))
 
-        # Win rate plot
         ax1.plot(episodes[-len(win_rate_rolling):], win_rate_rolling, 'b-', linewidth=2)
         ax1.set_ylabel('Win Rate')
         ax1.set_title(f'Training Performance (Rolling Average, Window={window_size})')
         ax1.grid(True, alpha=0.3)
         ax1.set_ylim(0, 1)
 
-        # Average game length plot
         ax2.plot(episodes[-len(game_length_rolling):], game_length_rolling, 'g-', linewidth=2)
         ax2.set_ylabel('Average Game Length')
         ax2.grid(True, alpha=0.3)
 
-        # Evaluation loss plot
         ax3.plot(episodes[-len(loss_rolling):], loss_rolling, 'r-', linewidth=2)
         ax3.set_xlabel('Episode')
         ax3.set_ylabel('Evaluation Loss')

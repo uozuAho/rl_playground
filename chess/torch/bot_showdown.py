@@ -21,7 +21,8 @@ def greedy_vs_random():
     greedy = GreedyChessAgent(env.WHITE)
     random = RandomAgent(env.BLACK)
     evaluate(greedy, random, 5)
-    greedy.train_against(random, n_episodes=10)
+    print("training greedy agent for 10 episodes...")
+    greedy.train_against(random, n_episodes=10, plot=True)
     evaluate(greedy, random, 5)
 
 
