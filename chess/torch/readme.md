@@ -19,7 +19,6 @@ uv run bot_showdown.py    # vs all bots against each other
         - DONE re-check updated plan with claude
         - WIP execute plan: implement a greedy chess agent
             - claude "follow the instructions in impl_plan_next.md"
-- maybe: add small reward for piece captures
 - evaluate vs opponents
     - random
     - greedy
