@@ -9,8 +9,9 @@
     - uses a target network with soft updates
     - uses gradient clipping
     - trains against a supplied agent that implements ChessAgent in lib/agent.py
-- add an agent evaluator that logs the following:
-    - win rate vs various opponents
+- add code to evaluate the training performance of GreedyChessAgent. it should
+  plot the following against the number of episodes:
+    - win rate versus the opponent given in the train_against method
     - average game length
     - evaluation loss
 - add the ability to plot output from the evaluator
