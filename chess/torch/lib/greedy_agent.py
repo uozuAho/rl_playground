@@ -115,17 +115,18 @@ class GreedyChessAgent(ChessAgent):
                 WHITE: self,
                 BLACK: opponent
             }
-            prev_state = None
+            prev_state = game.state_np()
+
             while not done:
-                current_state = game.state_np()
                 move = players[game.turn].get_action(game)
                 done, reward = game.step(move)
+                state = game.state_np()
 
-                if prev_state is not None and game.turn != self.player:
-                    self.add_experience(prev_state, current_state, reward)
+                if game.turn != self.player:
+                    self.add_experience(prev_state, state, reward)
 
                 if game.turn == self.player:
-                    prev_state = current_state
+                    prev_state = state
 
                 self.train_step()
 
