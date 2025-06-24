@@ -81,6 +81,7 @@ class GreedyChessAgent(ChessAgent):
         self.episode_wins: list[int] = []
         self.episode_game_lengths: list[int] = []
         self.episode_losses: list[float] = []
+        self.episode_rewards: list[float] = []
         self.episode_count = 0
 
     def get_action(self, env: ChessGame) -> chess.Move:
@@ -125,6 +126,7 @@ class GreedyChessAgent(ChessAgent):
             prev_state = game.state_np()
             game_length = 0
             episode_losses = []
+            episode_reward = 0.0
 
             while not done:
                 move = players[game.turn].get_action(game)
@@ -134,6 +136,7 @@ class GreedyChessAgent(ChessAgent):
 
                 if game.turn != self.player:
                     self.add_experience(prev_state, state, reward)
+                    episode_reward += reward
 
                 if game.turn == self.player:
                     prev_state = state
@@ -149,6 +152,7 @@ class GreedyChessAgent(ChessAgent):
             self.episode_game_lengths.append(game_length)
             avg_loss = sum(episode_losses) / len(episode_losses) if episode_losses else 0.0
             self.episode_losses.append(avg_loss)
+            self.episode_rewards.append(episode_reward)
         if plot:
             self.plot_training_metrics()
 
@@ -202,8 +206,9 @@ class GreedyChessAgent(ChessAgent):
         win_rate_rolling = rolling_average(self.episode_wins, window_size)
         game_length_rolling = rolling_average(self.episode_game_lengths, window_size)
         loss_rolling = rolling_average(self.episode_losses, window_size)
+        reward_rolling = rolling_average(self.episode_rewards, window_size)
 
-        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 10))
+        fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(12, 12))
 
         ax1.plot(episodes[-len(win_rate_rolling):], win_rate_rolling, 'b-', linewidth=2)
         ax1.set_ylabel('Win Rate')
@@ -216,9 +221,13 @@ class GreedyChessAgent(ChessAgent):
         ax2.grid(True, alpha=0.3)
 
         ax3.plot(episodes[-len(loss_rolling):], loss_rolling, 'r-', linewidth=2)
-        ax3.set_xlabel('Episode')
         ax3.set_ylabel('Evaluation Loss')
         ax3.grid(True, alpha=0.3)
+
+        ax4.plot(episodes[-len(reward_rolling):], reward_rolling, 'm-', linewidth=2)
+        ax4.set_xlabel('Episode')
+        ax4.set_ylabel('Average Reward')
+        ax4.grid(True, alpha=0.3)
 
         plt.tight_layout()
         plt.show()
@@ -231,11 +240,13 @@ class GreedyChessAgent(ChessAgent):
         recent_wins = self.episode_wins[-recent_episodes:]
         recent_lengths = self.episode_game_lengths[-recent_episodes:]
         recent_losses = self.episode_losses[-recent_episodes:]
+        recent_rewards = self.episode_rewards[-recent_episodes:]
 
         return {
             'total_episodes': len(self.episode_wins),
             'recent_win_rate': sum(recent_wins) / len(recent_wins),
             'recent_avg_game_length': sum(recent_lengths) / len(recent_lengths),
             'recent_avg_loss': sum(recent_losses) / len(recent_losses),
+            'recent_avg_reward': sum(recent_rewards) / len(recent_rewards),
             'overall_win_rate': sum(self.episode_wins) / len(self.episode_wins)
         }
