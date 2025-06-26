@@ -9,7 +9,7 @@ def test_greedy_agent():
 
     players: dict[env.Player, ChessAgent] = {  # type: ignore
         WHITE: agent,
-        BLACK: RandomAgent(BLACK)
+        BLACK: RandomAgent(BLACK),
     }
 
     game = ChessGame()

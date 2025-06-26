@@ -98,9 +98,9 @@ class GreedyChessAgent(ChessAgent):
             resulting_states.append(env.state_np())
             env.undo()
 
-        state_tensors = torch.stack([
-            torch.tensor(state, dtype=torch.float32) for state in resulting_states
-        ]).to(self.device)
+        state_tensors = torch.stack(
+            [torch.tensor(state, dtype=torch.float32) for state in resulting_states]
+        ).to(self.device)
 
         with torch.no_grad():
             values = self.value_net(state_tensors).squeeze()
@@ -109,28 +109,33 @@ class GreedyChessAgent(ChessAgent):
         return legal_moves[best_idx]
 
     def _state_to_tensor(self, state_array: np.ndarray):
-        return torch.tensor(state_array, dtype=torch.float32).unsqueeze(0).to(self.device)
+        return (
+            torch.tensor(state_array, dtype=torch.float32).unsqueeze(0).to(self.device)
+        )
 
     def _update_target_network(self):
-        for target_param, param in zip(self.target_net.parameters(), self.value_net.parameters()):
-            target_param.data.copy_(self.tau * param.data + (1.0 - self.tau) * target_param.data)
+        for target_param, param in zip(
+            self.target_net.parameters(), self.value_net.parameters()
+        ):
+            target_param.data.copy_(
+                self.tau * param.data + (1.0 - self.tau) * target_param.data
+            )
 
     def train_against(
-            self,
-            opponent: ChessAgent,
-            n_episodes: int,
-            capture_reward_factor=0.0,
-            halfmove_limit: int | None=None,
-            plot=False):
+        self,
+        opponent: ChessAgent,
+        n_episodes: int,
+        capture_reward_factor=0.0,
+        halfmove_limit: int | None = None,
+        plot=False,
+    ):
         for episode in range(n_episodes):
             game = ChessGame(
                 capture_reward_factor=capture_reward_factor,
-                halfmove_limit=halfmove_limit)
+                halfmove_limit=halfmove_limit,
+            )
             done = False
-            players: dict[Player, ChessAgent] = {
-                WHITE: self,
-                BLACK: opponent
-            }
+            players: dict[Player, ChessAgent] = {WHITE: self, BLACK: opponent}
             prev_state = game.state_np()
             game_length = 0
             episode_losses = []
@@ -158,7 +163,9 @@ class GreedyChessAgent(ChessAgent):
             winner = game.winner()
             self.episode_wins.append(1 if winner == WHITE else 0)
             self.episode_game_lengths.append(game_length)
-            avg_loss = sum(episode_losses) / len(episode_losses) if episode_losses else 0.0
+            avg_loss = (
+                sum(episode_losses) / len(episode_losses) if episode_losses else 0.0
+            )
             self.episode_losses.append(avg_loss)
             self.episode_rewards.append(episode_reward)
         if plot:
@@ -171,8 +178,12 @@ class GreedyChessAgent(ChessAgent):
         batch = self.replay_buffer.sample(self.batch_size)
         states, next_states, rewards = zip(*batch)
 
-        states_t = torch.stack([torch.tensor(s, dtype=torch.float32) for s in states]).to(self.device)
-        next_states_t = torch.stack([torch.tensor(s, dtype=torch.float32) for s in next_states]).to(self.device)
+        states_t = torch.stack(
+            [torch.tensor(s, dtype=torch.float32) for s in states]
+        ).to(self.device)
+        next_states_t = torch.stack(
+            [torch.tensor(s, dtype=torch.float32) for s in next_states]
+        ).to(self.device)
         rewards_t = torch.tensor(rewards, dtype=torch.float32).to(self.device)
 
         current_values = self.value_net(states_t).squeeze()
@@ -209,7 +220,10 @@ class GreedyChessAgent(ChessAgent):
         def rolling_average(data, window):
             if len(data) < window:
                 return data
-            return [sum(data[i:i+window])/window for i in range(len(data)-window+1)]
+            return [
+                sum(data[i : i + window]) / window
+                for i in range(len(data) - window + 1)
+            ]
 
         win_rate_rolling = rolling_average(self.episode_wins, window_size)
         game_length_rolling = rolling_average(self.episode_game_lengths, window_size)
@@ -218,23 +232,30 @@ class GreedyChessAgent(ChessAgent):
 
         fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(12, 12))
 
-        ax1.plot(episodes[-len(win_rate_rolling):], win_rate_rolling, 'b-', linewidth=2)
-        ax1.set_ylabel('Win Rate')
-        ax1.set_title(f'Training Performance (Rolling Average, Window={window_size})')
+        ax1.plot(
+            episodes[-len(win_rate_rolling) :], win_rate_rolling, "b-", linewidth=2
+        )
+        ax1.set_ylabel("Win Rate")
+        ax1.set_title(f"Training Performance (Rolling Average, Window={window_size})")
         ax1.grid(True, alpha=0.3)
         ax1.set_ylim(0, 1)
 
-        ax2.plot(episodes[-len(game_length_rolling):], game_length_rolling, 'g-', linewidth=2)
-        ax2.set_ylabel('Average Game Length')
+        ax2.plot(
+            episodes[-len(game_length_rolling) :],
+            game_length_rolling,
+            "g-",
+            linewidth=2,
+        )
+        ax2.set_ylabel("Average Game Length")
         ax2.grid(True, alpha=0.3)
 
-        ax3.plot(episodes[-len(loss_rolling):], loss_rolling, 'r-', linewidth=2)
-        ax3.set_ylabel('Evaluation Loss')
+        ax3.plot(episodes[-len(loss_rolling) :], loss_rolling, "r-", linewidth=2)
+        ax3.set_ylabel("Evaluation Loss")
         ax3.grid(True, alpha=0.3)
 
-        ax4.plot(episodes[-len(reward_rolling):], reward_rolling, 'm-', linewidth=2)
-        ax4.set_xlabel('Episode')
-        ax4.set_ylabel('Average Reward')
+        ax4.plot(episodes[-len(reward_rolling) :], reward_rolling, "m-", linewidth=2)
+        ax4.set_xlabel("Episode")
+        ax4.set_ylabel("Average Reward")
         ax4.grid(True, alpha=0.3)
 
         plt.tight_layout()
@@ -251,10 +272,10 @@ class GreedyChessAgent(ChessAgent):
         recent_rewards = self.episode_rewards[-recent_episodes:]
 
         return {
-            'total_episodes': len(self.episode_wins),
-            'recent_win_rate': sum(recent_wins) / len(recent_wins),
-            'recent_avg_game_length': sum(recent_lengths) / len(recent_lengths),
-            'recent_avg_loss': sum(recent_losses) / len(recent_losses),
-            'recent_avg_reward': sum(recent_rewards) / len(recent_rewards),
-            'overall_win_rate': sum(self.episode_wins) / len(self.episode_wins)
+            "total_episodes": len(self.episode_wins),
+            "recent_win_rate": sum(recent_wins) / len(recent_wins),
+            "recent_avg_game_length": sum(recent_lengths) / len(recent_lengths),
+            "recent_avg_loss": sum(recent_losses) / len(recent_losses),
+            "recent_avg_reward": sum(recent_rewards) / len(recent_rewards),
+            "overall_win_rate": sum(self.episode_wins) / len(self.episode_wins),
         }

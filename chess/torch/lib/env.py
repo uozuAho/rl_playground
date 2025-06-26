@@ -6,7 +6,7 @@ import numpy as np
 
 type Player = t.Literal[-1, 1]
 BLACK: Player = -1  # chess.BLACK = False
-WHITE: Player = 1   # chess.WHITE = True
+WHITE: Player = 1  # chess.WHITE = True
 
 _color_to_player: dict[chess.Color, Player] = {chess.BLACK: BLACK, chess.WHITE: WHITE}
 
@@ -16,11 +16,7 @@ def other_player(player: Player):
 
 
 class ChessGame:
-    def __init__(
-            self,
-            fen=None,
-            capture_reward_factor=0.0,
-            halfmove_limit=None):
+    def __init__(self, fen=None, capture_reward_factor=0.0, halfmove_limit=None):
         self._board = chess.Board(fen) if fen else chess.Board()
         self.capture_reward_factor = capture_reward_factor
         self.halfmove_limit = halfmove_limit
@@ -30,13 +26,13 @@ class ChessGame:
         return _color_to_player[self._board.turn]
 
     def copy(self):
-        """ Return a copy of this state. Expensive! Prefer using the same state
-            + undo() where possible
+        """Return a copy of this state. Expensive! Prefer using the same state
+        + undo() where possible
         """
         return ChessGame(self.fen(), self.capture_reward_factor)
 
     def step(self, move: chess.Move) -> tuple[bool, float]:
-        """ Returns: (game_over: bool, reward: float)"""
+        """Returns: (game_over: bool, reward: float)"""
         self._board.push(move)
         outcome = self._board.outcome()
         reward = 0.0
@@ -64,7 +60,9 @@ class ChessGame:
         return self._reached_halfmove_limit() or self._board.is_game_over()
 
     def _reached_halfmove_limit(self):
-        return self.halfmove_limit and len(self._board.move_stack) >= self.halfmove_limit
+        return (
+            self.halfmove_limit and len(self._board.move_stack) >= self.halfmove_limit
+        )
 
     def legal_moves(self):
         return self._board.generate_legal_moves()
@@ -91,7 +89,7 @@ class ChessGame:
             elif piece.symbol().isupper():
                 sign = 1  # FEN: upper = white
             else:
-                sign = -1 # FEN: lower = black
+                sign = -1  # FEN: lower = black
             layer = piece_layer[piece.symbol()]
             state[layer, row, col] = sign
             state[6, :, :] = 1 / self._board.fullmove_number
