@@ -6,10 +6,14 @@ import lib.env as env
 
 
 def test_random_game():
-    game = env.ChessGame()
+    game = env.ChessGame(halfmove_limit=20)
+    num_moves = 0
     while not game.is_game_over():
         move = random.choice(list(game.legal_moves()))
-        game.step(move)
+        game_over, _ = game.step(move)
+        num_moves += 1
+        assert game_over == game.is_game_over()
+    assert num_moves <= 20
 
 
 def test_random_agent():
@@ -17,7 +21,7 @@ def test_random_agent():
         env.WHITE: RandomAgent(env.WHITE),
         env.BLACK: RandomAgent(env.BLACK)
     }
-    game = env.ChessGame()
+    game = env.ChessGame(halfmove_limit=20)
     assert game.turn == env.WHITE
     while not game.is_game_over():
         agent = agents[game.turn]

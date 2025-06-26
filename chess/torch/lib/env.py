@@ -16,9 +16,14 @@ def other_player(player: Player):
 
 
 class ChessGame:
-    def __init__(self, fen=None, capture_reward_factor=0.01):
+    def __init__(
+            self,
+            fen=None,
+            capture_reward_factor=0.01,
+            halfmove_limit=None):
         self._board = chess.Board(fen) if fen else chess.Board()
         self.capture_reward_factor = capture_reward_factor
+        self.halfmove_limit = halfmove_limit
 
     @property
     def turn(self) -> Player:
@@ -35,20 +40,30 @@ class ChessGame:
         self._board.push(move)
         outcome = self._board.outcome()
         reward = 0.0
-        game_over = False
+        captured = self._board.piece_at(move.to_square)
+        if captured:
+            reward = captured.piece_type * self.capture_reward_factor
+
+        if self._reached_halfmove_limit():
+            return True, reward
+
         if outcome:
-            game_over = True
             if outcome.winner == chess.WHITE:
                 reward = 1.0
             elif outcome.winner == chess.BLACK:
                 reward = -1.0
-        return game_over, reward
+            return True, reward
+
+        return False, reward
 
     def undo(self):
         self._board.pop()
 
     def is_game_over(self):
-        return self._board.is_game_over()
+        return self._reached_halfmove_limit() or self._board.is_game_over()
+
+    def _reached_halfmove_limit(self):
+        return self.halfmove_limit and len(self._board.move_stack) >= self.halfmove_limit
 
     def legal_moves(self):
         return self._board.generate_legal_moves()

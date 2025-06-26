@@ -9,13 +9,13 @@
     - uses a target network with soft updates
     - uses gradient clipping
     - trains against a supplied agent that implements ChessAgent in lib/agent.py
-- DONE add code to evaluate the training performance of GreedyChessAgent. it should
-  plot the following against the number of episodes:
+- DONE add code to evaluate the training performance of GreedyChessAgent. it
+  should plot the following against the number of episodes:
     - win rate versus the opponent given in the train_against method
     - average game length
     - evaluation loss
 - reduce game length during training. ideas:
-    - check RLC code
+    - check RLC code: maxiter (halfmoves)
     - add small negative reward per turn
 - check the greedy agent using the evaluator
 - add self-play capability to the agent
