@@ -17,8 +17,9 @@
 - DONE reduce game length during training. ideas:
     - check RLC code: maxiter (halfmoves)
     - add small negative reward per turn
-- check the small neural network: can it approximate a known fixed value function?
-- check the greedy agent using the evaluator
+- DONE check the small neural network: can it approximate a known fixed value function?
+- add progress bar to greedy agent training
+- train the greedy agent for longer. does its win rate increase?
 - add self-play capability to the agent
 - add checkpointing to the agent
     - save models at regular intervals during training
