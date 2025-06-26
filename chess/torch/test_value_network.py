@@ -1,13 +1,48 @@
 import torch
 import numpy as np
 import chess
-# from sklearn.metrics import mean_squared_error, mean_absolute_error
-# from scipy.stats import pearsonr
 import matplotlib.pyplot as plt
 from lib.greedy_agent import ValueNetwork
 from lib.michniew import evaluate_board
 from lib.env import ChessGame
 import random
+
+
+def mean_squared_error(y_true, y_pred):
+    return np.mean((y_true - y_pred) ** 2)
+
+
+def mean_absolute_error(y_true, y_pred):
+    return np.mean(np.abs(y_true - y_pred))
+
+
+def pearsonr(x, y):
+    x = np.array(x)
+    y = np.array(y)
+
+    mean_x = np.mean(x)
+    mean_y = np.mean(y)
+
+    numerator = np.sum((x - mean_x) * (y - mean_y))
+    sum_sq_x = np.sum((x - mean_x) ** 2)
+    sum_sq_y = np.sum((y - mean_y) ** 2)
+
+    denominator = np.sqrt(sum_sq_x * sum_sq_y)
+
+    if denominator == 0:
+        return 0.0, 1.0
+
+    correlation = numerator / denominator
+
+    n = len(x)
+    if n <= 2:
+        p_value = 1.0
+    else:
+        t_stat = correlation * np.sqrt((n - 2) / (1 - correlation ** 2 + 1e-8))
+        p_value = 2 * (1 - np.abs(t_stat) / (np.abs(t_stat) + np.sqrt(n - 2)))
+        p_value = np.clip(p_value, 0.0, 1.0)
+
+    return correlation, p_value
 
 
 def generate_random_positions(n_positions=1000):

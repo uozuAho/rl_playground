@@ -1,2 +1,2 @@
-Write code to test if ValueNetwork in lib/greedy_agent.py can accurately approximate
-evaluate_board in lib/michniew.py
+in test_value_network.py, implement mean_squared_error, mean_absolute_error and
+pearsonr without using any libraries like sklearn or scipy
