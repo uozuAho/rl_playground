@@ -19,7 +19,7 @@ class ChessGame:
     def __init__(
             self,
             fen=None,
-            capture_reward_factor=0.01,
+            capture_reward_factor=0.0,
             halfmove_limit=None):
         self._board = chess.Board(fen) if fen else chess.Board()
         self.capture_reward_factor = capture_reward_factor
@@ -42,7 +42,8 @@ class ChessGame:
         reward = 0.0
         captured = self._board.piece_at(move.to_square)
         if captured:
-            reward = captured.piece_type * self.capture_reward_factor
+            sign = 1 if captured.color == chess.WHITE else -1
+            reward = sign * captured.piece_type * self.capture_reward_factor
 
         if self._reached_halfmove_limit():
             return True, reward

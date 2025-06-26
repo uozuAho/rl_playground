@@ -11,8 +11,6 @@ uv run bot_showdown.py    # vs all bots against each other
 ```
 
 # todo
-- fix: defalt cap factor = 0
-- fix: +reward for white cap, neg when black
 - fix? total reward should be < 1 for non win/loss
 - make & train small net
     - plan
