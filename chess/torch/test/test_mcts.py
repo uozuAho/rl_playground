@@ -5,8 +5,12 @@ from lib.mcts import MctsAgent, random_rollout_reward
 
 def test_mctsrr_vs_random():
     agents = {
-        env.WHITE: MctsAgent(env.WHITE, n_sims=2, valfn=lambda e,p: random_rollout_reward(e, p, max_depth=2)),
-        env.BLACK: RandomAgent(env.BLACK)
+        env.WHITE: MctsAgent(
+            env.WHITE,
+            n_sims=2,
+            valfn=lambda e, p: random_rollout_reward(e, p, max_depth=2),
+        ),
+        env.BLACK: RandomAgent(env.BLACK),
     }
     game = env.ChessGame(halfmove_limit=20)
     assert game.turn == env.WHITE

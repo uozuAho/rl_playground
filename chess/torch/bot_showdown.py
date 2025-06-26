@@ -1,4 +1,3 @@
-
 from lib import env
 from lib.agent import RandomAgent
 from lib.evaluate import evaluate
@@ -12,7 +11,9 @@ def main():
 
 
 def mcts_vs_random():
-    w = MctsAgent(env.WHITE, n_sims=5, valfn=lambda e,p: random_rollout_reward(e,p,max_depth=5))
+    w = MctsAgent(
+        env.WHITE, n_sims=5, valfn=lambda e, p: random_rollout_reward(e, p, max_depth=5)
+    )
     b = RandomAgent(env.BLACK)
     evaluate(w, b, 5)
 
@@ -32,7 +33,8 @@ def greedy_vs_random():
         n_episodes=n_train_episodes,
         capture_reward_factor=capture_reward_factor,
         halfmove_limit=halfmove_limit,
-        plot=True)
+        plot=True,
+    )
     evaluate(greedy, random, n_eval_episodes, halfmove_limit=halfmove_limit)
 
 

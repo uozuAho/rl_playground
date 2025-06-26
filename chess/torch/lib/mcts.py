@@ -14,7 +14,7 @@ type ValFunc = t.Callable[[env.ChessGame, env.Player], float]
 
 
 def random_rollout_reward(env: env.ChessGame, player: env.Player, max_depth=50):
-    """ Returns the given player's reward from a random rollout """
+    """Returns the given player's reward from a random rollout"""
     winner = env.winner()
     if not env.is_game_over():
         done = False
@@ -31,17 +31,19 @@ def random_rollout_reward(env: env.ChessGame, player: env.Player, max_depth=50):
 
 
 class MctsAgent(ChessAgent):
-    """ Monte-carlo tree search agent.
-        Good visualisation here: https://vgarciasc.github.io/mcts-viz/
-        - https://github.com/vgarciasc/mcts-viz/
-        - my fork: https://github.com/uozuAho/mcts-viz
+    """Monte-carlo tree search agent.
+    Good visualisation here: https://vgarciasc.github.io/mcts-viz/
+    - https://github.com/vgarciasc/mcts-viz/
+    - my fork: https://github.com/uozuAho/mcts-viz
     """
+
     def __init__(
-            self,
-            player: env.Player,
-            n_sims: int,
-            valfn: ValFunc = random_rollout_reward,
-            use_valfn_for_expand = False):
+        self,
+        player: env.Player,
+        n_sims: int,
+        valfn: ValFunc = random_rollout_reward,
+        use_valfn_for_expand=False,
+    ):
         self.player = player
         self.n_sims = n_sims
         self._valfn = valfn
@@ -52,21 +54,23 @@ class MctsAgent(ChessAgent):
         return _mcts_decision(env, self.n_sims, self._valfn, self._use_valfn_for_expand)
 
     def print_tree(self, env: env.ChessGame, n_sims=-1):
-        """ For debugging """
+        """For debugging"""
         n_sims = n_sims if n_sims > 0 else self.n_sims
         tree = _build_mcts_tree(env, n_sims, self._valfn, self._use_valfn_for_expand)
         print_tree(tree, None)
 
 
 def _mcts_decision(
-        env: env.ChessGame,
-        n_simulations: int,
-        val_func: ValFunc,
-        use_val_func_for_expand: bool
-        ):
+    env: env.ChessGame,
+    n_simulations: int,
+    val_func: ValFunc,
+    use_val_func_for_expand: bool,
+):
     root = _build_mcts_tree(env, n_simulations, val_func, use_val_func_for_expand)
-    best_move = max(root.children, key=lambda move: (
-        root.children[move].visits, root.children[move].total_reward))
+    best_move = max(
+        root.children,
+        key=lambda move: (root.children[move].visits, root.children[move].total_reward),
+    )
     return best_move
 
 
@@ -77,7 +81,9 @@ class _MCTSNode:
         self.val_est = val_est
         self.children: t.Dict[chess.Move, _MCTSNode] = {}  # action, node
         self.visits = 0
-        self.total_reward = 0.0  # sum of all rewards/estimates from all visited children
+        self.total_reward = (
+            0.0  # sum of all rewards/estimates from all visited children
+        )
 
     def who_moved_last(self):
         return env.other_player(self.turn)
@@ -86,24 +92,23 @@ class _MCTSNode:
         v = self.visits
         p = self.parent
         return (
-            float('nan') if p is None else
-            float('inf') if v == 0 else
-            self.total_reward / v + (2 * log(p.visits) / v) ** 0.5
+            float("nan")
+            if p is None
+            else float("inf")
+            if v == 0
+            else self.total_reward / v + (2 * log(p.visits) / v) ** 0.5
         )
 
 
 def print_tree(root: _MCTSNode, action: chess.Move | None, indent=0):
-    print(f'{" "*indent}{action}: {root}')
+    print(f"{' ' * indent}{action}: {root}")
     for action, node in root.children.items():
         print_tree(node, action, indent + 4)
 
 
 def _build_mcts_tree(
-        env: env.ChessGame,
-        simulations: int,
-        val_func: ValFunc,
-        use_val_func_for_expand
-        ):
+    env: env.ChessGame, simulations: int, val_func: ValFunc, use_val_func_for_expand
+):
     root = _MCTSNode(env, parent=None)
     fen_start = env.fen()
     for _ in range(simulations):
