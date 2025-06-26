@@ -115,9 +115,14 @@ class GreedyChessAgent(ChessAgent):
         for target_param, param in zip(self.target_net.parameters(), self.value_net.parameters()):
             target_param.data.copy_(self.tau * param.data + (1.0 - self.tau) * target_param.data)
 
-    def train_against(self, opponent: ChessAgent, n_episodes: int, plot=False):
+    def train_against(
+            self,
+            opponent: ChessAgent,
+            n_episodes: int,
+            halfmove_limit: int | None=None,
+            plot=False):
         for episode in range(n_episodes):
-            game = ChessGame()
+            game = ChessGame(halfmove_limit=halfmove_limit)
             done = False
             players: dict[Player, ChessAgent] = {
                 WHITE: self,

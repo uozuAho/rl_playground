@@ -20,10 +20,10 @@ def mcts_vs_random():
 def greedy_vs_random():
     greedy = GreedyChessAgent(env.WHITE)
     random = RandomAgent(env.BLACK)
-    evaluate(greedy, random, 5)
+    evaluate(greedy, random, 5, halfmove_limit=80)
     print("training greedy agent for 10 episodes...")
-    greedy.train_against(random, n_episodes=10, plot=True)
-    evaluate(greedy, random, 5)
+    greedy.train_against(random, n_episodes=10, plot=True, halfmove_limit=80)
+    evaluate(greedy, random, 5, halfmove_limit=80)
 
 
 if __name__ == "__main__":

@@ -2,12 +2,15 @@ from lib import env
 from lib.agent import ChessAgent
 
 
-def play_game(agent_w: ChessAgent, agent_b: ChessAgent):
+def play_game(
+        agent_w: ChessAgent,
+        agent_b: ChessAgent,
+        halfmove_limit: int | None=None):
     agents = {
         env.WHITE: agent_w,
         env.BLACK: agent_b
     }
-    game = env.ChessGame()
+    game = env.ChessGame(halfmove_limit=halfmove_limit)
     done = False
     total_white_reward = 0.0
     while not done:
@@ -18,7 +21,11 @@ def play_game(agent_w: ChessAgent, agent_b: ChessAgent):
     return total_white_reward
 
 
-def evaluate(agent_w: ChessAgent, agent_b: ChessAgent, n_games=10):
+def evaluate(
+        agent_w: ChessAgent,
+        agent_b: ChessAgent,
+        n_games=10,
+        halfmove_limit: int | None=None):
     print(f"evaulating over {n_games} games...")
     white_rewards = []
     for _ in range(n_games):
