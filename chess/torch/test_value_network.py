@@ -38,7 +38,7 @@ def pearsonr(x, y):
     if n <= 2:
         p_value = 1.0
     else:
-        t_stat = correlation * np.sqrt((n - 2) / (1 - correlation ** 2 + 1e-8))
+        t_stat = correlation * np.sqrt((n - 2) / (1 - correlation**2 + 1e-8))
         p_value = 2 * (1 - np.abs(t_stat) / (np.abs(t_stat) + np.sqrt(n - 2)))
         p_value = np.clip(p_value, 0.0, 1.0)
 
@@ -71,7 +71,7 @@ def normalize_michniew_score(score):
     return np.tanh(score / 3000.0)
 
 
-def compare_evaluations(value_network, positions, device='cpu'):
+def compare_evaluations(value_network, positions, device="cpu"):
     """Compare ValueNetwork predictions with Michniew evaluate_board."""
     value_network.eval()
 
@@ -82,7 +82,9 @@ def compare_evaluations(value_network, positions, device='cpu'):
         for game in positions:
             # Get board state for ValueNetwork
             state = game.state_np()
-            state_tensor = torch.tensor(state, dtype=torch.float32).unsqueeze(0).to(device)
+            state_tensor = (
+                torch.tensor(state, dtype=torch.float32).unsqueeze(0).to(device)
+            )
 
             # Get ValueNetwork prediction
             network_pred = value_network(state_tensor).item()
@@ -104,11 +106,11 @@ def evaluate_accuracy(network_scores, michniew_scores):
     correlation, p_value = pearsonr(network_scores, michniew_scores)
 
     return {
-        'mse': mse,
-        'mae': mae,
-        'correlation': correlation,
-        'p_value': p_value,
-        'rmse': np.sqrt(mse)
+        "mse": mse,
+        "mae": mae,
+        "correlation": correlation,
+        "p_value": p_value,
+        "rmse": np.sqrt(mse),
     }
 
 
@@ -118,19 +120,19 @@ def plot_comparison(network_scores, michniew_scores, metrics):
 
     plt.subplot(1, 2, 1)
     plt.scatter(michniew_scores, network_scores, alpha=0.6, s=20)
-    plt.plot([-1, 1], [-1, 1], 'r--', alpha=0.8, label='Perfect correlation')
-    plt.xlabel('Michniew Evaluation (normalized)')
-    plt.ylabel('ValueNetwork Prediction')
-    plt.title(f'Evaluation Comparison\nCorrelation: {metrics["correlation"]:.3f}')
+    plt.plot([-1, 1], [-1, 1], "r--", alpha=0.8, label="Perfect correlation")
+    plt.xlabel("Michniew Evaluation (normalized)")
+    plt.ylabel("ValueNetwork Prediction")
+    plt.title(f"Evaluation Comparison\nCorrelation: {metrics['correlation']:.3f}")
     plt.legend()
     plt.grid(True, alpha=0.3)
 
     plt.subplot(1, 2, 2)
     residuals = network_scores - michniew_scores
-    plt.hist(residuals, bins=50, alpha=0.7, edgecolor='black')
-    plt.xlabel('Residuals (Network - Michniew)')
-    plt.ylabel('Frequency')
-    plt.title(f'Residual Distribution\nMAE: {metrics["mae"]:.3f}')
+    plt.hist(residuals, bins=50, alpha=0.7, edgecolor="black")
+    plt.xlabel("Residuals (Network - Michniew)")
+    plt.ylabel("Frequency")
+    plt.title(f"Residual Distribution\nMAE: {metrics['mae']:.3f}")
     plt.grid(True, alpha=0.3)
 
     plt.tight_layout()
@@ -150,7 +152,9 @@ def test_value_network_accuracy():
     positions = generate_random_positions(1000)
 
     print(f"Evaluating {len(positions)} positions...")
-    network_scores, michniew_scores = compare_evaluations(value_network, positions, device)
+    network_scores, michniew_scores = compare_evaluations(
+        value_network, positions, device
+    )
 
     # Calculate metrics
     metrics = evaluate_accuracy(network_scores, michniew_scores)
@@ -165,19 +169,29 @@ def test_value_network_accuracy():
 
     # Interpretation
     print("\n=== INTERPRETATION ===")
-    if metrics['correlation'] > 0.7:
-        print("✓ Strong positive correlation - ValueNetwork shows good agreement with Michniew")
-    elif metrics['correlation'] > 0.4:
-        print("⚠ Moderate correlation - ValueNetwork shows some agreement with Michniew")
+    if metrics["correlation"] > 0.7:
+        print(
+            "✓ Strong positive correlation - ValueNetwork shows good agreement with Michniew"
+        )
+    elif metrics["correlation"] > 0.4:
+        print(
+            "⚠ Moderate correlation - ValueNetwork shows some agreement with Michniew"
+        )
     else:
         print("✗ Poor correlation - ValueNetwork does not agree well with Michniew")
 
-    if metrics['mae'] < 0.2:
-        print("✓ Low mean absolute error - ValueNetwork predictions are close to Michniew")
-    elif metrics['mae'] < 0.4:
-        print("⚠ Moderate mean absolute error - ValueNetwork predictions are somewhat close to Michniew")
+    if metrics["mae"] < 0.2:
+        print(
+            "✓ Low mean absolute error - ValueNetwork predictions are close to Michniew"
+        )
+    elif metrics["mae"] < 0.4:
+        print(
+            "⚠ Moderate mean absolute error - ValueNetwork predictions are somewhat close to Michniew"
+        )
     else:
-        print("✗ High mean absolute error - ValueNetwork predictions differ significantly from Michniew")
+        print(
+            "✗ High mean absolute error - ValueNetwork predictions differ significantly from Michniew"
+        )
 
     # Create visualization
     plot_comparison(network_scores, michniew_scores, metrics)

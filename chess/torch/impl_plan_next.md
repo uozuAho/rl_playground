@@ -1,2 +1,1 @@
-in test_value_network.py, implement mean_squared_error, mean_absolute_error and
-pearsonr without using any libraries like sklearn or scipy
+in test_value_network.py, train the value network first before testing its accuracy. Use evaluate_board in lib/michniew.py to generate training data.
