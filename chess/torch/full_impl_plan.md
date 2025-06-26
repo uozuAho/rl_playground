@@ -14,15 +14,15 @@
     - win rate versus the opponent given in the train_against method
     - average game length
     - evaluation loss
-- reduce game length during training. ideas:
+- DONE reduce game length during training. ideas:
     - check RLC code: maxiter (halfmoves)
     - add small negative reward per turn
+- check the small neural network: can it approximate a known fixed value function?
 - check the greedy agent using the evaluator
 - add self-play capability to the agent
 - add checkpointing to the agent
     - save models at regular intervals during training
     - make it easy to load a saved model
-- check the small neural network: can it approximate a known fixed value function?
 - (maybe) Add board symmetries (rotations, reflections) to increase training
   data diversity
 - (maybe) Implement adaptive learning rates or warmup schedules for better

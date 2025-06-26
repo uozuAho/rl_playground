@@ -11,7 +11,6 @@ uv run bot_showdown.py    # vs all bots against each other
 ```
 
 # todo
-- fix? total reward should be < 1 for non win/loss
 - make & train small net
     - plan
         - DONE write implementation plan
