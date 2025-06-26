@@ -119,10 +119,13 @@ class GreedyChessAgent(ChessAgent):
             self,
             opponent: ChessAgent,
             n_episodes: int,
+            capture_reward_factor=0.0,
             halfmove_limit: int | None=None,
             plot=False):
         for episode in range(n_episodes):
-            game = ChessGame(halfmove_limit=halfmove_limit)
+            game = ChessGame(
+                capture_reward_factor=capture_reward_factor,
+                halfmove_limit=halfmove_limit)
             done = False
             players: dict[Player, ChessAgent] = {
                 WHITE: self,
