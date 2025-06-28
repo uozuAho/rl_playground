@@ -25,6 +25,10 @@ class ChessGame:
     def turn(self) -> Player:
         return _color_to_player[self._board.turn]
 
+    @property
+    def outcome(self):
+        return self._board.outcome()
+
     def copy(self):
         """Return a copy of this state. Expensive! Prefer using the same state
         + undo() where possible

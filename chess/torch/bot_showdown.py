@@ -1,6 +1,6 @@
 from lib import env
 from lib.agents.agent import RandomAgent
-from lib.agents.andoma.andoma_agent import AndomaAgent
+from lib.agents.andoma.andoma_agent import AndomaAgent, AndomaMctsAgent
 from lib.evaluate import evaluate
 from lib.agents.greedy_agent import GreedyChessAgent
 from lib.agents.mcts import MctsAgent, random_rollout_reward
@@ -9,7 +9,8 @@ from lib.agents.mcts import MctsAgent, random_rollout_reward
 def main():
     # mcts_vs_random()
     # greedy_vs_random()
-    greedy_vs_andoma()
+    # greedy_vs_andoma()
+    andoma_vs_andoma_mcts()
 
 
 def mcts_vs_random():
@@ -58,6 +59,13 @@ def greedy_vs_andoma():
         plot=False,
     )
     # evaluate(greedy, andoma, n_eval_episodes, halfmove_limit=halfmove_limit)
+
+
+def andoma_vs_andoma_mcts():
+    a = AndomaAgent(env.WHITE, search_depth=1)
+    m = AndomaMctsAgent(env.BLACK, n_sims=20)
+    print("andoma vs andoma_mcts:")
+    evaluate(a, m, 5, halfmove_limit=100)
 
 
 if __name__ == "__main__":
