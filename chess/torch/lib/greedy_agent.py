@@ -174,14 +174,16 @@ class GreedyChessAgent(ChessAgent):
 
             # Update progress bar with current metrics
             if (episode + 1) % 10 == 0:
-                recent_wins = self.episode_wins[-min(100, len(self.episode_wins)):]
+                recent_wins = self.episode_wins[-min(100, len(self.episode_wins)) :]
                 win_rate = sum(recent_wins) / len(recent_wins) if recent_wins else 0
-                pbar.set_postfix({
-                    'Win Rate': f'{win_rate:.3f}',
-                    'Avg Loss': f'{avg_loss:.4f}',
-                    'Game Len': game_length,
-                    'Reward': f'{episode_reward:.2f}'
-                })
+                pbar.set_postfix(
+                    {
+                        "Win Rate": f"{win_rate:.3f}",
+                        "Avg Loss": f"{avg_loss:.4f}",
+                        "Game Len": game_length,
+                        "Reward": f"{episode_reward:.2f}",
+                    }
+                )
 
             # Print detailed metrics periodically
             if (episode + 1) % print_every == 0:
