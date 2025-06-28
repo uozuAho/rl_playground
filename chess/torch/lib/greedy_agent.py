@@ -8,6 +8,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import chess
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 from lib.agent import ChessAgent
 from lib.env import BLACK, WHITE, ChessGame, Player
@@ -128,8 +129,10 @@ class GreedyChessAgent(ChessAgent):
         capture_reward_factor=0.0,
         halfmove_limit: int | None = None,
         plot=False,
+        print_every=100,
     ):
-        for episode in range(n_episodes):
+        pbar = tqdm(range(n_episodes), desc="Training Episodes")
+        for episode in pbar:
             game = ChessGame(
                 capture_reward_factor=capture_reward_factor,
                 halfmove_limit=halfmove_limit,
@@ -168,6 +171,29 @@ class GreedyChessAgent(ChessAgent):
             )
             self.episode_losses.append(avg_loss)
             self.episode_rewards.append(episode_reward)
+
+            # Update progress bar with current metrics
+            if (episode + 1) % 10 == 0:
+                recent_wins = self.episode_wins[-min(100, len(self.episode_wins)):]
+                win_rate = sum(recent_wins) / len(recent_wins) if recent_wins else 0
+                pbar.set_postfix({
+                    'Win Rate': f'{win_rate:.3f}',
+                    'Avg Loss': f'{avg_loss:.4f}',
+                    'Game Len': game_length,
+                    'Reward': f'{episode_reward:.2f}'
+                })
+
+            # Print detailed metrics periodically
+            if (episode + 1) % print_every == 0:
+                stats = self.get_training_stats()
+                print(f"\nEpisode {episode + 1}/{n_episodes}")
+                print(f"  Win Rate (recent): {stats['recent_win_rate']:.3f}")
+                print(f"  Win Rate (overall): {stats['overall_win_rate']:.3f}")
+                print(f"  Avg Game Length: {stats['recent_avg_game_length']:.1f}")
+                print(f"  Avg Loss: {stats['recent_avg_loss']:.4f}")
+                print(f"  Avg Reward: {stats['recent_avg_reward']:.3f}")
+                print(f"  Buffer Size: {len(self.replay_buffer)}")
+
         if plot:
             self.plot_training_metrics()
 

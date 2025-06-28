@@ -21,7 +21,7 @@ def mcts_vs_random():
 def greedy_vs_random():
     halfmove_limit = 80
     capture_reward_factor = 0.001
-    n_train_episodes = 20
+    n_train_episodes = 200
     n_eval_episodes = 5
 
     greedy = GreedyChessAgent(env.WHITE)
