@@ -20,7 +20,7 @@
 - DONE check the small neural network: can it approximate a known fixed value function?
 - DONE add a tqdm progress bar and periodic metrics printout to greedy agent
   training in lib/greedy_agent.py
-- add andoma agent to train against
+- DONE add andoma agent to train against
 - train faster
 - train the greedy agent for longer. does its win rate increase?
 - add self-play capability to the agent
