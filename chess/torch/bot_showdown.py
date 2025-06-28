@@ -62,8 +62,8 @@ def greedy_vs_andoma():
 
 
 def andoma_vs_andoma_mcts():
-    a = AndomaAgent(env.WHITE, search_depth=1)
-    m = AndomaMctsAgent(env.BLACK, n_sims=20)
+    a = AndomaAgent(env.WHITE, search_depth=2)
+    m = AndomaMctsAgent(env.BLACK, n_sims=30)
     print("andoma vs andoma_mcts:")
     evaluate(a, m, 5, halfmove_limit=100)
 

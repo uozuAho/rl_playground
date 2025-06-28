@@ -21,8 +21,15 @@
 - DONE add a tqdm progress bar and periodic metrics printout to greedy agent
   training in lib/greedy_agent.py
 - DONE add andoma agent to train against
-- add andoma-mcts agent, compare with andoma: skill + exe speed
-- train faster
+- DONE add andoma-mcts agent, compare with andoma: skill + exe speed
+- make faster. options
+    - find a fast chess engine in a fast language. switch to its language
+        - stockfish: C++: https://github.com/official-stockfish/Stockfish
+        - go
+            - https://github.com/corentings/chess
+            - https://github.com/dylhunn/dragontoothmg
+        - chesslib: java: https://github.com/bhlangonijr/chesslib
+        - UCI? eg stockfish engine -> UCI -> python agents
 - train the greedy agent for longer. does its win rate increase?
 - add self-play capability to the agent
 - add checkpointing to the agent
