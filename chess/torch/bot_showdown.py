@@ -43,21 +43,21 @@ def greedy_vs_random():
 def greedy_vs_andoma():
     halfmove_limit = 100
     capture_reward_factor = 0.001
-    n_train_episodes = 20
+    n_train_episodes = 2
     n_eval_episodes = 5
 
     greedy = GreedyChessAgent(env.WHITE)
     andoma = AndomaAgent(env.BLACK, search_depth=2)
-    evaluate(greedy, andoma, n_eval_episodes, halfmove_limit=halfmove_limit)
+    # evaluate(greedy, andoma, n_eval_episodes, halfmove_limit=halfmove_limit)
     print(f"training greedy agent for {n_train_episodes} episodes...")
     greedy.train_against(
         andoma,
         n_episodes=n_train_episodes,
         capture_reward_factor=capture_reward_factor,
         halfmove_limit=halfmove_limit,
-        plot=True,
+        plot=False,
     )
-    evaluate(greedy, andoma, n_eval_episodes, halfmove_limit=halfmove_limit)
+    # evaluate(greedy, andoma, n_eval_episodes, halfmove_limit=halfmove_limit)
 
 
 if __name__ == "__main__":

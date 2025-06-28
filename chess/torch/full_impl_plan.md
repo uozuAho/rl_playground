@@ -21,6 +21,7 @@
 - DONE add a tqdm progress bar and periodic metrics printout to greedy agent
   training in lib/greedy_agent.py
 - DONE add andoma agent to train against
+- add andoma-mcts agent, compare with andoma: skill + exe speed
 - train faster
 - train the greedy agent for longer. does its win rate increase?
 - add self-play capability to the agent
