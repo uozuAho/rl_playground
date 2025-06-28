@@ -4,7 +4,7 @@ import torch.optim as optim
 import numpy as np
 import chess
 import matplotlib.pyplot as plt
-from lib.greedy_agent import ValueNetwork
+from lib.agents.greedy_agent import ValueNetwork
 from lib.michniew import evaluate_board
 from lib.env import ChessGame
 import random

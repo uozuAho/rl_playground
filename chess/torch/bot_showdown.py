@@ -1,8 +1,8 @@
 from lib import env
-from lib.agent import RandomAgent
+from lib.agents.agent import RandomAgent
 from lib.evaluate import evaluate
-from lib.greedy_agent import GreedyChessAgent
-from lib.mcts import MctsAgent, random_rollout_reward
+from lib.agents.greedy_agent import GreedyChessAgent
+from lib.agents.mcts import MctsAgent, random_rollout_reward
 
 
 def main():

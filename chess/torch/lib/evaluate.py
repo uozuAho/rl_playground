@@ -1,5 +1,5 @@
 from lib import env
-from lib.agent import ChessAgent
+from lib.agents.agent import ChessAgent
 
 
 def play_game(

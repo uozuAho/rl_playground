@@ -2,7 +2,7 @@ import random
 
 import chess
 import numpy as np
-from lib.agent import RandomAgent
+from lib.agents.agent import RandomAgent
 import lib.env as env
 
 

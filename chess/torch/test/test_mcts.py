@@ -1,6 +1,6 @@
-from lib.agent import RandomAgent
+from lib.agents.agent import RandomAgent
 import lib.env as env
-from lib.mcts import MctsAgent, random_rollout_reward
+from lib.agents.mcts import MctsAgent, random_rollout_reward
 
 
 def test_mctsrr_vs_random():
