@@ -3,21 +3,14 @@
 This project runs two random chess agents against each other using
 LeelaChessZero's chess impl.
 
+# Quick start
 
-### 3. Build this project
 ```sh
 ./build.sh
+./build/cpp_chess
 ```
 
-### 4. Run
-```
-./cpp_chess
-```
-
-## Extending Agents
-- Implement new agents in `src/` and inherit from the `Agent` interface.
-- Register new agents in `main.cpp`.
-
-## Notes
-- Uses LeelaChessZero's `board.h` for board representation and move generation.
-- Logging is minimal for speed; enable as needed in code.
+# to do
+- implement game wrapper
+    - need to use position to work out win/loss
+        - check lc0 code - already done?
