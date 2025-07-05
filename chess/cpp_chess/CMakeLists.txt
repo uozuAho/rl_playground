@@ -26,3 +26,29 @@ add_executable(cpp_chess
     src/mystuff/cpp/agent_random.cpp
     src/mystuff/cpp/leela_board_wrapper.cpp
 )
+
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
+enable_testing()
+
+add_executable(test_leela_board_wrapper
+    test/test_leela_board_wrapper.cpp
+    src/mystuff/cpp/leela_board_wrapper.cpp
+    src/lc0chess/chess/board.cc
+    src/lc0chess/chess/gamestate.cc
+    src/lc0chess/chess/position.cc
+    src/lc0chess/utils/logging.cc
+)
+
+target_include_directories(test_leela_board_wrapper PRIVATE src/mystuff/include src/lc0chess)
+target_link_libraries(test_leela_board_wrapper gtest_main)
+
+add_test(NAME LeelaBoardWrapperTest COMMAND test_leela_board_wrapper)
