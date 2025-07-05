@@ -22,7 +22,6 @@ add_executable(cpp_chess
     src/lc0chess/utils/logging.cc
 
     src/mystuff/cpp/main.cpp
-    src/mystuff/cpp/game.cpp
     src/mystuff/cpp/agent_random.cpp
     src/mystuff/cpp/leela_board_wrapper.cpp
 )
