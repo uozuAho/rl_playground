@@ -4,11 +4,11 @@
 
 #include "chess/types.h"
 #include "chess/board.h"
+#include "leela_board_wrapper.h"
 
 class Agent {
 public:
     virtual ~Agent() = default;
-    // Returns a move in UCI or internal format, as appropriate
-    virtual lczero::Move select_move(const lczero::ChessBoard& board) = 0;
+    virtual lczero::Move select_move(const LeelaBoardWrapper& board) = 0;
     virtual std::string name() const = 0;
 };
