@@ -13,6 +13,7 @@ Then:
 ```sh
 ./run.sh test  # run tests
 ./run.sh       # run whatever's in main.cpp
+./run.sh --rebuild  # if something's going wrong during build, do a rebuild
 ```
 
 # to do

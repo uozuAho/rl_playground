@@ -27,10 +27,23 @@ function test_run() {
     popd
 }
 
-# build_full
-build_fast
+BUILD_FULL=false
+ARGS=()
+for arg in "$@"; do
+    if [[ "$arg" == "--rebuild" ]]; then
+        BUILD_FULL=true
+    else
+        ARGS+=("$arg")
+    fi
+done
 
-if [[ "$1" == "test" ]]; then
+if $BUILD_FULL; then
+    build_full
+else
+    build_fast
+fi
+
+if [[ "${ARGS[0]}" == "test" ]]; then
     test_run
 else
     run
