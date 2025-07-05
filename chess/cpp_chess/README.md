@@ -11,3 +11,7 @@ LeelaChessZero's chess impl.
 ```
 
 # to do
+- WIP: implement andoma
+    - implement stubs in chess wrapper
+    - add miech evaluation
+    - implement move ordering
