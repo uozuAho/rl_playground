@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.10)
 project(cpp_chess)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Add LeelaChessZero as a submodule or external project
-# (Instructions in README.md)
+add_definitions(-DNO_PEXT)
 
 include_directories(src/lc0chess)
 include_directories(src/mystuff/include)
