@@ -11,4 +11,3 @@ LeelaChessZero's chess impl.
 ```
 
 # to do
-- benchmark: games/sec vs python

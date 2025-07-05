@@ -1,17 +1,26 @@
 #!/bin/bash
 
-# build: full
-# rm -rf build
-# mkdir build
-# pushd build
-# cmake ..
-# make
+function build_full() {
+    rm -rf build
+    mkdir build
+    pushd build
+    cmake ..
+    make
+    popd
+}
 
-# build: fast
-pushd build
-make
+function build_fast() {
+    pushd build
+    make
+    popd
+}
 
-# run
-./cpp_chess
+function run() {
+    pushd build
+    ./cpp_chess
+    popd
+}
 
-popd
+# build_full
+build_fast
+run
