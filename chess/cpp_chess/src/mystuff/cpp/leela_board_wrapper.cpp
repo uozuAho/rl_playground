@@ -26,12 +26,9 @@ bool LeelaBoardWrapper::is_game_over() const {
 std::string LeelaBoardWrapper::result() const {
     auto moves = impl_->position.GetBoard().GenerateLegalMoves();
     if (!moves.empty() && impl_->position.GetRule50Ply() < 100) return "*";
-    // Checkmate or stalemate
     if (impl_->position.GetBoard().IsUnderCheck( )) {
-        // Side to move is checkmated
         return impl_->position.IsBlackToMove() ? "1-0" : "0-1";
     }
-    // Stalemate or 50-move rule
     return "1/2-1/2";
 }
 

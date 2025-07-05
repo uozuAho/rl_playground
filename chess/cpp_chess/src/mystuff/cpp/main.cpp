@@ -10,11 +10,14 @@ int main() {
     Agent* agents[2] = {&white, &black};
     LeelaBoardWrapper board = LeelaBoardWrapper();
     int turn = 0;
+    int numHalfmoves = 0;
     while (!board.is_game_over()) {
         auto move = agents[turn]->select_move(board);
         board.make_move(move);
         turn = 1 - turn;
+        numHalfmoves++;
     }
     std::cout << "Result: " << board.result() << std::endl;
+    std::cout << "Num moves: " << numHalfmoves << std::endl;
     return 0;
 }
