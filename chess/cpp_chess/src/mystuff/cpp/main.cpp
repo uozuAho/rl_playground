@@ -1,10 +1,10 @@
 #include <iostream>
+#include <chrono>
 #include "agent_random.h"
 #include "chess/board.h"
 
-int main() {
+int play_single_game() {
     lczero::InitializeMagicBitboards();
-
     RandomAgent white = RandomAgent();
     RandomAgent black = RandomAgent();
     Agent* agents[2] = {&white, &black};
@@ -17,7 +17,25 @@ int main() {
         turn = 1 - turn;
         numHalfmoves++;
     }
-    std::cout << "Result: " << board.result() << std::endl;
-    std::cout << "Num moves: " << numHalfmoves << std::endl;
+    return numHalfmoves;
+}
+
+void play_multiple_games(int num_games) {
+    int total_moves = 0;
+    auto start = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < num_games; ++i) {
+        total_moves += play_single_game();
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end - start;
+    double games_per_sec = num_games / elapsed.count();
+    double avg_game_length = static_cast<double>(total_moves) / num_games;
+    std::cout << "Played " << num_games << " games in " << elapsed.count() << " seconds.\n";
+    std::cout << "Games per second: " << games_per_sec << std::endl;
+    std::cout << "Average game length (half-moves): " << avg_game_length << std::endl;
+}
+
+int main() {
+    play_multiple_games(100);
     return 0;
 }
