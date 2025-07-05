@@ -11,10 +11,8 @@ include_directories(src/mystuff/include)
 
 add_executable(cpp_chess
     src/lc0chess/chess/board.cc
-    src/lc0chess/chess/board_test.cc
     src/lc0chess/chess/gamestate.cc
     src/lc0chess/chess/position.cc
-    src/lc0chess/chess/position_test.cc
     src/lc0chess/chess/uciloop.cc
 
     src/mystuff/cpp/main.cpp
