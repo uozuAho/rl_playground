@@ -5,11 +5,8 @@ LeelaChessZero's chess impl.
 
 
 ### 3. Build this project
-```
-mkdir build
-cd build
-cmake ..
-make
+```sh
+./build.sh
 ```
 
 ### 4. Run

@@ -22,14 +22,31 @@
   training in lib/greedy_agent.py
 - DONE add andoma agent to train against
 - DONE add andoma-mcts agent, compare with andoma: skill + exe speed
-- make faster. options
-    - find a fast chess engine in a fast language. switch to its language
-        - stockfish: C++: https://github.com/official-stockfish/Stockfish
+- make faster
+    - try lc0: https://lczero.org
+        - has a reconisable chess impl: https://github.com/LeelaChessZero/lc0/blob/master/src/chess/board.h
+        - simple tests, measure games/sec + avg game length, compare to pychess:
+            - two random agents vs each other
+            - random vs andoma
+    - discounted options:
+        - C++:
+            - stockfish: https://github.com/official-stockfish/Stockfish
+                - seems to be all about being an 'engine', ie an agent that
+                  plays chess
+                - doesn't gen legal moves? https://chess.stackexchange.com/questions/41365/chess-game-gui-in-c-sdl-integrating-stockfish-mostly-all-is-working-but-is
         - go
-            - https://github.com/corentings/chess
-            - https://github.com/dylhunn/dragontoothmg
-        - chesslib: java: https://github.com/bhlangonijr/chesslib
+            - I'd like to try go, but I don't trust the available chess/ML
+              implementations. C++ seems much more common wrt. torch + ML +
+              pytorch
+            - chess
+                - https://github.com/corentings/chess
+                - https://github.com/dylhunn/dragontoothmg
+            - ML
+                - https://github.com/gomlx/gomlx
+        - nah: chesslib: java: https://github.com/bhlangonijr/chesslib
         - UCI? eg stockfish engine -> UCI -> python agents
+            - aimed at playing chess, not searching for optimal moves. Probably
+              can, probably slow
 - train the greedy agent for longer. does its win rate increase?
 - add self-play capability to the agent
 - add checkpointing to the agent
