@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(cpp_chess_leela_random_agents)
+project(cpp_chess)
 
 set(CMAKE_CXX_STANDARD 17)
 
