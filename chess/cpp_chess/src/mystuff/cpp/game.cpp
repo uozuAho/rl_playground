@@ -3,7 +3,7 @@
 #include "leela_board_wrapper.h"
 
 Game::Game(Agent* white, Agent* black)
-    : white_(white), black_(black) {
+    : white_(white), black_(black), board_() {
 }
 
 void Game::play() {
