@@ -13,6 +13,7 @@ add_executable(cpp_chess
     src/lc0chess/chess/board.cc
     src/lc0chess/chess/gamestate.cc
     src/lc0chess/chess/position.cc
+    src/lc0chess/utils/logging.cc
 
     src/mystuff/cpp/main.cpp
     src/mystuff/cpp/game.cpp
