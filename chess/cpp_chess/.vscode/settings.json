@@ -1,6 +1,7 @@
 {
     "files.associations": {
         ".fantomasignore": "ignore",
-        "optional": "cpp"
+        "optional": "cpp",
+        "atomic": "cpp"
     }
 }

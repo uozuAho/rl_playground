@@ -4,7 +4,7 @@
 #include "agent.h"
 
 // Forward declaration for LeelaChessZero board
-namespace lcz {
+namespace lczero {
     class Board;
     struct Move;
 }
@@ -12,7 +12,7 @@ namespace lcz {
 class RandomAgent : public Agent {
 public:
     RandomAgent();
-    lcz::Move select_move(const lcz::Board& board) override;
+    lczero::Move select_move(const lczero::Board& board) override;
     std::string name() const override { return "RandomAgent"; }
 private:
     std::mt19937 rng;
