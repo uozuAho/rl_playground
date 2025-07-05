@@ -11,6 +11,4 @@ LeelaChessZero's chess impl.
 ```
 
 # to do
-- implement game wrapper
-    - need to use position to work out win/loss
-        - check lc0 code - already done?
+- benchmark: games/sec vs python
