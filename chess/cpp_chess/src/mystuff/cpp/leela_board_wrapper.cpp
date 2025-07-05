@@ -13,7 +13,7 @@ void LeelaBoardWrapper::make_move(const lczero::Move& move) {
     // board_->make_move(move);
 }
 
-const lczero::Board& LeelaBoardWrapper::board() const {
+const lczero::ChessBoard& LeelaBoardWrapper::board() const {
     // return *board_;
     throw std::runtime_error("Not implemented");
 }
