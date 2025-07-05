@@ -11,11 +11,11 @@ Prerequisites:
 
 Then:
 ```sh
-./run.sh
+./run.sh test  # run tests
+./run.sh       # run whatever's in main.cpp
 ```
 
 # to do
-- add tests
 - WIP: implement andoma
     - implement stubs in chess wrapper
     - add miech evaluation

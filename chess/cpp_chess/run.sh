@@ -21,6 +21,17 @@ function run() {
     popd
 }
 
+function test_run() {
+    pushd build
+    ctest --output-on-failure
+    popd
+}
+
 # build_full
 build_fast
-# run
+
+if [[ "$1" == "test" ]]; then
+    test_run
+else
+    run
+fi
