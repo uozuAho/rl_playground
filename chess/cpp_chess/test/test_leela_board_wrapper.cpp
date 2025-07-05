@@ -1,8 +1,7 @@
 #include <gtest/gtest.h>
 #include "leela_board_wrapper.h"
 
-// Sample test fixture for LeelaBoardWrapper
-test(LeelaBoardWrapperTest, InitialState) {
+TEST(LeelaBoardWrapperTest, InitialState) {
     LeelaBoardWrapper board;
     EXPECT_FALSE(board.is_game_over());
     EXPECT_EQ(board.turn(), 0); // White to move

@@ -21,6 +21,6 @@ function run() {
     popd
 }
 
-build_full
-# build_fast
+# build_full
+build_fast
 # run
