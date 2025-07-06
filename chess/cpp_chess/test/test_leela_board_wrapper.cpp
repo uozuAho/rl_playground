@@ -3,6 +3,8 @@
 #include "chess/board.h"
 #include "agent_random.h"
 
+namespace mystuff {
+
 class LeelaBoardWrapperTest : public ::testing::Test {
 protected:
     static void SetUpTestSuite() {
@@ -46,3 +48,5 @@ TEST_F(LeelaBoardWrapperTest, PlayFullGame) {
 
     EXPECT_TRUE(board.is_game_over());
 }
+
+} // namespace mystuff

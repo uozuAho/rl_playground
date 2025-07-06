@@ -2,6 +2,8 @@
 #include "chess/position.h"
 #include <cassert>
 
+namespace mystuff {
+
 class LeelaBoardWrapperImpl {
 public:
     lczero::Position position;
@@ -72,3 +74,5 @@ int LeelaBoardWrapper::color_at(lczero::Square square) const
 
     return LeelaBoardWrapper::BLACK;
 }
+
+} // namespace mystuff

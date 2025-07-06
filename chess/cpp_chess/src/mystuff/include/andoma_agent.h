@@ -2,6 +2,8 @@
 #include "agent.h"
 #include <string>
 
+namespace mystuff {
+
 // A C++ implementation of the AndomaAgent (minimax, Michniewski evaluation)
 class AndomaAgent : public Agent {
 public:
@@ -11,3 +13,5 @@ public:
 private:
     int search_depth_;
 };
+
+} // namespace mystuff

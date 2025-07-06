@@ -2,6 +2,8 @@
 #include <random>
 #include "leela_board_wrapper.h"
 
+namespace mystuff {
+
 RandomAgent::RandomAgent() : rng(std::random_device{}()) {}
 
 lczero::Move RandomAgent::select_move(const LeelaBoardWrapper& board) {
@@ -10,3 +12,5 @@ lczero::Move RandomAgent::select_move(const LeelaBoardWrapper& board) {
     std::uniform_int_distribution<size_t> dist(0, moves.size() - 1);
     return moves[dist(rng)];
 }
+
+} // namespace mystuff

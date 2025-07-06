@@ -6,6 +6,8 @@
 #include "chess/types.h"
 #include "chess/board.h"
 
+namespace mystuff {
+
 class LeelaBoardWrapperImpl;
 class LeelaBoardWrapper {
 public:
@@ -24,3 +26,5 @@ public:
 private:
     LeelaBoardWrapperImpl* impl_;
 };
+
+} // namespace mystuff

@@ -17,7 +17,7 @@ Then:
 ```
 
 # to do
-- put all my code in mystuff namespace
+- fix run script when no args passed
 - WIP: impl miech board eval
 - WIP: implement andoma
     - WIP add miech evaluation

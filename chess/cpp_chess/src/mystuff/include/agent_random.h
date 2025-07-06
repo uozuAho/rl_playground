@@ -3,6 +3,8 @@
 #include <random>
 #include "agent.h"
 
+namespace mystuff {
+
 class RandomAgent : public Agent {
 public:
     RandomAgent();
@@ -11,3 +13,5 @@ public:
 private:
     std::mt19937 rng;
 };
+
+} // namespace mystuff

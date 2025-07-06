@@ -3,6 +3,8 @@
 #include <vector>
 #include <algorithm>
 
+namespace mystuff {
+
 // Michniewski evaluation function stub
 static double evaluate_board(const LeelaBoardWrapper& board) {
     // TODO: Implement Michniewski evaluation for board
@@ -74,3 +76,5 @@ lczero::Move AndomaAgent::select_move(const LeelaBoardWrapper& board) {
     LeelaBoardWrapper board_copy = board;
     return minimax_root(search_depth_, board_copy);
 }
+
+} // namespace mystuff

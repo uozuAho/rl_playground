@@ -3,6 +3,8 @@
 #include "agent_random.h"
 #include "chess/board.h"
 
+namespace mystuff {
+
 int play_single_game() {
     lczero::InitializeMagicBitboards();
     RandomAgent white = RandomAgent();
@@ -35,7 +37,9 @@ void play_multiple_games(int num_games) {
     std::cout << "Average game length (half-moves): " << avg_game_length << std::endl;
 }
 
+} // namespace mystuff
+
 int main() {
-    play_multiple_games(100);
+    mystuff::play_multiple_games(100);
     return 0;
 }
