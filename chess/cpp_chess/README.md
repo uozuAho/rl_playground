@@ -17,7 +17,6 @@ Then:
 ```
 
 # to do
-- fix run script when no args passed
 - WIP: impl miech board eval
 - WIP: implement andoma
     - WIP add miech evaluation

@@ -45,7 +45,7 @@ else
     build_fast
 fi
 
-if [[ "${ARGS[0]}" == "test" ]]; then
+if [[ ${#ARGS[@]} -gt 0 && "${ARGS[0]}" == "test" ]]; then
     test_run
 else
     run
