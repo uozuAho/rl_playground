@@ -35,18 +35,3 @@ std::string LeelaBoardWrapper::result() const {
 std::vector<lczero::Move> LeelaBoardWrapper::legal_moves() const {
     return impl_->position.GetBoard().GenerateLegalMoves();
 }
-
-bool LeelaBoardWrapper::is_black_to_move() const {
-    // TODO: Implement this function
-    return false;
-}
-
-int LeelaBoardWrapper::turn() const {
-    // TODO: Implement this function
-    return 0;
-}
-
-std::string LeelaBoardWrapper::color() const {
-    // TODO: Implement this function
-    return "white";
-}
