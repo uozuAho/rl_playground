@@ -17,8 +17,9 @@ Then:
 ```
 
 # to do
-- impl miech board eval
+- put all my code in mystuff namespace
+- WIP: impl miech board eval
 - WIP: implement andoma
-    - implement stubs in chess wrapper
-    - add miech evaluation
+    - WIP add miech evaluation
     - implement move ordering
+    - write bot fight to check win rates
