@@ -42,6 +42,7 @@ enable_testing()
 add_executable(test_leela_board_wrapper
     test/test_leela_board_wrapper.cpp
     src/mystuff/cpp/leela_board_wrapper.cpp
+    src/mystuff/cpp/agent_random.cpp
     src/lc0chess/chess/board.cc
     src/lc0chess/chess/gamestate.cc
     src/lc0chess/chess/position.cc
