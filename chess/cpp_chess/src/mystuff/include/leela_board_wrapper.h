@@ -9,8 +9,8 @@
 class LeelaBoardWrapperImpl;
 class LeelaBoardWrapper {
 public:
-    const static int WHITE = 1;
-    const static int BLACK = -1;
+    const static int WHITE;
+    const static int BLACK;
 
     LeelaBoardWrapper();
     ~LeelaBoardWrapper();

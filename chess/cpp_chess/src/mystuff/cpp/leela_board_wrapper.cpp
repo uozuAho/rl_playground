@@ -11,6 +11,9 @@ public:
 LeelaBoardWrapper::LeelaBoardWrapper() : impl_(new LeelaBoardWrapperImpl()) {}
 LeelaBoardWrapper::~LeelaBoardWrapper() { delete impl_; }
 
+const int LeelaBoardWrapper::WHITE = 1;
+const int LeelaBoardWrapper::BLACK = -1;
+
 void LeelaBoardWrapper::make_move(const lczero::Move& move) {
     impl_->position = lczero::Position(impl_->position, move);
 }
