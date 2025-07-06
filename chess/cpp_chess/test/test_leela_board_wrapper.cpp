@@ -22,8 +22,11 @@ TEST_F(LeelaBoardWrapperTest, HowDoSquaresWork) {
     const auto square_0 = lczero::Square::FromIdx(0);
     const auto square_a1 = lczero::Square::Parse("a1");
     EXPECT_EQ(square_0, square_a1);
+
     EXPECT_EQ(board.piece_at(square_a1), lczero::kRook);
     EXPECT_EQ(board.piece_at(lczero::Square::Parse("a2")), lczero::kPawn);
+    EXPECT_EQ(board.color_at(square_a1), LeelaBoardWrapper::WHITE);
+    EXPECT_EQ(board.color_at(lczero::Square::Parse("a8")), LeelaBoardWrapper::BLACK);
 }
 
 TEST_F(LeelaBoardWrapperTest, PlayFullGame) {

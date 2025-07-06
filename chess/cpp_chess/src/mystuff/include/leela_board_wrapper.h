@@ -9,6 +9,9 @@
 class LeelaBoardWrapperImpl;
 class LeelaBoardWrapper {
 public:
+    const static int WHITE = 1;
+    const static int BLACK = -1;
+
     LeelaBoardWrapper();
     ~LeelaBoardWrapper();
     void make_move(const lczero::Move& move);
@@ -17,6 +20,7 @@ public:
     std::vector<lczero::Move> legal_moves() const;
 
     std::optional<lczero::PieceType> piece_at(lczero::Square square) const;
+    int color_at(lczero::Square square) const;
 private:
     LeelaBoardWrapperImpl* impl_;
 };
