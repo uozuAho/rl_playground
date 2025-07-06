@@ -18,8 +18,6 @@ Then:
 
 # to do
 - impl miech board eval
-    - add required interfaces to board wrapper
-    - need piece_color(square)
 - WIP: implement andoma
     - implement stubs in chess wrapper
     - add miech evaluation
