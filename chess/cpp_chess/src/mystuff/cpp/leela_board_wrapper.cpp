@@ -36,15 +36,11 @@ std::vector<lczero::Move> LeelaBoardWrapper::legal_moves() const {
     return impl_->position.GetBoard().GenerateLegalMoves();
 }
 
-lczero::PieceType LeelaBoardWrapper::piece_at(lczero::Square square) const
+std::optional<lczero::PieceType> LeelaBoardWrapper::piece_at(lczero::Square square) const
 {
     assert(square >= 0 && square < 64);
 
-    // this is just here for my understanding. Remove once well tested.
     const auto board = impl_->position.GetBoard();
-    const auto isOurs = board.ours().get(square);
-    const auto isTheirs = board.theirs().get(square);
-    assert(isOurs ^ isTheirs);
 
     if (board.pawns().get(square)) {
         return lczero::kPawn;
@@ -59,4 +55,6 @@ lczero::PieceType LeelaBoardWrapper::piece_at(lczero::Square square) const
     } else if (board.kings().get(square)) {
         return lczero::kKing;
     }
+
+    return std::nullopt;
 }

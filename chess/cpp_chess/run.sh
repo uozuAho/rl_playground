@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -eu
+
 function build_full() {
     rm -rf build
     mkdir build

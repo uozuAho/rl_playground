@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <optional>
 
 #include "chess/types.h"
 #include "chess/board.h"
@@ -15,7 +16,7 @@ public:
     std::string result() const;
     std::vector<lczero::Move> legal_moves() const;
 
-    lczero::PieceType piece_at(lczero::Square square) const;
+    std::optional<lczero::PieceType> piece_at(lczero::Square square) const;
 private:
     LeelaBoardWrapperImpl* impl_;
 };
