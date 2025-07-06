@@ -14,6 +14,8 @@ public:
     bool is_game_over() const;
     std::string result() const;
     std::vector<lczero::Move> legal_moves() const;
+
+    lczero::PieceType piece_at(lczero::Square square) const;
 private:
     LeelaBoardWrapperImpl* impl_;
 };
