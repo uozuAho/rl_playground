@@ -1,3 +1,4 @@
+#include <tuple>
 #include "gtest/gtest.h"
 #include "eval.h"
 #include "leela_board_wrapper.h"
@@ -8,34 +9,33 @@ static LeelaBoardWrapper board_from_fen(const std::string& fen) {
     return LeelaBoardWrapper::from_fen(fen);
 }
 
-TEST(EvalTest, StartingPositionIsEqual) {
-    auto board = board_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    float eval = evaluate_board(board);
-    EXPECT_NEAR(eval, 0.0, 0.1);
-}
+struct EvalTestParam {
+    std::string fen;
+    float expected;
+};
 
-TEST(EvalTest, WhiteUpQueenIsHigh) {
-    auto board = board_from_fen("rnb1kbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    float eval = evaluate_board(board);
-    EXPECT_GT(eval, 7.0);
-}
+class EvalParameterizedTest : public ::testing::TestWithParam<EvalTestParam> {};
 
-TEST(EvalTest, BlackUpQueenIsLow) {
-    auto board = board_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNB1KBNR w KQkq - 0 1");
-    float eval = evaluate_board(board);
-    EXPECT_LT(eval, -7.0);
-}
+INSTANTIATE_TEST_SUITE_P(
+    EvalCases,
+    EvalParameterizedTest,
+    ::testing::Values(
+        EvalTestParam{"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 0},
+        EvalTestParam{"8/8/8/8/8/8/8/8 w - - 0 1", 0},
+        EvalTestParam{"8/8/8/8/8/8/8/K7 w - - 0 1", 20050},
+        EvalTestParam{"8/8/8/8/8/8/8/k7 w - - 0 1", -19950},
+        EvalTestParam{"8/8/8/8/8/8/8/4Q3 w - - 0 1", 895},
+        EvalTestParam{"8/8/8/8/8/8/8/4q3 w - - 0 1", -895},
+        EvalTestParam{"8/8/8/8/8/8/8/4P3 w - - 0 1", 100},
+        EvalTestParam{"8/8/8/8/8/8/8/4p3 w - - 0 1", -100},
+        EvalTestParam{"r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3", 0},
+        EvalTestParam{"rnbq1bnr/ppppkppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQ - 3 4", 50}
+    )
+);
 
-TEST(EvalTest, WhiteUpPawnIsSmall) {
-    auto board = board_from_fen("rnbqkbnr/ppppppp1/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+TEST_P(EvalParameterizedTest, BoardEvalMatchesExpected) {
+    const auto& param = GetParam();
+    auto board = board_from_fen(param.fen);
     float eval = evaluate_board(board);
-    EXPECT_GT(eval, 0.7);
-    EXPECT_LT(eval, 2.0);
-}
-
-TEST(EvalTest, BlackUpPawnIsSmall) {
-    auto board = board_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPP1/RNBQKBNR w KQkq - 0 1");
-    float eval = evaluate_board(board);
-    EXPECT_LT(eval, -0.7);
-    EXPECT_GT(eval, -2.0);
+    EXPECT_NEAR(eval, param.expected, 0.01);
 }
