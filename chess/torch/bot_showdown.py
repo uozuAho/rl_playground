@@ -41,24 +41,24 @@ def greedy_vs_random():
     evaluate(greedy, random, n_eval_episodes, halfmove_limit=halfmove_limit)
 
 
-def greedy_vs_andoma():
-    halfmove_limit = 100
-    capture_reward_factor = 0.001
-    n_train_episodes = 2
-    n_eval_episodes = 5
+# def greedy_vs_andoma():
+#     halfmove_limit = 100
+#     capture_reward_factor = 0.001
+#     n_train_episodes = 2
+#     n_eval_episodes = 5
 
-    greedy = GreedyChessAgent(env.WHITE)
-    andoma = AndomaAgent(env.BLACK, search_depth=2)
-    # evaluate(greedy, andoma, n_eval_episodes, halfmove_limit=halfmove_limit)
-    print(f"training greedy agent for {n_train_episodes} episodes...")
-    greedy.train_against(
-        andoma,
-        n_episodes=n_train_episodes,
-        capture_reward_factor=capture_reward_factor,
-        halfmove_limit=halfmove_limit,
-        plot=False,
-    )
-    # evaluate(greedy, andoma, n_eval_episodes, halfmove_limit=halfmove_limit)
+#     greedy = GreedyChessAgent(env.WHITE)
+#     andoma = AndomaAgent(env.BLACK, search_depth=2)
+#     # evaluate(greedy, andoma, n_eval_episodes, halfmove_limit=halfmove_limit)
+#     print(f"training greedy agent for {n_train_episodes} episodes...")
+#     greedy.train_against(
+#         andoma,
+#         n_episodes=n_train_episodes,
+#         capture_reward_factor=capture_reward_factor,
+#         halfmove_limit=halfmove_limit,
+#         plot=False,
+#     )
+# evaluate(greedy, andoma, n_eval_episodes, halfmove_limit=halfmove_limit)
 
 
 def andoma_vs_andoma_mcts():
