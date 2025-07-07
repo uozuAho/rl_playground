@@ -39,17 +39,19 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-add_executable(test_leela_board_wrapper
+add_executable(allTests
     test/test_leela_board_wrapper.cpp
+    test/test_eval.cpp
     src/mystuff/cpp/leela_board_wrapper.cpp
     src/mystuff/cpp/agent_random.cpp
+    src/mystuff/cpp/eval.cpp
     src/lc0chess/chess/board.cc
     src/lc0chess/chess/gamestate.cc
     src/lc0chess/chess/position.cc
     src/lc0chess/utils/logging.cc
 )
 
-target_include_directories(test_leela_board_wrapper PRIVATE src/mystuff/include src/lc0chess)
-target_link_libraries(test_leela_board_wrapper gtest_main)
+target_include_directories(allTests PRIVATE src/mystuff/include src/lc0chess)
+target_link_libraries(allTests gtest_main)
 
-add_test(NAME LeelaBoardWrapperTest COMMAND test_leela_board_wrapper)
+add_test(NAME allTests COMMAND allTests)

@@ -1,5 +1,5 @@
 #pragma once
-#include "mystuff/include/leela_board_wrapper.h"
+#include "leela_board_wrapper.h"
 
 namespace mystuff {
 

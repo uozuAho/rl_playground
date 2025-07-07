@@ -5,17 +5,24 @@
 // https://www.chessprogramming.org/Simplified_Evaluation_Function
 // note that the board layouts have been flipped and the top left square is A1
 
-#include "mystuff/include/leela_board_wrapper.h"
+#include "leela_board_wrapper.h"
 #include <vector>
 #include <optional>
 #include <cmath>
 
 namespace mystuff {
 
-// Piece values
-constexpr int PIECE_VALUE[] = {0, 100, 320, 330, 500, 900, 20000}; // [None, Pawn, Knight, Bishop, Rook, Queen, King]
+constexpr uint8_t   kKnightIdx = lczero::kKnight.idx,
+                    kQueenIdx = lczero::kQueen.idx,
+                    kRookIdx = lczero::kRook.idx,
+                    kBishopIdx = lczero::kBishop.idx,
+                    kPawnIdx = lczero::kPawn.idx,
+                    kKingIdx = lczero::kKing.idx;
 
-// Piece-square tables (from asdf.py)
+// Piece values
+// [None, Pawn, Knight, Bishop, Rook, Queen, King]
+constexpr int PIECE_VALUE[] = {0, 100, 320, 330, 500, 900, 20000};
+
 constexpr int pawnEvalWhite[64] = {
     0,  0,  0,  0,  0,  0,  0,  0,
     5, 10, 10, -20, -20, 10, 10,  5,
@@ -137,50 +144,59 @@ constexpr int kingEvalEndGameBlack[64] = {
     50, -30, -30, -30, -30, -30, -30, -50
 };
 
-// Helper: get piece-square table value
-int piece_square_value(int piece_type, int color, int square, bool endgame) {
-    switch (piece_type) {
-        case 1: // Pawn
-            return color == LeelaBoardWrapper::WHITE ? pawnEvalWhite[square] : pawnEvalBlack[square];
-        case 2: // Knight
-            return knightEval[square];
-        case 3: // Bishop
-            return color == LeelaBoardWrapper::WHITE ? bishopEvalWhite[square] : bishopEvalBlack[square];
-        case 4: // Rook
-            return color == LeelaBoardWrapper::WHITE ? rookEvalWhite[square] : rookEvalBlack[square];
-        case 5: // Queen
-            return queenEval[square];
-        case 6: // King
-            if (endgame)
-                return color == LeelaBoardWrapper::WHITE ? kingEvalEndGameWhite[square] : kingEvalEndGameBlack[square];
+int piece_square_value(
+    lczero::PieceType piece_type,
+    int color,
+    lczero::Square square,
+    bool isEndgame)
+{
+    const auto squareIdx = square.as_idx();
+
+    switch (piece_type.idx) {
+        case kPawnIdx:
+            return color == LeelaBoardWrapper::WHITE ? pawnEvalWhite[squareIdx] : pawnEvalBlack[squareIdx];
+        case kKnightIdx:
+            return knightEval[squareIdx];
+        case kBishopIdx:
+            return color == LeelaBoardWrapper::WHITE ? bishopEvalWhite[squareIdx] : bishopEvalBlack[squareIdx];
+        case kRookIdx:
+            return color == LeelaBoardWrapper::WHITE ? rookEvalWhite[squareIdx] : rookEvalBlack[squareIdx];
+        case kQueenIdx:
+            return queenEval[squareIdx];
+        case kKingIdx:
+            if (isEndgame)
+                return color == LeelaBoardWrapper::WHITE ? kingEvalEndGameWhite[squareIdx] : kingEvalEndGameBlack[squareIdx];
             else
-                return color == LeelaBoardWrapper::WHITE ? kingEvalWhite[square] : kingEvalBlack[square];
+                return color == LeelaBoardWrapper::WHITE ? kingEvalWhite[squareIdx] : kingEvalBlack[squareIdx];
         default:
             return 0;
     }
 }
 
-// Evaluate a single piece
-int evaluate_piece(int piece_type, int color, int square, bool endgame) {
-    return PIECE_VALUE[piece_type] + piece_square_value(piece_type, color, square, endgame);
+int evaluate_piece(
+    lczero::PieceType piece_type,
+    int color,
+    lczero::Square square,
+    bool isEndgame)
+{
+    return PIECE_VALUE[piece_type.idx] + piece_square_value(piece_type, color, square, isEndgame);
 }
 
-// Check if the board is in endgame (stub: only checks for queens/minors)
-bool check_end_game(const LeelaBoardWrapper& board) {
+bool f_isEndgame(const LeelaBoardWrapper& board) {
     // TODO: Implement real logic. For now, always return false.
     return false;
 }
 
-// Evaluate the board position
 float evaluate_board(const LeelaBoardWrapper& board) {
     float total = 0;
-    bool endgame = check_end_game(board);
+    bool isEndgame = f_isEndgame(board);
     for (int sq = 0; sq < 64; ++sq) {
-        auto piece_opt = board.piece_at(sq);
+        auto square = lczero::Square::FromIdx(sq);
+        auto piece_opt = board.piece_at(lczero::Square::FromIdx(sq));
         if (!piece_opt.has_value()) continue;
-        int piece_type = static_cast<int>(piece_opt.value());
-        int color = board.color_at(sq);
-        int value = evaluate_piece(piece_type, color, sq, endgame);
+        auto piece_type = piece_opt.value();
+        int color = board.color_at(square);
+        int value = evaluate_piece(piece_type, color, square, isEndgame);
         total += (color == LeelaBoardWrapper::WHITE) ? value : -value;
     }
     return total;

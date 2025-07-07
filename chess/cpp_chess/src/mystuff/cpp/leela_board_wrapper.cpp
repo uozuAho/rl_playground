@@ -75,4 +75,10 @@ int LeelaBoardWrapper::color_at(lczero::Square square) const
     return LeelaBoardWrapper::BLACK;
 }
 
+LeelaBoardWrapper LeelaBoardWrapper::from_fen(const std::string& fen) {
+    LeelaBoardWrapper board;
+    board.impl_->position = lczero::Position::FromFen(fen);
+    return board;
+}
+
 } // namespace mystuff

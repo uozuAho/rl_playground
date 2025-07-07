@@ -1,7 +1,7 @@
-# cpp_chess_leela_random_agents
+# C++ chess
 
-This project runs two random chess agents against each other using
-LeelaChessZero's chess impl.
+Faster than python chess! Uses LeelaChessZero chess implementation.
+
 
 # Quick start
 Prerequisites:
@@ -18,6 +18,10 @@ Then:
 
 # to do
 - WIP: impl miech board eval
+    - DONE get test running
+    - compare tests with py tests
+    - get all tests passing
+    - review eval code, do easy optimisations
 - WIP: implement andoma
     - WIP add miech evaluation
     - implement move ordering

@@ -16,11 +16,13 @@ public:
 
     LeelaBoardWrapper();
     ~LeelaBoardWrapper();
-    void make_move(const lczero::Move& move);
-    bool is_game_over() const;
-    std::string result() const;
-    std::vector<lczero::Move> legal_moves() const;
 
+    static LeelaBoardWrapper from_fen(const std::string& fen);
+
+    void make_move(const lczero::Move& move);
+    std::vector<lczero::Move> legal_moves() const;
+    std::string result() const;
+    bool is_game_over() const;
     std::optional<lczero::PieceType> piece_at(lczero::Square square) const;
     int color_at(lczero::Square square) const;
 private:
