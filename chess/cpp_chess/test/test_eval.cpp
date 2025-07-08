@@ -30,7 +30,15 @@ INSTANTIATE_TEST_SUITE_P(
         EvalTestParam{"8/8/8/8/8/8/8/4p3 w - - 0 1", -100},
         EvalTestParam{"r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3", 0},
         EvalTestParam{"rnbq1bnr/ppppkppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQ - 3 4", 50}
-    )
+    ),
+    [](const ::testing::TestParamInfo<EvalTestParam>& info) {
+        // Sanitize FEN for test name
+        std::string name = info.param.fen;
+        for (char& c : name) {
+            if (!isalnum(c)) c = '_';
+        }
+        return name;
+    }
 );
 
 TEST_P(EvalParameterizedTest, BoardEvalMatchesExpected) {
