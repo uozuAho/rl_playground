@@ -43,7 +43,7 @@ std::vector<lczero::Move> LeelaBoardWrapper::legal_moves() const {
 
 std::optional<lczero::PieceType> LeelaBoardWrapper::piece_at(lczero::Square square) const
 {
-    assert(square >= 0 && square < 64);
+    assert(square.as_idx() >= 0 && square.as_idx() < 64);
 
     const auto board = impl_->position.GetBoard();
 

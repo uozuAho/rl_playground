@@ -7,11 +7,10 @@
         {
             "type": "cppdbg",
             "request": "launch",
-            "name": "Debug cpp_chess",
+            "name": "Debug",
             "program": "${workspaceFolder}/build/${input:executableName}",
             "cwd": "${workspaceFolder}/build",
-            "stopAtEntry": true,
-            "preLaunchTask": "build"
+            "stopAtEntry": false,
         }
     ],
     "inputs": [
@@ -20,7 +19,8 @@
             "type": "pickString",
             "description": "Select the executable to debug",
             "options": [
-                "cpp_chess"
+                "cpp_chess",
+                "allTests"
             ]
         }
     ]

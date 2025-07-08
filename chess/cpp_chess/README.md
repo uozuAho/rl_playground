@@ -16,6 +16,12 @@ Then:
 ./run.sh --rebuild  # if something's going wrong during build, do a rebuild
 ```
 
+# Debugging
+- in CMakelists.txt, comment out `set(CMAKE_BUILD_TYPE Release)` and uncomment
+  the next 3 lines
+- run ./run.sh to build
+- use vscode debugger. You can debug main or the tests.
+
 # to do
 - WIP: impl miech board eval
     - DONE get test running
