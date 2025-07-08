@@ -4,7 +4,7 @@
 namespace mystuff {
 
 // Evaluate the board position. Returns positive for white advantage, negative for black.
-float evaluate_board(const LeelaBoardWrapper& board);
+int evaluate_board(const LeelaBoardWrapper& board);
 
 // Evaluate a move (stub for now)
 float move_value(const LeelaBoardWrapper& board, int move, bool endgame);

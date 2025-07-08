@@ -44,6 +44,6 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(EvalParameterizedTest, BoardEvalMatchesExpected) {
     const auto& param = GetParam();
     auto board = board_from_fen(param.fen);
-    float eval = evaluate_board(board);
-    EXPECT_NEAR(eval, param.expected, 0.01);
+    int eval = evaluate_board(board);
+    EXPECT_EQ(eval, param.expected);
 }

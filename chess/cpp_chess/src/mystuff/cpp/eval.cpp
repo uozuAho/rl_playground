@@ -187,17 +187,31 @@ bool f_isEndgame(const LeelaBoardWrapper& board) {
     return false;
 }
 
-float evaluate_board(const LeelaBoardWrapper& board) {
-    float total = 0;
+int evaluate_board(const LeelaBoardWrapper& board) {
+    int total = 0;
     bool isEndgame = f_isEndgame(board);
+    // DEBUG CODE: remove me once this is working
+    int piec[64] = {0};
+    int colr[64] = {0};
+    int vals[64] = {0};
     for (int sq = 0; sq < 64; ++sq) {
         auto square = lczero::Square::FromIdx(sq);
         auto piece_opt = board.piece_at(lczero::Square::FromIdx(sq));
         if (!piece_opt.has_value()) continue;
         auto piece_type = piece_opt.value();
         int color = board.color_at(square);
+        // todo: colors are reversed (and probably pieces. note that this eval code treats 0 = A1 = top left)
         int value = evaluate_piece(piece_type, color, square, isEndgame);
-        total += (color == LeelaBoardWrapper::WHITE) ? value : -value;
+
+        // DEBUG CODE: remove me once this is working
+        if (color == LeelaBoardWrapper::BLACK)
+        {
+            value = -value;
+        }
+        piec[sq] = piece_type.idx;
+        colr[sq] = color;
+        vals[sq] = value;
+        total += value;
     }
     return total;
 }
