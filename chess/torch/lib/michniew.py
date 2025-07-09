@@ -183,23 +183,14 @@ def evaluate_board(board: chess.Board) -> float:
     total = 0
     end_game = check_end_game(board)
 
-    # DEBUG CODE: remove me once this is working
-    squares = []
-    pieces = []
-    values = []
-
     for square in chess.SQUARES:
-        squares.append(square)
         piece = board.piece_at(square)
-        pieces.append(piece)
         if not piece:
-            values.append(0)
             continue
 
         value = piece_value[piece.piece_type] + evaluate_piece(piece, square, end_game)
         if piece.color == chess.BLACK:
             value = -value
-        values.append(value)
         total += value
 
     return total

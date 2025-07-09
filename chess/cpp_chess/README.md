@@ -23,11 +23,6 @@ Then:
 - use vscode debugger. You can debug main or the tests.
 
 # to do
-- WIP: impl miech board eval
-    - DONE get test running
-    - compare tests with py tests
-    - get all tests passing
-    - review eval code, do easy optimisations
 - WIP: implement andoma
     - WIP add miech evaluation
     - implement move ordering
