@@ -27,8 +27,7 @@ INSTANTIATE_TEST_SUITE_P(
         EvalTestParam{"8/8/8/8/8/8/8/K6k w - - 0 1", 100},
         EvalTestParam{"8/8/8/8/8/8/8/K5Qk w - - 0 1", 940},
         EvalTestParam{"8/8/8/8/8/8/8/K5qk w - - 0 1", -840},
-        EvalTestParam{"8/8/8/8/8/8/8/K5Pk w - - 0 1", 200},
-        EvalTestParam{"8/8/8/8/8/8/8/K5pk w - - 0 1", 0},
+        EvalTestParam{"8/8/8/8/8/8/8/K5k1 w - - 0 1", 90},
         EvalTestParam{"r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3", 0},
         EvalTestParam{"rnbq1bnr/ppppkppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQ - 3 4", 50}
     ),

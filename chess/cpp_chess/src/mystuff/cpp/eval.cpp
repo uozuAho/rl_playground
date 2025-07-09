@@ -236,10 +236,4 @@ int evaluate_board(const LeelaBoardWrapper& board) {
     return total;
 }
 
-// Evaluate a move (stub: only returns 0 for now)
-float move_value(const LeelaBoardWrapper& board, int move, bool endgame) {
-    // TODO: Implement move evaluation logic
-    return 0.0f;
-}
-
 } // namespace mystuff
