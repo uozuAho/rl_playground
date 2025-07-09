@@ -188,8 +188,23 @@ int evaluate_piece(
 }
 
 bool f_isEndgame(const LeelaBoardWrapper& board) {
-    // TODO: Implement real logic. For now, always return false.
-    return false;
+    // perf: this could be faster by using lc0 boards bit counters
+    int numQueens = 0;
+    int numMinors = 0;
+
+    for (int sq = 0; sq < 64; ++sq) {
+        const auto optPiece = board.piece_at(lczero::Square::FromIdx(sq));
+        if (optPiece.has_value()) {
+            if (optPiece.value() == lczero::kQueen) {
+                numQueens++;
+            } else if (optPiece.value() == lczero::kBishop
+                       || optPiece.value() == lczero::kKnight) {
+                numMinors++;
+            }
+        }
+    }
+
+    return numQueens == 0 || (numQueens == 2 && numMinors <= 1);
 }
 
 int evaluate_board(const LeelaBoardWrapper& board) {
