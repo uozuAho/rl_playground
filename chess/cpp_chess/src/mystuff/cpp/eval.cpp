@@ -19,9 +19,14 @@ constexpr uint8_t   kKnightIdx = lczero::kKnight.idx,
                     kPawnIdx = lczero::kPawn.idx,
                     kKingIdx = lczero::kKing.idx;
 
-// Piece values
-// [None, Pawn, Knight, Bishop, Rook, Queen, King]
-constexpr int PIECE_VALUE[] = {0, 100, 320, 330, 500, 900, 20000};
+constexpr int PIECE_VALUE[] = {
+    320,  // knight
+    900,  // queen
+    500,  // rook
+    330,  // bishop
+    100,  // pawn
+    20000 // king
+};
 
 constexpr int pawnEvalWhite[64] = {
     0,  0,  0,  0,  0,  0,  0,  0,
@@ -118,10 +123,10 @@ constexpr int kingEvalBlack[64] = {
     -30, -40, -40, -50, -50, -40, -40, -30,
     -30, -40, -40, -50, -50, -40, -40, -30,
     -30, -40, -40, -50, -50, -40, -40, -30,
-    -30, -40, -40, -50, -50, -40, -40, -30,
-    20, -30, -30, -40, -40, -30, -30, -20,
+     20, -30, -30, -40, -40, -30, -30, -20,
     -10, -20, -20, -20, -20, -20, -20, -10,
-    20, 20, 0, 0, 0, 0, 20, 20
+    20, 20, 0, 0, 0, 0, 20, 20,
+    20, 30, 0, 0, 0, 0, 30, 20
 };
 constexpr int kingEvalEndGameWhite[64] = {
     50, -30, -30, -30, -30, -30, -30, -50,
