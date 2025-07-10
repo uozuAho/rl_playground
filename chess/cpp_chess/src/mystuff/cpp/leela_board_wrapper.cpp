@@ -20,6 +20,13 @@ void LeelaBoardWrapper::make_move(const lczero::Move& move) {
     impl_->position = lczero::Position(impl_->position, move);
 }
 
+void LeelaBoardWrapper::make_move(std::string_view from, std::string_view to) {
+    const auto fromSq = lczero::Square::Parse(from);
+    const auto toSq = lczero::Square::Parse(to);
+    const auto move = lczero::Move::White(fromSq, toSq);
+    make_move(move);
+}
+
 bool LeelaBoardWrapper::is_game_over() const {
     auto moves = impl_->position.GetBoard().GenerateLegalMoves();
     // Game is over if no legal moves or 50-move rule
@@ -64,6 +71,11 @@ std::optional<lczero::PieceType> LeelaBoardWrapper::piece_at(lczero::Square squa
     return std::nullopt;
 }
 
+std::optional<lczero::PieceType> LeelaBoardWrapper::piece_at(std::string_view square) const
+{
+    return piece_at(lczero::Square::Parse(square));
+}
+
 int LeelaBoardWrapper::color_at(lczero::Square square) const
 {
     const auto board = impl_->position.GetBoard();
@@ -75,6 +87,11 @@ int LeelaBoardWrapper::color_at(lczero::Square square) const
     return LeelaBoardWrapper::BLACK;
 }
 
+int LeelaBoardWrapper::color_at(std::string_view square) const
+{
+    return color_at(lczero::Square::Parse(square));
+}
+
 LeelaBoardWrapper LeelaBoardWrapper::from_fen(const std::string& fen) {
     LeelaBoardWrapper board;
     board.impl_->position = lczero::Position::FromFen(fen);
@@ -84,6 +101,17 @@ LeelaBoardWrapper LeelaBoardWrapper::from_fen(const std::string& fen) {
 int LeelaBoardWrapper::turn() const
 {
     return impl_->position.IsBlackToMove() ? BLACK : WHITE;
+}
+
+LeelaBoardWrapper LeelaBoardWrapper::copy() const {
+    // perf: ChessBoard(board) exists, may be faster if we don't need position
+    LeelaBoardWrapper new_wrapper;
+    new_wrapper.impl_->position = impl_->position;
+    return new_wrapper;
+}
+
+std::string LeelaBoardWrapper::fen() const {
+    return lczero::BoardToFen(impl_->position.GetBoard());
 }
 
 } // namespace mystuff

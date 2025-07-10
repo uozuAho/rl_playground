@@ -20,13 +20,18 @@ public:
     static LeelaBoardWrapper from_fen(const std::string& fen);
 
     void make_move(const lczero::Move& move);
+    void make_move(std::string_view from, std::string_view to);
 
+    LeelaBoardWrapper copy() const;
+    std::string fen() const;
     int turn() const;
     std::vector<lczero::Move> legal_moves() const;
     std::string result() const;
     bool is_game_over() const;
     std::optional<lczero::PieceType> piece_at(lczero::Square square) const;
+    std::optional<lczero::PieceType> piece_at(std::string_view square) const;
     int color_at(lczero::Square square) const;
+    int color_at(std::string_view square) const;
 private:
     LeelaBoardWrapperImpl* impl_;
 };

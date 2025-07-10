@@ -4,6 +4,7 @@
 
 namespace mystuff {
 
+// Original Andoma: https://github.com/healeycodes/andoma
 class AndomaAgent : public Agent {
 public:
     AndomaAgent(int search_depth = 1);
