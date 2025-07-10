@@ -52,7 +52,12 @@ std::optional<lczero::PieceType> LeelaBoardWrapper::piece_at(lczero::Square squa
 {
     assert(square.as_idx() >= 0 && square.as_idx() < 64);
 
-    const auto board = impl_->position.GetBoard();
+    auto board = impl_->position.GetBoard();
+
+    if (board.flipped()) {
+        board = lczero::ChessBoard(board);
+        board.Mirror();
+    }
 
     if (board.pawns().get(square)) {
         return lczero::kPawn;
@@ -78,7 +83,12 @@ std::optional<lczero::PieceType> LeelaBoardWrapper::piece_at(std::string_view sq
 
 int LeelaBoardWrapper::color_at(lczero::Square square) const
 {
-    const auto board = impl_->position.GetBoard();
+    auto board = impl_->position.GetBoard();
+
+    if (board.flipped()) {
+        board = lczero::ChessBoard(board);
+        board.Mirror();
+    }
 
     if (board.ours().get(square)) {
         return LeelaBoardWrapper::WHITE;

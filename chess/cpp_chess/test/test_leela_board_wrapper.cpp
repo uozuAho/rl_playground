@@ -31,6 +31,16 @@ TEST_F(LeelaBoardWrapperTest, HowDoSquaresWork) {
     EXPECT_EQ(board.color_at(lczero::Square::Parse("a8")), LeelaBoardWrapper::BLACK);
 }
 
+TEST_F(LeelaBoardWrapperTest, HowDoMovesAndPositionsWork) {
+    // as expected, but the implementation is tricky. You don't need to worry
+    // about that!
+    LeelaBoardWrapper board;
+    board.make_move("a2", "a3");
+    EXPECT_TRUE(board.piece_at("a3").has_value());
+    EXPECT_EQ(board.piece_at("a3").value(), lczero::kPawn);
+    EXPECT_EQ(board.color_at("a3"), LeelaBoardWrapper::WHITE);
+}
+
 TEST_F(LeelaBoardWrapperTest, PlayFullGame) {
     LeelaBoardWrapper board;
     RandomAgent white;
