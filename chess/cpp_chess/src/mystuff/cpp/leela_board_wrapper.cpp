@@ -17,7 +17,10 @@ const int LeelaBoardWrapper::WHITE = 1;
 const int LeelaBoardWrapper::BLACK = -1;
 
 void LeelaBoardWrapper::make_move(const lczero::Move& move) {
-    impl_->position = lczero::Position(impl_->position, move);
+    const auto board = impl_->position.GetBoard();
+    auto realMove = lczero::Move(move);
+    if (board.flipped()) realMove.Flip();
+    impl_->position = lczero::Position(impl_->position, realMove);
 }
 
 void LeelaBoardWrapper::make_move(std::string_view from, std::string_view to) {

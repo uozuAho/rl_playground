@@ -15,6 +15,7 @@ protected:
 TEST_F(LeelaBoardWrapperTest, InitialState) {
     LeelaBoardWrapper board;
     EXPECT_FALSE(board.is_game_over());
+    EXPECT_EQ(board.turn(), LeelaBoardWrapper::WHITE);
     auto moves = board.legal_moves();
     EXPECT_FALSE(moves.empty());
 }
@@ -35,10 +36,20 @@ TEST_F(LeelaBoardWrapperTest, HowDoMovesAndPositionsWork) {
     // as expected, but the implementation is tricky. You don't need to worry
     // about that!
     LeelaBoardWrapper board;
+    EXPECT_EQ(board.turn(), LeelaBoardWrapper::WHITE);
     board.make_move("a2", "a3");
     EXPECT_TRUE(board.piece_at("a3").has_value());
     EXPECT_EQ(board.piece_at("a3").value(), lczero::kPawn);
     EXPECT_EQ(board.color_at("a3"), LeelaBoardWrapper::WHITE);
+
+    EXPECT_EQ(board.turn(), LeelaBoardWrapper::BLACK);
+    EXPECT_EQ(board.color_at("a7"), LeelaBoardWrapper::BLACK);
+    // todo: fails here due to move not intersecting with 'our pieces'
+    board.make_move("a7", "a6");
+    EXPECT_TRUE(board.piece_at("a6").has_value());
+    EXPECT_EQ(board.piece_at("a6").value(), lczero::kPawn);
+    EXPECT_EQ(board.color_at("a6"), LeelaBoardWrapper::BLACK);
+    EXPECT_EQ(board.turn(), LeelaBoardWrapper::WHITE);
 }
 
 TEST_F(LeelaBoardWrapperTest, PlayFullGame) {
