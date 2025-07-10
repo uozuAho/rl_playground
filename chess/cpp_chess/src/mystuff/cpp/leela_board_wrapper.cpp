@@ -81,4 +81,9 @@ LeelaBoardWrapper LeelaBoardWrapper::from_fen(const std::string& fen) {
     return board;
 }
 
+int LeelaBoardWrapper::turn() const
+{
+    return impl_->position.IsBlackToMove() ? BLACK : WHITE;
+}
+
 } // namespace mystuff

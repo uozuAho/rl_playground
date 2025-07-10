@@ -4,7 +4,6 @@
 
 namespace mystuff {
 
-// A C++ implementation of the AndomaAgent (minimax, Michniewski evaluation)
 class AndomaAgent : public Agent {
 public:
     AndomaAgent(int search_depth = 1);

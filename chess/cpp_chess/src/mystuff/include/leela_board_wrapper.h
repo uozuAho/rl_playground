@@ -20,6 +20,8 @@ public:
     static LeelaBoardWrapper from_fen(const std::string& fen);
 
     void make_move(const lczero::Move& move);
+
+    int turn() const;
     std::vector<lczero::Move> legal_moves() const;
     std::string result() const;
     bool is_game_over() const;

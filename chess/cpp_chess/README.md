@@ -24,6 +24,8 @@ Then:
 
 # to do
 - WIP: implement andoma
-    - WIP add miech evaluation
-    - implement move ordering
+    - DONE add miech evaluation
+    - WIP fix unimplemented stuff
+        - implement copy instaed of undo
     - write bot fight to check win rates
+    - maybe: implement move ordering

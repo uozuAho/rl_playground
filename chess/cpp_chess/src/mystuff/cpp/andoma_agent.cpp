@@ -11,7 +11,6 @@ static double evaluate_board(const LeelaBoardWrapper& board) {
     return 0.0;
 }
 
-// Helper to get ordered moves (captures, promotions, etc. first)
 static std::vector<lczero::Move> get_ordered_moves(const LeelaBoardWrapper& board) {
     // TODO: Implement move ordering (captures/promotions first)
     return board.legal_moves();
@@ -22,8 +21,7 @@ static constexpr double MATE_THRESHOLD = 999000000.0;
 
 // Minimax with alpha-beta pruning
 static double minimax(int depth, LeelaBoardWrapper& board, double alpha, double beta, bool is_maximising_player) {
-    // TODO: Implement game over and checkmate detection
-    if (depth == 0 /* || board.is_game_over() */) {
+    if (depth == 0 || board.is_game_over() ) {
         return evaluate_board(board);
     }
     double best_move = is_maximising_player ? -std::numeric_limits<double>::infinity() : std::numeric_limits<double>::infinity();
@@ -31,7 +29,7 @@ static double minimax(int depth, LeelaBoardWrapper& board, double alpha, double 
     for (const auto& move : moves) {
         board.make_move(move);
         double value = minimax(depth - 1, board, alpha, beta, !is_maximising_player);
-        // TODO: Mate scoring
+        // TODO: Mate scoring (?)
         if (is_maximising_player) {
             best_move = std::max(best_move, value);
             alpha = std::max(alpha, best_move);
@@ -53,7 +51,7 @@ static double minimax(int depth, LeelaBoardWrapper& board, double alpha, double 
 }
 
 static lczero::Move minimax_root(int depth, LeelaBoardWrapper& board) {
-    bool maximize = !board.is_black_to_move();
+    bool maximize = board.turn() == LeelaBoardWrapper::WHITE;
     double best_value = maximize ? -std::numeric_limits<double>::infinity() : std::numeric_limits<double>::infinity();
     lczero::Move best_move;
     auto moves = get_ordered_moves(board);
