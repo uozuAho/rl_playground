@@ -41,10 +41,12 @@ FetchContent_MakeAvailable(googletest)
 enable_testing()
 
 add_executable(allTests
+    test/test_andoma.cpp
     test/test_leela_board_wrapper.cpp
     test/test_eval.cpp
     src/mystuff/cpp/leela_board_wrapper.cpp
     src/mystuff/cpp/agent_random.cpp
+    src/mystuff/cpp/andoma_agent.cpp
     src/mystuff/cpp/eval.cpp
     src/lc0chess/chess/board.cc
     src/lc0chess/chess/gamestate.cc
