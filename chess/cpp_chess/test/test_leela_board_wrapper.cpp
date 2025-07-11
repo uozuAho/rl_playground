@@ -44,7 +44,6 @@ TEST_F(LeelaBoardWrapperTest, HowDoMovesAndPositionsWork) {
 
     EXPECT_EQ(board.turn(), LeelaBoardWrapper::BLACK);
     EXPECT_EQ(board.color_at("a7"), LeelaBoardWrapper::BLACK);
-    // todo: fails here due to move not intersecting with 'our pieces'
     board.make_move("a7", "a6");
     EXPECT_TRUE(board.piece_at("a6").has_value());
     EXPECT_EQ(board.piece_at("a6").value(), lczero::kPawn);

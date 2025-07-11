@@ -31,3 +31,4 @@ Then:
             - add a test
     - write bot fight to check win rates
     - maybe: implement move ordering
+- try training a torch model

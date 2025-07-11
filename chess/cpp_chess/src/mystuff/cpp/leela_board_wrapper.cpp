@@ -17,16 +17,16 @@ const int LeelaBoardWrapper::WHITE = 1;
 const int LeelaBoardWrapper::BLACK = -1;
 
 void LeelaBoardWrapper::make_move(const lczero::Move& move) {
-    const auto board = impl_->position.GetBoard();
-    auto realMove = lczero::Move(move);
-    if (board.flipped()) realMove.Flip();
-    impl_->position = lczero::Position(impl_->position, realMove);
+    impl_->position = lczero::Position(impl_->position, move);
 }
 
 void LeelaBoardWrapper::make_move(std::string_view from, std::string_view to) {
     const auto fromSq = lczero::Square::Parse(from);
     const auto toSq = lczero::Square::Parse(to);
-    const auto move = lczero::Move::White(fromSq, toSq);
+    auto move = lczero::Move::White(fromSq, toSq);
+
+    if (impl_->position.GetBoard().flipped()) move.Flip();
+
     make_move(move);
 }
 
