@@ -12,17 +12,16 @@ Prerequisites:
 Then:
 ```sh
 ./run.sh test       # run tests
-./run.sh            # run whatever's in main.cpp
-./run.sh --release  # run it fast (optimised build)
+./run.sh --release  # run whatever's in main.cpp (optimised build)
+./run.sh            # debug run, probably very slow!
 ./run.sh --rebuild  # if something's going wrong during build, try a rebuild
 ```
 
 # Debugging
-- in CMakelists.txt, comment out `set(CMAKE_BUILD_TYPE Release)` and uncomment
-  the next 3 lines
-- run ./run.sh to build
-- use vscode debugger. You can debug main or the tests.
+- run ./run.sh test to build in debug mode (there's no build-only option at the moment)
+- use vscode debugger with C++ extension
 
 # to do
 - try training a torch model
 - maybe: perf: andoma: implement move ordering
+- maybe: perf: general profile + optimise
