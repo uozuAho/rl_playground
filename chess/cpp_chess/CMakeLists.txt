@@ -22,22 +22,22 @@ add_executable(cpp_chess
     src/mystuff/cpp/leela_board_wrapper.cpp
 )
 
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
-  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-)
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
-
 enable_testing()
 
 # Only build allTests if TESTS_ENABLED is ON
 option(TESTS_ENABLED "Build tests" OFF)
 
 if(TESTS_ENABLED)
+    include(FetchContent)
+    FetchContent_Declare(
+    googletest
+    URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    )
+    # For Windows: Prevent overriding the parent project's compiler/linker settings
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
+
     add_executable(allTests
         test/test_andoma.cpp
         test/test_leela_board_wrapper.cpp
