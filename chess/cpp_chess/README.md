@@ -26,9 +26,6 @@ Then:
 - WIP: implement andoma
     - DONE add miech evaluation
     - WIP fix unimplemented stuff
-        - WIP add test: how does board flipping work?
-        - WIP (on hold) implement copy instaed of undo
-            - add a test
     - write bot fight to check win rates
     - maybe: implement move ordering
 - try training a torch model

@@ -117,7 +117,6 @@ int LeelaBoardWrapper::turn() const
 }
 
 LeelaBoardWrapper LeelaBoardWrapper::copy() const {
-    // perf: ChessBoard(board) exists, may be faster if we don't need position
     LeelaBoardWrapper new_wrapper;
     new_wrapper.impl_->position = impl_->position;
     return new_wrapper;

@@ -69,20 +69,24 @@ TEST_F(LeelaBoardWrapperTest, PlayFullGame) {
     EXPECT_TRUE(board.is_game_over());
 }
 
-// TODO: come back to this when you understand board mirroring
-// TEST_F(LeelaBoardWrapperTest, Copy) {
-//     LeelaBoardWrapper board1;
-//     board1.make_move("a2", "a3");
-//     EXPECT_TRUE(board1.piece_at("a3").has_value());
-//     EXPECT_EQ(board1.piece_at("a3").value(), lczero::kPawn);
-//     EXPECT_EQ(board1.color_at("a3"), LeelaBoardWrapper::WHITE);
+TEST_F(LeelaBoardWrapperTest, Copy) {
+    LeelaBoardWrapper board1;
+    board1.make_move("a2", "a3");
 
-//     auto board2 = board1.copy();
-//     EXPECT_EQ(board2.piece_at("a3").value(), lczero::kPawn);
-//     EXPECT_EQ(board1.fen(), board2.fen());
+    // copy
+    auto board2 = board1.copy();
 
-//     board2.make_move("a7", "a6");
-//     EXPECT_NE(board1.fen(), board2.fen());
-// }
+    // copy == original
+    EXPECT_EQ(board2.piece_at("a3").value(), lczero::kPawn);
+    EXPECT_EQ(board1.fen(), board2.fen());
+
+    // modify copy
+    board2.make_move("a7", "a6");
+
+    // copy != original
+    EXPECT_EQ(board2.piece_at("a6").value(), lczero::kPawn);
+    EXPECT_FALSE(board1.piece_at("a6").has_value());
+    EXPECT_NE(board1.fen(), board2.fen());
+}
 
 } // namespace mystuff
