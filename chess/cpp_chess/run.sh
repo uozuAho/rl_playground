@@ -2,17 +2,33 @@
 
 set -eu
 
+BUILD_TYPE=Debug
+BUILD_FULL=false
+ARGS=()
+for arg in "$@"; do
+    if [[ "$arg" == "--rebuild" ]]; then
+        BUILD_FULL=true
+    elif [[ "$arg" == "--release" ]]; then
+        BUILD_TYPE=Release
+    elif [[ "$arg" == "--debug" ]]; then
+        BUILD_TYPE=Debug
+    else
+        ARGS+=("$arg")
+    fi
+done
+
 function build_full() {
     rm -rf build
     mkdir build
     pushd build
-    cmake ..
+    cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
     make
     popd
 }
 
 function build_fast() {
     pushd build
+    cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
     make
     popd
 }
@@ -28,16 +44,6 @@ function test_run() {
     ctest --output-on-failure
     popd
 }
-
-BUILD_FULL=false
-ARGS=()
-for arg in "$@"; do
-    if [[ "$arg" == "--rebuild" ]]; then
-        BUILD_FULL=true
-    else
-        ARGS+=("$arg")
-    fi
-done
 
 if $BUILD_FULL; then
     build_full

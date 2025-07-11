@@ -4,14 +4,6 @@ project(cpp_chess)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Optimised build, can't debug
-# set(CMAKE_BUILD_TYPE Release)
-
-# Debug build, can debug! Uncomment the following 3 lines
-set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g")
-
 add_definitions(-DNO_PEXT)
 
 include_directories(src/lc0chess)
