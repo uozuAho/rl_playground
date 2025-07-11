@@ -4,6 +4,7 @@ set -eu
 
 BUILD_TYPE=Debug
 BUILD_FULL=false
+BUILD_TESTS=OFF
 ARGS=()
 for arg in "$@"; do
     if [[ "$arg" == "--rebuild" ]]; then
@@ -12,6 +13,9 @@ for arg in "$@"; do
         BUILD_TYPE=Release
     elif [[ "$arg" == "--debug" ]]; then
         BUILD_TYPE=Debug
+    elif [[ "$arg" == "test" ]]; then
+        BUILD_TESTS=ON
+        ARGS+=("$arg")
     else
         ARGS+=("$arg")
     fi
@@ -21,14 +25,14 @@ function build_full() {
     rm -rf build
     mkdir build
     pushd build
-    cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
+    cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DTESTS_ENABLED=$BUILD_TESTS ..
     make
     popd
 }
 
 function build_fast() {
     pushd build
-    cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
+    cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DTESTS_ENABLED=$BUILD_TESTS ..
     make
     popd
 }
