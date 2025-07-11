@@ -43,10 +43,12 @@ MatchResult play_game(Agent& white, Agent& black) {
 // todo: print time taken
 void bot_fight(int n_games) {
     RandomAgent random_agent;
-    AndomaAgent andoma_agent;
+    AndomaAgent andoma_agent_s1(1);
+    AndomaAgent andoma_agent_s2(2);
     std::vector<AgentInfo> agents = {
         {"RandomAgent", &random_agent},
-        {"AndomaAgent", &andoma_agent}
+        {"AndomaAgent depth=1", &andoma_agent_s1},
+        {"AndomaAgent depth=2", &andoma_agent_s2}
     };
     int n = agents.size();
     for (int i = 0; i < n; ++i) {
@@ -69,8 +71,8 @@ void bot_fight(int n_games) {
             double games_per_sec = n_games / elapsed.count();
             double avg_halfmoves = static_cast<double>(totalHalfmoves) / n_games;
             std::cout << agents[i].name << " vs " << agents[j].name << " : ";
-            std::cout << white_wins << " wins, " << black_wins << " losses, " << draws << " draws\n";
-            std::cout << "  Games/sec: " << games_per_sec << ", Avg halfmoves/game: " << avg_halfmoves << std::endl;
+            std::cout << white_wins << " wins, " << black_wins << " losses, " << draws << " draws,";
+            std::cout << "  Games/sec: " << games_per_sec << ", Avg halfmoves: " << avg_halfmoves << std::endl;
         }
     }
 }
@@ -78,6 +80,6 @@ void bot_fight(int n_games) {
 } // namespace mystuff
 
 int main() {
-    mystuff::bot_fight(10);
+    mystuff::bot_fight(100);
     return 0;
 }

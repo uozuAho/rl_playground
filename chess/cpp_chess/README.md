@@ -24,9 +24,5 @@ Then:
 - use vscode debugger. You can debug main or the tests.
 
 # to do
-- WIP: implement andoma
-    - DONE add miech evaluation
-    - DONE? fix unimplemented stuff
-    - WIP write bot fight to check win rates
-    - maybe: implement move ordering
 - try training a torch model
+- maybe: perf: andoma: implement move ordering
