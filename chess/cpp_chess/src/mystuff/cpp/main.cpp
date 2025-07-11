@@ -56,6 +56,7 @@ void bot_fight(int n_games) {
             int black_wins = 0;
             int draws = 0;
             int totalHalfmoves = 0;
+            auto start = std::chrono::high_resolution_clock::now();
             for (int g = 0; g < n_games; ++g) {
                 auto result = play_game(*agents[i].agent, *agents[j].agent);
                 totalHalfmoves += result.halfMoves;
@@ -63,8 +64,13 @@ void bot_fight(int n_games) {
                 else if (!result.draw) black_wins++;
                 else draws++;
             }
+            auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elapsed = end - start;
+            double games_per_sec = n_games / elapsed.count();
+            double avg_halfmoves = static_cast<double>(totalHalfmoves) / n_games;
             std::cout << agents[i].name << " vs " << agents[j].name << " : ";
             std::cout << white_wins << " wins, " << black_wins << " losses, " << draws << " draws\n";
+            std::cout << "  Games/sec: " << games_per_sec << ", Avg halfmoves/game: " << avg_halfmoves << std::endl;
         }
     }
 }
