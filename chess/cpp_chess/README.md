@@ -25,7 +25,7 @@ Then:
 # to do
 - WIP: implement andoma
     - DONE add miech evaluation
-    - WIP fix unimplemented stuff
-    - write bot fight to check win rates
+    - DONE? fix unimplemented stuff
+    - WIP write bot fight to check win rates
     - maybe: implement move ordering
 - try training a torch model
