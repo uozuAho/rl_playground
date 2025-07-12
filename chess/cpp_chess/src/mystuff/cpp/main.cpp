@@ -1,10 +1,12 @@
 #include <iostream>
 #include <chrono>
+#include <torch/torch.h>
+#include <vector>
+#include <string>
+
 #include "agent_random.h"
 #include "chess/board.h"
 #include "andoma_agent.h"
-#include <vector>
-#include <string>
 
 namespace mystuff {
 
@@ -80,6 +82,8 @@ void bot_fight(int n_games) {
 } // namespace mystuff
 
 int main() {
-    mystuff::bot_fight(100);
+    // mystuff::bot_fight(100);
+    torch::Tensor tensor = torch::eye(3);
+    std::cout << tensor << std::endl;
     return 0;
 }

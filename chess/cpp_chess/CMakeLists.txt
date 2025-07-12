@@ -4,6 +4,8 @@ project(cpp_chess)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+find_package(Torch REQUIRED)
+
 add_definitions(-DNO_PEXT)
 
 include_directories(src/lc0chess)
@@ -21,6 +23,8 @@ add_executable(cpp_chess
     src/mystuff/cpp/andoma_agent.cpp
     src/mystuff/cpp/leela_board_wrapper.cpp
 )
+
+target_link_libraries(cpp_chess "${TORCH_LIBRARIES}")
 
 enable_testing()
 

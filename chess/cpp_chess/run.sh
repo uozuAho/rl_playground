@@ -2,6 +2,10 @@
 
 set -eu
 
+LIBTORCH_URL=https://download.pytorch.org/libtorch/nightly/cpu/libtorch-shared-with-deps-latest.zip
+SRC_DIR=$(pwd)/src
+LIBTORCH_DIR=${SRC_DIR}/libtorch
+
 BUILD_TYPE=Debug
 BUILD_FULL=false
 BUILD_TESTS=OFF
@@ -21,8 +25,19 @@ for arg in "$@"; do
     fi
 done
 
+function fetch_torch() {
+    if [ ! -d "$LIBTORCH_DIR" ]; then
+        mkdir -p /tmp/libtorch
+        pushd /tmp/libtorch
+        wget $LIBTORCH_URL
+        unzip libtorch-shared-with-deps-latest.zip -d $SRC_DIR
+        popd
+    fi
+}
+
 function build_full() {
     rm -rf build
+    fetch_torch
     mkdir build
     pushd build
     cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DTESTS_ENABLED=$BUILD_TESTS ..
@@ -31,6 +46,7 @@ function build_full() {
 }
 
 function build_fast() {
+    fetch_torch
     pushd build
     cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DTESTS_ENABLED=$BUILD_TESTS ..
     make
