@@ -1,12 +1,12 @@
 #include <iostream>
 #include <chrono>
-#include <torch/torch.h>
 #include <vector>
 #include <string>
 
 #include "agent_random.h"
 #include "chess/board.h"
 #include "andoma_agent.h"
+#include "torch_eval_approximator.h"
 
 namespace mystuff {
 
@@ -83,7 +83,7 @@ void bot_fight(int n_games) {
 
 int main() {
     // mystuff::bot_fight(100);
-    torch::Tensor tensor = torch::eye(3);
-    std::cout << tensor << std::endl;
+    mystuff::EvalApproximator ea;
+    ea.doSimpleTorchAction();
     return 0;
 }
