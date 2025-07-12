@@ -4,6 +4,9 @@ project(cpp_chess)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/libtorch/share/cmake/Torch" ${CMAKE_PREFIX_PATH})
+find_package(Torch REQUIRED)
+
 add_definitions(-DNO_PEXT)
 
 include_directories(src/lc0chess)
@@ -17,10 +20,14 @@ add_executable(cpp_chess
 
     src/mystuff/cpp/main.cpp
     src/mystuff/cpp/eval.cpp
+    src/mystuff/cpp/bot_fight.cpp
     src/mystuff/cpp/agent_random.cpp
     src/mystuff/cpp/andoma_agent.cpp
     src/mystuff/cpp/leela_board_wrapper.cpp
+    src/mystuff/cpp/torch_eval_approximator.cpp
 )
+
+target_link_libraries(cpp_chess "${TORCH_LIBRARIES}")
 
 enable_testing()
 
