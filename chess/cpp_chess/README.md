@@ -22,14 +22,12 @@ Then:
 - use vscode debugger with C++ extension
 
 # to do
-- try training a torch model. Prompt:
-
-Port the python code in train_value_network.py to C++. Add the C++ code to
-EvalApproximator. The python code trains a neural network to approximate a chess
-board evaluation function. It then evaluates how well the network approximates
-the evaluation function. In this case, our evaluation function is evaluate_board
-in eval.cpp.
-
+- WIP try training a torch model
+    - DONE gen code
+    - try running it, fix compile/run
+    - does it approximate well?
+    - compare to python code
+        - note the board encoding is different (64 floats, different float val per piece)
 - copy greedy nn bot from python
 - maybe: perf: andoma: implement move ordering
 - maybe: perf: general profile + optimise
