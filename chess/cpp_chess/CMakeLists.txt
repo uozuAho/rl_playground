@@ -4,6 +4,7 @@ project(cpp_chess)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/libtorch/share/cmake/Torch" ${CMAKE_PREFIX_PATH})
 find_package(Torch REQUIRED)
 
 add_definitions(-DNO_PEXT)
