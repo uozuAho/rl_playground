@@ -5,6 +5,9 @@ There is a user-friendly run.sh script that hides the complexities of cmake.
 All chess game implementation code is in src/lc0chess. Do not modify this unless
 instructed to.
 
+libtorch (a C++ interface to pytorch) is used for machine learning. Its code is
+in src/libtorch. Do not modify this code.
+
 My code is under src/mystuff. This is where you should add code.
 src/mystuff/include/leela_board_wrapper.h is a user-friendly wrapper around the
 chess implementation in src/lc0chess.

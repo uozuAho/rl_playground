@@ -20,6 +20,7 @@ add_executable(cpp_chess
 
     src/mystuff/cpp/main.cpp
     src/mystuff/cpp/eval.cpp
+    src/mystuff/cpp/bot_fight.cpp
     src/mystuff/cpp/agent_random.cpp
     src/mystuff/cpp/andoma_agent.cpp
     src/mystuff/cpp/leela_board_wrapper.cpp
