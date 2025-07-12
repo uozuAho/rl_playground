@@ -1,10 +1,6 @@
 #pragma once
 
-/*
-Just a little demo to show how to use torch (and teach me how to use it)
-*/
 namespace mystuff {
-// Simple feedforward network for value approximation
 struct ValueNetImpl : torch::nn::Module {
     torch::nn::Linear fc1{nullptr}, fc2{nullptr}, fc3{nullptr};
     ValueNetImpl(int input_size, int hidden_size=128) {
@@ -24,8 +20,13 @@ TORCH_MODULE(ValueNet);
 class EvalApproximator {
 public:
     EvalApproximator();
-    void doSimpleTorchAction();
-    void train_and_test_value_network(int n_train=1000, int n_test=200, int epochs=10, int batch_size=32, double lr=1e-3);
+    void train_and_test_value_network(
+        int n_train=1000,
+        int n_test=200,
+        int epochs=10,
+        int batch_size=32,
+        double lr=1e-3
+    );
 private:
     ValueNet net_;
     int input_size_ = 773; // Example: 773 for 12x64 + 5 extras, adjust as needed

@@ -16,14 +16,8 @@ EvalApproximator::EvalApproximator() :
     net_->to(device_);
 }
 
-// Example: just print a tensor
-void EvalApproximator::doSimpleTorchAction() {
-    torch::Tensor tensor = torch::eye(3);
-    std::cout << tensor << std::endl;
-}
-
 // Encode board as a flat vector (12x64 one-hot for pieces + 5 extras)
-static std::vector<float> encode_board(const LeelaBoardWrapper& board) {
+static std::vector<float> board2vec(const LeelaBoardWrapper& board) {
     // 12 piece types (6 per color) x 64 squares
     std::vector<float> features(12 * 64, 0.0f);
     // Piece type order: white P N B R Q K, black P N B R Q K
@@ -31,7 +25,7 @@ static std::vector<float> encode_board(const LeelaBoardWrapper& board) {
         auto piece_opt = board.piece_at(lczero::Square::FromIdx(sq));
         if (!piece_opt.has_value()) continue;
         int color = board.color_at(lczero::Square::FromIdx(sq));
-        int type = piece_opt.value();
+        int type = piece_opt.value().idx;
         int idx = -1;
         if (color == LeelaBoardWrapper::WHITE) idx = (type - 1);
         else idx = 6 + (type - 1);
@@ -40,7 +34,6 @@ static std::vector<float> encode_board(const LeelaBoardWrapper& board) {
     // Add 5 extras: turn, castling, etc. (dummy for now)
     features.resize(12 * 64 + 5, 0.0f);
     features[12 * 64] = (board.turn() == LeelaBoardWrapper::WHITE) ? 1.0f : 0.0f;
-    // TODO: add more features if needed
     return features;
 }
 
@@ -58,7 +51,7 @@ std::vector<std::vector<float>> EvalApproximator::generate_random_positions(int 
             std::uniform_int_distribution<size_t> dist(0, moves.size() - 1);
             board.make_move(moves[dist(gen)]);
         }
-        positions.push_back(encode_board(board));
+        positions.push_back(board2vec(board));
     }
     return positions;
 }
@@ -68,16 +61,21 @@ float EvalApproximator::normalize_eval(int eval) {
     return std::tanh(eval / 3000.0f);
 }
 
-void EvalApproximator::train_and_test_value_network(int n_train, int n_test, int epochs, int batch_size, double lr) {
+void EvalApproximator::train_and_test_value_network(
+    int n_train,
+    int n_test,
+    int epochs,
+    int batch_size,
+    double lr
+)
+{
+    // todo: convert these to a dataset generation function, then split
+    // into test/train
     std::cout << "Generating training positions...\n";
     auto train_positions = generate_random_positions(n_train);
     std::vector<float> train_targets;
     for (const auto& feat : train_positions) {
         LeelaBoardWrapper board = LeelaBoardWrapper();
-        // decode features to board not implemented, so re-generate
-        // Instead, just evaluate the board after random playout
-        // (features and board are in sync in this context)
-        // This is a hack: in real code, keep the board objects
         int eval = evaluate_board(board);
         train_targets.push_back(normalize_eval(eval));
     }
