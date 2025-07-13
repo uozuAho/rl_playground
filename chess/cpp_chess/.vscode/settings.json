@@ -69,6 +69,15 @@
         "typeinfo": "cpp",
         "variant": "cpp",
         "any": "cpp",
-        "forward_list": "cpp"
+        "forward_list": "cpp",
+        "bitset": "cpp",
+        "codecvt": "cpp",
+        "complex": "cpp",
+        "csignal": "cpp",
+        "expected": "cpp",
+        "regex": "cpp",
+        "source_location": "cpp",
+        "typeindex": "cpp",
+        "valarray": "cpp"
     }
 }

@@ -4,6 +4,6 @@
 int main() {
     // mystuff::bot_fight(5);
     mystuff::EvalApproximator ea;
-    ea.doSimpleTorchAction();
+    ea.train_and_test_value_network(100, 10, 1);
     return 0;
 }

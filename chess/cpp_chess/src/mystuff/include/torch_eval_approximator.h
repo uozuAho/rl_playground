@@ -1,4 +1,5 @@
 #pragma once
+#include <torch/torch.h>
 
 namespace mystuff {
 struct ValueNetImpl : torch::nn::Module {
@@ -21,9 +22,9 @@ class EvalApproximator {
 public:
     EvalApproximator();
     void train_and_test_value_network(
-        int n_train=1000,
-        int n_test=200,
-        int epochs=10,
+        int n_train,
+        int n_test,
+        int epochs,
         int batch_size=32,
         double lr=1e-3
     );
@@ -31,7 +32,8 @@ private:
     ValueNet net_;
     int input_size_ = 773; // Example: 773 for 12x64 + 5 extras, adjust as needed
     torch::Device device_ = torch::kCPU;
-    std::vector<std::vector<float>> generate_random_positions(int n_positions);
+    std::tuple<std::vector<std::vector<float>>, std::vector<float>>
+        generate_random_positions(int n_positions);
     float normalize_eval(int eval);
 };
 } // namespace mystuff

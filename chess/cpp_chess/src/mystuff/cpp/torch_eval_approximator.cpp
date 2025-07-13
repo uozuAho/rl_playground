@@ -37,11 +37,20 @@ static std::vector<float> board2vec(const LeelaBoardWrapper& board) {
     return features;
 }
 
-// Generate n random positions by random playouts
-std::vector<std::vector<float>> EvalApproximator::generate_random_positions(int n_positions) {
-    std::vector<std::vector<float>> positions;
+// Normalize evaluation to [-1, 1]
+float EvalApproximator::normalize_eval(int eval) {
+    return std::tanh(eval / 3000.0f);
+}
+
+// Generate 2 vectors of length n: (board vectors, normalised values)
+std::tuple<std::vector<std::vector<float>>, std::vector<float>>
+EvalApproximator::generate_random_positions(int n_positions)
+{
+    std::vector<std::vector<float>> boardVecs;
+    std::vector<float> normVals;
     std::random_device rd;
     std::mt19937 gen(rd());
+
     for (int i = 0; i < n_positions; ++i) {
         LeelaBoardWrapper board;
         int n_moves = std::uniform_int_distribution<>(5, 50)(gen);
@@ -51,14 +60,11 @@ std::vector<std::vector<float>> EvalApproximator::generate_random_positions(int 
             std::uniform_int_distribution<size_t> dist(0, moves.size() - 1);
             board.make_move(moves[dist(gen)]);
         }
-        positions.push_back(board2vec(board));
+        int value = evaluate_board(board);
+        boardVecs.push_back(board2vec(board));
+        normVals.push_back(normalize_eval(value));
     }
-    return positions;
-}
-
-// Normalize evaluation to [-1, 1]
-float EvalApproximator::normalize_eval(int eval) {
-    return std::tanh(eval / 3000.0f);
+    return std::tuple(boardVecs, normVals);
 }
 
 void EvalApproximator::train_and_test_value_network(
@@ -69,37 +75,22 @@ void EvalApproximator::train_and_test_value_network(
     double lr
 )
 {
-    // todo: convert these to a dataset generation function, then split
-    // into test/train
     std::cout << "Generating training positions...\n";
-    auto train_positions = generate_random_positions(n_train);
-    std::vector<float> train_targets;
-    for (const auto& feat : train_positions) {
-        LeelaBoardWrapper board = LeelaBoardWrapper();
-        int eval = evaluate_board(board);
-        train_targets.push_back(normalize_eval(eval));
-    }
+    auto [train_boards, train_values] = generate_random_positions(n_train);
 
     std::cout << "Generating test positions...\n";
-    auto test_positions = generate_random_positions(n_test);
-    std::vector<float> test_targets;
-    for (const auto& feat : test_positions) {
-        LeelaBoardWrapper board = LeelaBoardWrapper();
-        int eval = evaluate_board(board);
-        test_targets.push_back(normalize_eval(eval));
-    }
+    auto [test_boards, test_values] = generate_random_positions(n_test);
 
-    // Convert to tensors
     auto to_tensor = [](const std::vector<std::vector<float>>& data) {
         return torch::from_blob((float*)data.data(), {(long)data.size(), (long)data[0].size()}).clone();
     };
     auto to_tensor1d = [](const std::vector<float>& data) {
         return torch::from_blob((float*)data.data(), {(long)data.size(), 1}).clone();
     };
-    torch::Tensor X_train = to_tensor(train_positions).to(device_);
-    torch::Tensor y_train = to_tensor1d(train_targets).to(device_);
-    torch::Tensor X_test = to_tensor(test_positions).to(device_);
-    torch::Tensor y_test = to_tensor1d(test_targets).to(device_);
+    torch::Tensor X_train = to_tensor(train_boards).to(device_);
+    torch::Tensor y_train = to_tensor1d(train_values).to(device_);
+    torch::Tensor X_test = to_tensor(test_boards).to(device_);
+    torch::Tensor y_test = to_tensor1d(test_values).to(device_);
 
     torch::optim::Adam optimizer(net_->parameters(), torch::optim::AdamOptions(lr));
     auto criterion = torch::nn::MSELoss();
