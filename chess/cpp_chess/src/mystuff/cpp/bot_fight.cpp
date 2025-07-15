@@ -10,7 +10,6 @@
 namespace mystuff {
 
 MatchResult play_game(Agent& white, Agent& black) {
-    lczero::InitializeMagicBitboards();
     LeelaBoardWrapper board;
     Agent* agents[2] = {&white, &black};
     int turn = 0;

@@ -10,7 +10,7 @@
 namespace mystuff {
 
 EvalApproximator::EvalApproximator() :
-    net_(ValueNet(input_size_)),
+    net_(ValueNet(773)), // 773 for 12x64 + 5 extras, adjust as needed
     device_(torch::cuda::is_available() ? torch::kCUDA : torch::kCPU)
 {
     net_->to(device_);
@@ -75,10 +75,10 @@ void EvalApproximator::train_and_test_value_network(
     double lr
 )
 {
-    std::cout << "Generating training positions...\n";
+    std::cout << "Generating " << n_train << " training positions...\n";
     auto [train_boards, train_values] = generate_random_positions(n_train);
 
-    std::cout << "Generating test positions...\n";
+    std::cout << "Generating " << n_test << " test positions...\n";
     auto [test_boards, test_values] = generate_random_positions(n_test);
 
     auto to_tensor = [](const std::vector<std::vector<float>>& data) {
@@ -92,10 +92,12 @@ void EvalApproximator::train_and_test_value_network(
     torch::Tensor X_test = to_tensor(test_boards).to(device_);
     torch::Tensor y_test = to_tensor1d(test_values).to(device_);
 
+    std::cout << "X_train shape: " << X_train.sizes() << ", y_train shape: " << y_train.sizes() << std::endl;
+
     torch::optim::Adam optimizer(net_->parameters(), torch::optim::AdamOptions(lr));
     auto criterion = torch::nn::MSELoss();
 
-    std::cout << "Training for " << epochs << " epochs...\n";
+    std::cout << "Training for " << epochs << " epochs. Batch size " << batch_size << std::endl;
     for (int epoch = 0; epoch < epochs; ++epoch) {
         net_->train();
         float epoch_loss = 0.0f;

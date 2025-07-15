@@ -4,7 +4,7 @@
 namespace mystuff {
 struct ValueNetImpl : torch::nn::Module {
     torch::nn::Linear fc1{nullptr}, fc2{nullptr}, fc3{nullptr};
-    ValueNetImpl(int input_size, int hidden_size=128) {
+    ValueNetImpl(int input_size, int hidden_size=16) {
         fc1 = register_module("fc1", torch::nn::Linear(input_size, hidden_size));
         fc2 = register_module("fc2", torch::nn::Linear(hidden_size, hidden_size));
         fc3 = register_module("fc3", torch::nn::Linear(hidden_size, 1));
@@ -30,7 +30,6 @@ public:
     );
 private:
     ValueNet net_;
-    int input_size_ = 773; // Example: 773 for 12x64 + 5 extras, adjust as needed
     torch::Device device_ = torch::kCPU;
     std::tuple<std::vector<std::vector<float>>, std::vector<float>>
         generate_random_positions(int n_positions);

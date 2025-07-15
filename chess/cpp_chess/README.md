@@ -24,10 +24,10 @@ Then:
 # to do
 - WIP try training a torch model
     - DONE gen code
-    - try running it, fix compile/run
+    - DONE try running it, fix compile/run
     - does it approximate well?
-    - compare to python code
-        - note the board encoding is different (64 floats, different float val per piece)
+        - compare to python code
+            - note the board encoding is different (64 floats, different float val per piece)
 - copy greedy nn bot from python
 - maybe: perf: andoma: implement move ordering
 - maybe: perf: general profile + optimise
