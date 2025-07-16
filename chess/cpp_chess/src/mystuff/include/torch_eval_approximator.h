@@ -2,15 +2,32 @@
 #include <torch/torch.h>
 
 namespace mystuff {
+
 struct ValueNetImpl : torch::nn::Module {
+    torch::nn::Conv2d conv1{nullptr}, conv2{nullptr}, conv3{nullptr};
     torch::nn::Linear fc1{nullptr}, fc2{nullptr}, fc3{nullptr};
-    ValueNetImpl(int input_size, int hidden_size=16) {
-        fc1 = register_module("fc1", torch::nn::Linear(input_size, hidden_size));
-        fc2 = register_module("fc2", torch::nn::Linear(hidden_size, hidden_size));
-        fc3 = register_module("fc3", torch::nn::Linear(hidden_size, 1));
+    torch::nn::Dropout dropout{nullptr};
+
+    ValueNetImpl() {
+        conv1 = register_module("conv1", torch::nn::Conv2d(torch::nn::Conv2dOptions(8, 32, 3).padding(1)));
+        conv2 = register_module("conv2", torch::nn::Conv2d(torch::nn::Conv2dOptions(32, 64, 3).padding(1)));
+        conv3 = register_module("conv3", torch::nn::Conv2d(torch::nn::Conv2dOptions(64, 32, 3).padding(1)));
+
+        fc1 = register_module("fc1", torch::nn::Linear(32 * 8 * 8, 128));
+        fc2 = register_module("fc2", torch::nn::Linear(128, 64));
+        fc3 = register_module("fc3", torch::nn::Linear(64, 1));
+
+        dropout = register_module("dropout", torch::nn::Dropout(0.3));
     }
+
     torch::Tensor forward(torch::Tensor x) {
+        x = torch::relu(conv1->forward(x));
+        x = torch::relu(conv2->forward(x));
+        x = torch::relu(conv3->forward(x));
+
+        x = x.view({x.size(0), -1});
         x = torch::relu(fc1->forward(x));
+        x = dropout->forward(x);
         x = torch::relu(fc2->forward(x));
         x = torch::tanh(fc3->forward(x));
         return x;

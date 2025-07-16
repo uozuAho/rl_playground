@@ -10,7 +10,7 @@
 namespace mystuff {
 
 EvalApproximator::EvalApproximator() :
-    net_(ValueNet(773)), // 773 for 12x64 + 5 extras, adjust as needed
+    net_(ValueNet()),
     device_(torch::cuda::is_available() ? torch::kCUDA : torch::kCPU)
 {
     net_->to(device_);
