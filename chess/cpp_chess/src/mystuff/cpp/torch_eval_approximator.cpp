@@ -37,16 +37,43 @@ static std::vector<float> board2vec(const LeelaBoardWrapper& board) {
     return features;
 }
 
+// Encode board as an 8x8x8 float tensor (piece_layer, rows, cols)
+static torch::Tensor board2tensor(const LeelaBoardWrapper& board) {
+    torch::Tensor state = torch::zeros({8, 8, 8}, torch::kFloat32);
+    for (int i = 0; i < 64; ++i) {
+        int row = i / 8;
+        int col = i % 8;
+        auto sq = lczero::Square::FromIdx(i);
+        auto piece_opt = board.piece_at(sq);
+        if (!piece_opt.has_value()) continue;
+        int color = board.color_at(sq);
+        assert(color != 0);
+        auto pieceIdx = piece_opt.value().idx;
+        state[pieceIdx][row][col] = static_cast<float>(color);
+    }
+    float fullmove = static_cast<float>(board.fullmoveCount());
+    if (fullmove > 0) {
+        state[6].fill_(1.0f / fullmove);
+    }
+    if (board.turn() == LeelaBoardWrapper::WHITE) {
+        state[6][0].fill_(1.0f);
+    } else {
+        state[6][0].fill_(-1.0f);
+    }
+    state[7].fill_(1.0f);
+    return state;
+}
+
 // Normalize evaluation to [-1, 1]
 float EvalApproximator::normalize_eval(int eval) {
     return std::tanh(eval / 3000.0f);
 }
 
-// Generate 2 vectors of length n: (board vectors, normalised values)
-std::tuple<std::vector<std::vector<float>>, std::vector<float>>
+// Generate 2 vectors of length n: (board tensors, normalised values)
+std::tuple<std::vector<torch::Tensor>, std::vector<float>>
 EvalApproximator::generate_random_positions(int n_positions)
 {
-    std::vector<std::vector<float>> boardVecs;
+    std::vector<torch::Tensor> boardVecs;
     std::vector<float> normVals;
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -61,7 +88,7 @@ EvalApproximator::generate_random_positions(int n_positions)
             board.make_move(moves[dist(gen)]);
         }
         int value = evaluate_board(board);
-        boardVecs.push_back(board2vec(board));
+        boardVecs.push_back(board2tensor(board).to(device_));
         normVals.push_back(normalize_eval(value));
     }
     return std::tuple(boardVecs, normVals);
@@ -81,15 +108,12 @@ void EvalApproximator::train_and_test_value_network(
     std::cout << "Generating " << n_test << " test positions...\n";
     auto [test_boards, test_values] = generate_random_positions(n_test);
 
-    auto to_tensor = [](const std::vector<std::vector<float>>& data) {
-        return torch::from_blob((float*)data.data(), {(long)data.size(), (long)data[0].size()}).clone();
-    };
     auto to_tensor1d = [](const std::vector<float>& data) {
         return torch::from_blob((float*)data.data(), {(long)data.size(), 1}).clone();
     };
-    torch::Tensor X_train = to_tensor(train_boards).to(device_);
+    torch::Tensor X_train = torch::stack(test_boards);
     torch::Tensor y_train = to_tensor1d(train_values).to(device_);
-    torch::Tensor X_test = to_tensor(test_boards).to(device_);
+    torch::Tensor X_test = torch::stack(test_boards);
     torch::Tensor y_test = to_tensor1d(test_values).to(device_);
 
     std::cout << "X_train shape: " << X_train.sizes() << ", y_train shape: " << y_train.sizes() << std::endl;
@@ -98,6 +122,7 @@ void EvalApproximator::train_and_test_value_network(
     auto criterion = torch::nn::MSELoss();
 
     std::cout << "Training for " << epochs << " epochs. Batch size " << batch_size << std::endl;
+    auto start = std::chrono::high_resolution_clock::now();
     for (int epoch = 0; epoch < epochs; ++epoch) {
         net_->train();
         float epoch_loss = 0.0f;
@@ -117,6 +142,9 @@ void EvalApproximator::train_and_test_value_network(
             std::cout << "Epoch " << (epoch+1) << "/" << epochs << ", Loss: " << epoch_loss << std::endl;
         }
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto elapsed = end - start;
+    std::cout << "Done training in " << elapsed << std::endl;
 
     // Evaluate
     net_->eval();

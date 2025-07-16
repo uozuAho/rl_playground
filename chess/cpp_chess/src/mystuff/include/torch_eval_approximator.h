@@ -48,7 +48,7 @@ public:
 private:
     ValueNet net_;
     torch::Device device_ = torch::kCPU;
-    std::tuple<std::vector<std::vector<float>>, std::vector<float>>
+    std::tuple<std::vector<torch::Tensor>, std::vector<float>>
         generate_random_positions(int n_positions);
     float normalize_eval(int eval);
 };
