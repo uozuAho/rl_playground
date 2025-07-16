@@ -143,10 +143,10 @@ void EvalApproximator::train_and_test_value_network(
         }
     }
     auto end = std::chrono::high_resolution_clock::now();
-    auto elapsed = end - start;
-    std::cout << "Done training in " << elapsed << std::endl;
+    auto elapsed_ns = end - start;
+    auto elapsed_s = std::chrono::duration_cast<std::chrono::seconds>(elapsed_ns);
+    std::cout << "Done training in " << elapsed_s << std::endl;
 
-    // Evaluate
     net_->eval();
     auto pred = net_->forward(X_test).detach().cpu().squeeze();
     auto y_true = y_test.cpu().squeeze();
