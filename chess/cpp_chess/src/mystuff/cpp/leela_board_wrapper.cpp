@@ -84,9 +84,11 @@ std::optional<lczero::PieceType> LeelaBoardWrapper::piece_at(std::string_view sq
     return piece_at(lczero::Square::Parse(square));
 }
 
+// returns WHITE, BLACK or 0
 int LeelaBoardWrapper::color_at(lczero::Square square) const
 {
     auto board = impl_->position.GetBoard();
+
 
     if (board.flipped()) {
         board = lczero::ChessBoard(board);
@@ -96,8 +98,11 @@ int LeelaBoardWrapper::color_at(lczero::Square square) const
     if (board.ours().get(square)) {
         return LeelaBoardWrapper::WHITE;
     }
+    else if (board.theirs().get(square)) {
+        return LeelaBoardWrapper::BLACK;
+    }
 
-    return LeelaBoardWrapper::BLACK;
+    return 0;
 }
 
 int LeelaBoardWrapper::color_at(std::string_view square) const
@@ -124,6 +129,10 @@ LeelaBoardWrapper LeelaBoardWrapper::copy() const {
 
 std::string LeelaBoardWrapper::fen() const {
     return lczero::BoardToFen(impl_->position.GetBoard());
+}
+
+int LeelaBoardWrapper::fullmoveCount() const {
+    return impl_->position.GetGamePly() / 2;
 }
 
 } // namespace mystuff

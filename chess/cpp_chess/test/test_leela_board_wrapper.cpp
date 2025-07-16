@@ -16,8 +16,20 @@ TEST_F(LeelaBoardWrapperTest, InitialState) {
     LeelaBoardWrapper board;
     EXPECT_FALSE(board.is_game_over());
     EXPECT_EQ(board.turn(), LeelaBoardWrapper::WHITE);
+
     auto moves = board.legal_moves();
     EXPECT_FALSE(moves.empty());
+
+    EXPECT_TRUE(board.piece_at("a1").has_value());
+    EXPECT_EQ(board.piece_at("a1").value(), lczero::kRook);
+    EXPECT_EQ(board.color_at("a1"), LeelaBoardWrapper::WHITE);
+
+    EXPECT_TRUE(board.piece_at("a7").has_value());
+    EXPECT_EQ(board.piece_at("a7").value(), lczero::kPawn);
+    EXPECT_EQ(board.color_at("a7"), LeelaBoardWrapper::BLACK);
+
+    EXPECT_FALSE(board.piece_at("a6").has_value());
+    EXPECT_EQ(board.color_at("a6"), 0);
 }
 
 TEST_F(LeelaBoardWrapperTest, HowDoSquaresWork) {

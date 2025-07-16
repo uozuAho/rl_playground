@@ -32,6 +32,7 @@ public:
     std::optional<lczero::PieceType> piece_at(std::string_view square) const;
     int color_at(lczero::Square square) const;
     int color_at(std::string_view square) const;
+    int fullmoveCount() const;
 private:
     LeelaBoardWrapperImpl* impl_;
 };
