@@ -20,6 +20,11 @@ def mean_absolute_error(y_true, y_pred):
 
 
 def pearsonr(x, y):
+    """
+    https://en.wikipedia.org/wiki/Pearson_correlation_coefficient
+    0: no correlation
+    +1,-1: perfect +/- correlation
+    """
     x = np.array(x)
     y = np.array(y)
 

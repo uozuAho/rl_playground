@@ -25,8 +25,14 @@ Then:
 - WIP try training a torch model
     - DONE gen code
     - DONE try running it, fix compile/run
-    - does it approximate well?
-        - compare to python code. ensure they're doing the same thing
+    - WIP: why worse than python version?
+        - WIP review nets, training, eval: doing same thing?
+            - DONE nets are same
+            - DONE gendata: same
+            - DONE: train: cpp doesn't shuffle data. Doesn't explain bad stats.
+        - generate sample data in file to use in both
+        - confirm mich eval scores are same
+        - train + test both from file data
 - copy greedy nn bot from python
 - maybe: perf: andoma: implement move ordering
 - maybe: perf: general profile + optimise

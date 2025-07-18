@@ -73,7 +73,7 @@ float EvalApproximator::normalize_eval(int eval) {
 std::tuple<std::vector<torch::Tensor>, std::vector<float>>
 EvalApproximator::generate_random_positions(int n_positions)
 {
-    std::vector<torch::Tensor> boardVecs;
+    std::vector<torch::Tensor> boardTs;
     std::vector<float> normVals;
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -88,10 +88,10 @@ EvalApproximator::generate_random_positions(int n_positions)
             board.make_move(moves[dist(gen)]);
         }
         int value = evaluate_board(board);
-        boardVecs.push_back(board2tensor(board).to(device_));
+        boardTs.push_back(board2tensor(board).to(device_));
         normVals.push_back(normalize_eval(value));
     }
-    return std::tuple(boardVecs, normVals);
+    return std::tuple(boardTs, normVals);
 }
 
 void EvalApproximator::train_and_test_value_network(
@@ -152,7 +152,12 @@ void EvalApproximator::train_and_test_value_network(
     auto y_true = y_test.cpu().squeeze();
     float mse = torch::mse_loss(pred, y_true).item<float>();
     float mae = torch::linalg_norm(pred - y_true, 1).item<float>() / y_true.size(0);
+
+    // https://en.wikipedia.org/wiki/Pearson_correlation_coefficient
+    // 0: no correlation
+    // +1,-1: perfect +/- correlation
     float corr = torch::corrcoef(torch::stack({pred, y_true}))[0][1].item<float>();
+
     std::cout << "Test MSE: " << mse << ", MAE: " << mae << ", Corr: " << corr << std::endl;
 }
 
