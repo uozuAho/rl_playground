@@ -153,34 +153,6 @@ def train_value_network(
     return train_losses, val_losses
 
 
-def compare_evaluations(value_network, positions, device="cpu"):
-    """Compare ValueNetwork predictions with Michniew evaluate_board."""
-    value_network.eval()
-
-    network_scores = []
-    michniew_scores = []
-
-    with torch.no_grad():
-        for game in positions:
-            # Get board state for ValueNetwork
-            state = game.state_np()
-            state_tensor = (
-                torch.tensor(state, dtype=torch.float32).unsqueeze(0).to(device)
-            )
-
-            # Get ValueNetwork prediction
-            network_pred = value_network(state_tensor).item()
-            network_scores.append(network_pred)
-
-            # Get Michniew evaluation
-            board = chess.Board(game.fen())
-            michniew_pred = evaluate_board(board)
-            michniew_normalized = normalize_michniew_score(michniew_pred)
-            michniew_scores.append(michniew_normalized)
-
-    return np.array(network_scores), np.array(michniew_scores)
-
-
 def evaluate_accuracy(network_scores: np.ndarray, michniew_scores: np.ndarray):
     """Calculate various accuracy metrics."""
     mse = mean_squared_error(michniew_scores, network_scores)
