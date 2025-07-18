@@ -172,7 +172,7 @@ def evaluate_piece(piece: chess.Piece, square: chess.Square, end_game: bool) -> 
     return mapping[square]
 
 
-def evaluate_board(board: chess.Board) -> float:
+def evaluate_board(board: chess.Board) -> int:
     """
     Evaluates the full board and determines which player is in a most favorable position.
     The sign indicates the side:

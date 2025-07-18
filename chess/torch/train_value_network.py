@@ -8,10 +8,11 @@ from lib.agents.greedy_agent import ValueNetwork
 from lib.michniew import evaluate_board
 from lib.env import ChessGame
 import random
+import typing as t
 from tqdm import tqdm
 
 
-def mean_squared_error(y_true, y_pred):
+def mean_squared_error(y_true: np.ndarray, y_pred: np.ndarray):
     return np.mean((y_true - y_pred) ** 2)
 
 
@@ -53,37 +54,17 @@ def pearsonr(x, y):
     return correlation, p_value
 
 
-def generate_random_positions(n_positions=1000):
-    """Generate random chess positions by playing random moves from the starting position."""
-    positions = []
-
-    for _ in range(n_positions):
-        game = ChessGame()
-        n_moves = random.randint(5, 50)  # Random game length
-
-        for _ in range(n_moves):
-            legal_moves = list(game.legal_moves())
-            if not legal_moves or game.is_game_over():
-                break
-            move = random.choice(legal_moves)
-            game.step(move)
-
-        positions.append(game)
-
-    return positions
-
-
-def normalize_michniew_score(score):
+def normalize_michniew_score(score: int):
     """Normalize Michniew score to [-1, 1] range similar to ValueNetwork output."""
     # Empirically observed range is roughly -3000 to 3000
     return np.tanh(score / 3000.0)
 
 
-def generate_training_data(n_positions=5000):
-    """Generate training data using random positions and Michniew evaluation."""
-    print(f"Generating {n_positions} training positions...")
-    positions = []
-    targets = []
+def generate_data(n_positions) -> t.Tuple[list[ChessGame], list[float]]:
+    """returns [ChessGame], [normalised mich score]"""
+
+    positions: list[ChessGame] = []
+    scores: list[float] = []
 
     for _ in tqdm(range(n_positions), desc="Generating positions"):
         game = ChessGame()
@@ -96,28 +77,22 @@ def generate_training_data(n_positions=5000):
             move = random.choice(legal_moves)
             game.step(move)
 
-        # Get board state and evaluation
-        state = game.state_np()
-        board = chess.Board(game.fen())
-        michniew_score = evaluate_board(board)
-        normalized_score = normalize_michniew_score(michniew_score)
+        positions.append(game)
+        scores.append(normalize_michniew_score(evaluate_board(game._board)))
 
-        positions.append(state)
-        targets.append(normalized_score)
-
-    return np.array(positions), np.array(targets)
+    return positions, scores
 
 
 def train_value_network(
     value_network,
-    train_positions,
-    train_targets,
-    val_positions=None,
-    val_targets=None,
+    train_positions: list[ChessGame],
+    train_targets: list[float],
+    test_positions: list[ChessGame],
+    test_targets: list[float],
     epochs=100,
     batch_size=32,
     lr=1e-3,
-    device="cpu",
+    device: torch.device | str ="cpu",
 ):
     """Train the value network on the generated data."""
     value_network.to(device)
@@ -126,13 +101,10 @@ def train_value_network(
     optimizer = optim.Adam(value_network.parameters(), lr=lr)
     criterion = nn.MSELoss()
 
-    # Convert to tensors
-    train_positions = torch.tensor(train_positions, dtype=torch.float32).to(device)
-    train_targets = torch.tensor(train_targets, dtype=torch.float32).to(device)
-
-    if val_positions is not None:
-        val_positions = torch.tensor(val_positions, dtype=torch.float32).to(device)
-        val_targets = torch.tensor(val_targets, dtype=torch.float32).to(device)
+    train_positions_t = torch.tensor(np.array([b.state_np() for b in train_positions])).to(device)
+    train_targets_t = torch.tensor(train_targets, dtype=torch.float32).to(device)
+    test_positions_t = torch.tensor(np.array([b.state_np() for b in test_positions])).to(device)
+    test_targets_t = torch.tensor(test_targets, dtype=torch.float32).to(device)
 
     train_losses = []
     val_losses = []
@@ -141,14 +113,14 @@ def train_value_network(
 
     for epoch in tqdm(range(epochs), desc="Training"):
         # Shuffle data
-        indices = torch.randperm(len(train_positions))
+        indices = torch.randperm(len(train_positions_t))
         epoch_losses = []
 
         # Training batches
-        for i in range(0, len(train_positions), batch_size):
+        for i in range(0, len(train_positions_t), batch_size):
             batch_indices = indices[i : i + batch_size]
-            batch_positions = train_positions[batch_indices]
-            batch_targets = train_targets[batch_indices]
+            batch_positions = train_positions_t[batch_indices]
+            batch_targets = train_targets_t[batch_indices]
 
             optimizer.zero_grad()
             predictions = value_network(batch_positions).squeeze()
@@ -162,17 +134,16 @@ def train_value_network(
         train_losses.append(avg_train_loss)
 
         # Validation
-        if val_positions is not None:
-            value_network.eval()
-            with torch.no_grad():
-                val_predictions = value_network(val_positions).squeeze()
-                val_loss = criterion(val_predictions, val_targets).item()
-                val_losses.append(val_loss)
-            value_network.train()
+        value_network.eval()
+        with torch.no_grad():
+            val_predictions = value_network(test_positions_t).squeeze()
+            val_loss = criterion(val_predictions, test_targets_t).item()
+            val_losses.append(val_loss)
+        value_network.train()
 
         # Print progress every 10 epochs
         if (epoch + 1) % 10 == 0:
-            if val_positions is not None:
+            if test_positions_t is not None:
                 print(
                     f"Epoch {epoch + 1}/{epochs} - Train Loss: {avg_train_loss:.4f}, Val Loss: {val_loss:.4f}"
                 )
@@ -210,7 +181,7 @@ def compare_evaluations(value_network, positions, device="cpu"):
     return np.array(network_scores), np.array(michniew_scores)
 
 
-def evaluate_accuracy(network_scores, michniew_scores):
+def evaluate_accuracy(network_scores: np.ndarray, michniew_scores: np.ndarray):
     """Calculate various accuracy metrics."""
     mse = mean_squared_error(michniew_scores, network_scores)
     mae = mean_absolute_error(michniew_scores, network_scores)
@@ -250,41 +221,37 @@ def plot_comparison(network_scores, michniew_scores, metrics):
     plt.show()
 
 
-def train_and_test_value_network():
+def train_and_test_value_network(dataset_size):
     """Main function to train and test ValueNetwork accuracy against Michniew."""
     print("Training and testing ValueNetwork accuracy against Michniew evaluation...")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    # Generate training data
-    train_positions, train_targets = generate_training_data(n_positions=5000)
+    positions, values = generate_data(n_positions=dataset_size)
 
-    # Split into train/validation
-    split_idx = int(0.8 * len(train_positions))
-    val_positions = train_positions[split_idx:]
-    val_targets = train_targets[split_idx:]
-    train_positions = train_positions[:split_idx]
-    train_targets = train_targets[:split_idx]
+    split_idx = int(0.8 * len(positions))
+    train_positions = positions[:split_idx]
+    train_targets = values[:split_idx]
+    test_positions = positions[split_idx:]
+    test_targets = values[split_idx:]
 
     print(f"Training set: {len(train_positions)} positions")
-    print(f"Validation set: {len(val_positions)} positions")
+    print(f"Validation set: {len(test_positions)} positions")
 
-    # Initialize and train ValueNetwork
     value_network = ValueNetwork()
     train_losses, val_losses = train_value_network(
         value_network,
         train_positions,
         train_targets,
-        val_positions,
-        val_targets,
+        test_positions,
+        test_targets,
         epochs=50,
         batch_size=64,
         lr=1e-3,
         device=device,
     )
 
-    # Plot training curves
     plt.figure(figsize=(10, 4))
     plt.subplot(1, 2, 1)
     plt.plot(train_losses, label="Training Loss")
@@ -295,19 +262,17 @@ def train_and_test_value_network():
     plt.legend()
     plt.grid(True, alpha=0.3)
 
-    # Generate test positions for final evaluation
-    print("\nGenerating test positions for final evaluation...")
-    test_positions = generate_random_positions(1000)
-
     print(f"Evaluating {len(test_positions)} test positions...")
-    network_scores, michniew_scores = compare_evaluations(
-        value_network, test_positions, device
-    )
 
-    # Calculate metrics
-    metrics = evaluate_accuracy(network_scores, michniew_scores)
+    test_positions_t = torch.tensor([b.state_np() for b in test_positions]).to(device)
+    value_network.eval()
+    with torch.no_grad():
+        network_scores_t: torch.Tensor = value_network(test_positions_t).squeeze()
 
-    # Print results
+    network_scores = network_scores_t.cpu().numpy()
+
+    metrics = evaluate_accuracy(network_scores, np.array(test_targets))
+
     print("\n=== ACCURACY RESULTS ===")
     print(f"Mean Squared Error (MSE): {metrics['mse']:.4f}")
     print(f"Mean Absolute Error (MAE): {metrics['mae']:.4f}")
@@ -315,35 +280,8 @@ def train_and_test_value_network():
     print(f"Pearson Correlation: {metrics['correlation']:.4f}")
     print(f"P-value: {metrics['p_value']:.6f}")
 
-    # Interpretation
-    print("\n=== INTERPRETATION ===")
-    if metrics["correlation"] > 0.7:
-        print(
-            "✓ Strong positive correlation - ValueNetwork shows good agreement with Michniew"
-        )
-    elif metrics["correlation"] > 0.4:
-        print(
-            "⚠ Moderate correlation - ValueNetwork shows some agreement with Michniew"
-        )
-    else:
-        print("✗ Poor correlation - ValueNetwork does not agree well with Michniew")
-
-    if metrics["mae"] < 0.2:
-        print(
-            "✓ Low mean absolute error - ValueNetwork predictions are close to Michniew"
-        )
-    elif metrics["mae"] < 0.4:
-        print(
-            "⚠ Moderate mean absolute error - ValueNetwork predictions are somewhat close to Michniew"
-        )
-    else:
-        print(
-            "✗ High mean absolute error - ValueNetwork predictions differ significantly from Michniew"
-        )
-
-    # Create visualization
     plt.subplot(1, 2, 2)
-    plt.scatter(michniew_scores, network_scores, alpha=0.6, s=20)
+    plt.scatter(test_targets, network_scores, alpha=0.6, s=20)
     plt.plot([-1, 1], [-1, 1], "r--", alpha=0.8, label="Perfect correlation")
     plt.xlabel("Michniew Evaluation (normalized)")
     plt.ylabel("ValueNetwork Prediction")
@@ -358,4 +296,4 @@ def train_and_test_value_network():
 
 
 if __name__ == "__main__":
-    train_and_test_value_network()
+    train_and_test_value_network(5000)
