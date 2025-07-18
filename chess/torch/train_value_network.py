@@ -90,6 +90,17 @@ def generate_data_file(n_positions: int, path: Path):
             ofile.write(f'{position.fen()}, {score}\n')
 
 
+def read_datafile(path: Path):
+    positions: list[ChessGame] = []
+    scores: list[float] = []
+    with open(path, 'r') as infile:
+        for line in infile:
+            fen, score = line.split(',')
+            positions.append(ChessGame(fen))
+            scores.append(float(score))
+    return positions, scores
+
+
 def train_value_network(
     value_network,
     train_positions: list[ChessGame],
@@ -200,14 +211,22 @@ def plot_comparison(network_scores, michniew_scores, metrics):
     plt.show()
 
 
-def train_and_test_value_network(dataset_size):
-    """Main function to train and test ValueNetwork accuracy against Michniew."""
+def train_and_test_value_network(
+        dataset_path: Path | None = None,
+        dataset_size: int | None = None):
     print("Training and testing ValueNetwork accuracy against Michniew evaluation...")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    positions, values = generate_data(n_positions=dataset_size)
+    if dataset_path:
+        print(f"Reading data from {dataset_path}")
+        positions, values = read_datafile(dataset_path)
+    elif dataset_size:
+        print("Generating data...")
+        positions, values = generate_data(n_positions=dataset_size)
+    else:
+        raise Exception("Either gimme a dataset file or data size")
 
     split_idx = int(0.8 * len(positions))
     train_positions = positions[:split_idx]
@@ -276,4 +295,4 @@ def train_and_test_value_network(dataset_size):
 
 if __name__ == "__main__":
     # generate_data_file(5000, Path('pymieches.csv'))
-    train_and_test_value_network(5000)
+    train_and_test_value_network(Path('pymieches.csv'))
