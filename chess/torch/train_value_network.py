@@ -1,3 +1,4 @@
+from pathlib import Path
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -60,7 +61,7 @@ def normalize_michniew_score(score: int):
     return np.tanh(score / 3000.0)
 
 
-def generate_data(n_positions) -> t.Tuple[list[ChessGame], list[float]]:
+def generate_data(n_positions: int) -> t.Tuple[list[ChessGame], list[float]]:
     """returns [ChessGame], [normalised mich score]"""
 
     positions: list[ChessGame] = []
@@ -81,6 +82,12 @@ def generate_data(n_positions) -> t.Tuple[list[ChessGame], list[float]]:
         scores.append(normalize_michniew_score(evaluate_board(game._board)))
 
     return positions, scores
+
+
+def generate_data_file(n_positions: int, path: Path):
+    with open(path, 'w') as ofile:
+        for position, score in zip(*generate_data(n_positions)):
+            ofile.write(f'{position.fen()}, {score}\n')
 
 
 def train_value_network(
@@ -268,4 +275,5 @@ def train_and_test_value_network(dataset_size):
 
 
 if __name__ == "__main__":
+    # generate_data_file(5000, Path('pymieches.csv'))
     train_and_test_value_network(5000)
