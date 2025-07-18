@@ -30,9 +30,9 @@ Then:
             - DONE nets are same
             - DONE gendata: same
             - DONE: train: cpp doesn't shuffle data. Doesn't explain bad stats.
-        - generate sample data in file to use in both
-        - confirm mich eval scores are same
-        - train + test both from file data
+        - DONE: generate sample data in file to use in both
+        - cpp: read datafile, confirm cpp mich eval scores are same
+        - cpp: train + test from datafile
 - copy greedy nn bot from python
 - maybe: perf: andoma: implement move ordering
 - maybe: perf: general profile + optimise
