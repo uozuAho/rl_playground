@@ -31,8 +31,11 @@ Then:
             - DONE gendata: same
             - DONE: train: cpp doesn't shuffle data. Doesn't explain bad stats.
         - DONE: generate sample data in file to use in both
-        - cpp: read datafile, confirm cpp mich eval scores are same
+        - DONE: cpp: read datafile
+        - cpp: confirm cpp mich eval scores are same
         - cpp: train + test from datafile
+            - speed up training: do on GPU
+        - (maybe) cpp + py: don't shuffle data
 - copy greedy nn bot from python
 - maybe: perf: andoma: implement move ordering
 - maybe: perf: general profile + optimise

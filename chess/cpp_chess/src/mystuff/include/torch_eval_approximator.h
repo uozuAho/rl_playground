@@ -38,9 +38,12 @@ TORCH_MODULE(ValueNet);
 class EvalApproximator {
 public:
     EvalApproximator();
+    std::tuple<std::vector<torch::Tensor>, std::vector<float>>
+        generate_random_positions(int n_positions);
+    std::tuple<std::vector<torch::Tensor>, std::vector<float>>
+        read_positions_from_csv(const std::string& filename);
     void train_and_test_value_network(
-        int n_train,
-        int n_test,
+        const std::tuple<std::vector<torch::Tensor>, std::vector<float>>& data,
         int epochs,
         int batch_size=32,
         double lr=1e-3
@@ -48,8 +51,6 @@ public:
 private:
     ValueNet net_;
     torch::Device device_ = torch::kCPU;
-    std::tuple<std::vector<torch::Tensor>, std::vector<float>>
-        generate_random_positions(int n_positions);
     float normalize_eval(int eval);
 };
 } // namespace mystuff

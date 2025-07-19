@@ -1,6 +1,7 @@
 
 #include <torch/torch.h>
 #include <iostream>
+#include <fstream>
 #include <random>
 #include <algorithm>
 #include "torch_eval_approximator.h"
@@ -94,24 +95,73 @@ EvalApproximator::generate_random_positions(int n_positions)
     return std::tuple(boardTs, normVals);
 }
 
+std::tuple<std::vector<torch::Tensor>, std::vector<float>>
+EvalApproximator::read_positions_from_csv(const std::string& filename)
+{
+    std::vector<torch::Tensor> boardTs;
+    std::vector<float> values;
+    std::ifstream infile(filename);
+
+    if (not infile) {
+        throw std::ios_base::failure("file does not exist");
+    }
+
+    std::string line;
+    while (std::getline(infile, line)) {
+        if (line.empty()) continue;
+        std::istringstream ss(line);
+        std::string fen, value_str;
+        if (!std::getline(ss, fen, ',')) continue;
+        if (!std::getline(ss, value_str)) continue;
+        float value = std::stof(value_str);
+        auto board = LeelaBoardWrapper::from_fen(fen);
+        boardTs.push_back(board2tensor(board).to(device_));
+        values.push_back(value);
+    }
+    return std::tuple(boardTs, values);
+}
+
 void EvalApproximator::train_and_test_value_network(
-    int n_train,
-    int n_test,
+    const std::tuple<std::vector<torch::Tensor>, std::vector<float>>& data,
     int epochs,
     int batch_size,
     double lr
 )
 {
-    std::cout << "Generating " << n_train << " training positions...\n";
-    auto [train_boards, train_values] = generate_random_positions(n_train);
+    const auto& boards = std::get<0>(data);
+    const auto& values = std::get<1>(data);
+    size_t n = boards.size();
+    if (n == 0 || values.size() != n) {
+        std::cerr << "Empty or mismatched data for training." << std::endl;
+        return;
+    }
 
-    std::cout << "Generating " << n_test << " test positions...\n";
-    auto [test_boards, test_values] = generate_random_positions(n_test);
+    // Shuffle indices for random split
+    std::vector<size_t> indices(n);
+    std::iota(indices.begin(), indices.end(), 0);
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(indices.begin(), indices.end(), g);
+
+    size_t n_train = n * 8 / 10;
+    size_t n_test = n - n_train;
+
+    std::vector<torch::Tensor> train_boards, test_boards;
+    std::vector<float> train_values, test_values;
+    for (size_t i = 0; i < n; ++i) {
+        if (i < n_train) {
+            train_boards.push_back(boards[indices[i]]);
+            train_values.push_back(values[indices[i]]);
+        } else {
+            test_boards.push_back(boards[indices[i]]);
+            test_values.push_back(values[indices[i]]);
+        }
+    }
 
     auto to_tensor1d = [](const std::vector<float>& data) {
         return torch::from_blob((float*)data.data(), {(long)data.size(), 1}).clone();
     };
-    torch::Tensor X_train = torch::stack(test_boards);
+    torch::Tensor X_train = torch::stack(train_boards);
     torch::Tensor y_train = to_tensor1d(train_values).to(device_);
     torch::Tensor X_test = torch::stack(test_boards);
     torch::Tensor y_test = to_tensor1d(test_values).to(device_);
