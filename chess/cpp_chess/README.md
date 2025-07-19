@@ -27,7 +27,11 @@ Then:
         - play games + train much faster than py
         - beat andoma
     - todo
-        - fix build
+        - DONE fix build
+        - get to end of training
+            - fix double free of game during training
+        - env: add test: is_game_over should agree with result
+        - inline todos
         - e-greedy moves while training?
         - (maybe) limit num halfmoves
         - (maybe) support playing as black

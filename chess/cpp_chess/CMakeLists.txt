@@ -25,6 +25,7 @@ add_executable(cpp_chess
     src/mystuff/cpp/andoma_agent.cpp
     src/mystuff/cpp/leela_board_wrapper.cpp
     src/mystuff/cpp/torch_eval_approximator.cpp
+    src/mystuff/cpp/greedy_chess_agent.cpp
 )
 
 target_link_libraries(cpp_chess "${TORCH_LIBRARIES}")

@@ -41,7 +41,7 @@ function build_full() {
     mkdir build
     pushd build
     cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DTESTS_ENABLED=$BUILD_TESTS ..
-    make
+    make -j 10
     popd
 }
 
@@ -49,7 +49,7 @@ function build_fast() {
     fetch_torch
     pushd build
     cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DTESTS_ENABLED=$BUILD_TESTS ..
-    make
+    make -j 10
     popd
 }
 
