@@ -22,24 +22,9 @@ Then:
 - use vscode debugger with C++ extension
 
 # to do
-- WIP try training a torch model
-    - DONE gen code
-    - DONE try running it, fix compile/run
-    - FIXED: why worse than python version?
-        - DONE review nets, training, eval: doing same thing?
-            - DONE nets are same
-            - DONE gendata: same
-            - DONE: train: cpp doesn't shuffle data. Doesn't explain bad stats.
-        - DONE: generate sample data in file to use in both
-        - DONE: cpp: read datafile
-        - DONE: cpp: confirm cpp mich eval scores are same
-            - FIXED: black king sq 39: cpp -19980, py -20020
-        - DONE: cpp: train + test from datafile
-        - FIXED: why cpp-generated data produces bad training results?
-            - bad eval? not sure
-        - (maybe) speed up training: do on GPU
-        - (maybe) cpp + py: don't shuffle data
 - copy greedy nn bot from python. goal: play games + train much faster
+- make better bots? mcts etc.
+    - use go/C#? I hate C++
 - (maybe) try gpu for speedup. train_value_net is slower than python gpu
 - maybe: perf: andoma: implement move ordering
 - maybe: perf: general profile + optimise
