@@ -112,7 +112,7 @@ constexpr int kingEvalWhite[64] = {
     20, 30, 10, 0, 0, 10, 30, 20,
     20, 20, 0, 0, 0, 0, 20, 20,
     -10, -20, -20, -20, -20, -20, -20, -10,
-    20, -30, -30, -40, -40, -30, -30, -20,
+    -20, -30, -30, -40, -40, -30, -30, -20,
     -30, -40, -40, -50, -50, -40, -40, -30,
     -30, -40, -40, -50, -50, -40, -40, -30,
     -30, -40, -40, -50, -50, -40, -40, -30,
@@ -126,7 +126,7 @@ constexpr int kingEvalBlack[64] = {
      20, -30, -30, -40, -40, -30, -30, -20,
     -10, -20, -20, -20, -20, -20, -20, -10,
     20, 20, 0, 0, 0, 0, 20, 20,
-    20, 30, 0, 0, 0, 0, 30, 20
+    20, 30, 10, 0, 0, 10, 30, 20
 };
 constexpr int kingEvalEndGameWhite[64] = {
     50, -30, -30, -30, -30, -30, -30, -50,
@@ -210,16 +210,22 @@ bool f_isEndgame(const LeelaBoardWrapper& board) {
 int evaluate_board(const LeelaBoardWrapper& board) {
     int total = 0;
     bool isEndgame = f_isEndgame(board);
+    int pieces[64];
+    int values[64];
     for (int sq = 0; sq < 64; ++sq) {
+        pieces[sq] = -1;
+        values[sq] = -1;
         auto square = lczero::Square::FromIdx(sq);
         auto piece_opt = board.piece_at(lczero::Square::FromIdx(sq));
         if (!piece_opt.has_value())
             continue;
         auto piece_type = piece_opt.value();
+        pieces[sq] = piece_type.idx;
         int color = board.color_at(square);
         int value = evaluate_piece(piece_type, color, square, isEndgame);
         if (color == LeelaBoardWrapper::BLACK)
             value = -value;
+        values[sq] = value;
         total += value;
     }
     return total;

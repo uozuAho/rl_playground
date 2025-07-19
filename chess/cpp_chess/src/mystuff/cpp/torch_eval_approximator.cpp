@@ -115,6 +115,10 @@ EvalApproximator::read_positions_from_csv(const std::string& filename)
         if (!std::getline(ss, value_str)) continue;
         float value = std::stof(value_str);
         auto board = LeelaBoardWrapper::from_fen(fen);
+        auto myscore = normalize_eval(evaluate_board(board));
+        if (std::abs(myscore - value) > 0.01) {
+            std::cout << "score mismatch: " << fen << ", cpp: " << myscore << ", py: " << value << std::endl;
+        }
         boardTs.push_back(board2tensor(board).to(device_));
         values.push_back(value);
     }

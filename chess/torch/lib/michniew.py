@@ -78,7 +78,7 @@ kingEvalWhite = [
     20, 30, 10, 0, 0, 10, 30, 20,
     20, 20, 0, 0, 0, 0, 20, 20,
     -10, -20, -20, -20, -20, -20, -20, -10,
-    20, -30, -30, -40, -40, -30, -30, -20,
+    -20, -30, -30, -40, -40, -30, -30, -20,
     -30, -40, -40, -50, -50, -40, -40, -30,
     -30, -40, -40, -50, -50, -40, -40, -30,
     -30, -40, -40, -50, -50, -40, -40, -30,
@@ -183,14 +183,21 @@ def evaluate_board(board: chess.Board) -> int:
     total = 0
     end_game = check_end_game(board)
 
+    pieces = []
+    values = []
+
     for square in chess.SQUARES:
         piece = board.piece_at(square)
         if not piece:
+            pieces.append(None)
+            values.append(None)
             continue
+        pieces.append(piece)
 
         value = piece_value[piece.piece_type] + evaluate_piece(piece, square, end_game)
         if piece.color == chess.BLACK:
             value = -value
+        values.append(value)
         total += value
 
     return total

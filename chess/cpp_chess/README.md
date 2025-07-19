@@ -32,9 +32,13 @@ Then:
             - DONE: train: cpp doesn't shuffle data. Doesn't explain bad stats.
         - DONE: generate sample data in file to use in both
         - DONE: cpp: read datafile
-        - cpp: confirm cpp mich eval scores are same
+        - WIP: cpp: confirm cpp mich eval scores are same
+            - FIXED: black king sq 39: cpp -19980, py -20020
+            - **todo** generate new inputfile
+            - when done: remove debugging code in eval
         - cpp: train + test from datafile
-            - speed up training: do on GPU
+        - why cpp-generated data produces bad training results?
+        - (maybe) speed up training: do on GPU
         - (maybe) cpp + py: don't shuffle data
 - copy greedy nn bot from python
 - maybe: perf: andoma: implement move ordering

@@ -7,6 +7,6 @@ int main() {
     // mystuff::bot_fight(5);
     mystuff::EvalApproximator ea;
     auto data = ea.read_positions_from_csv("pymieches.csv");
-    ea.train_and_test_value_network(data, 50);
+    // ea.train_and_test_value_network(data, 50);
     return 0;
 }
