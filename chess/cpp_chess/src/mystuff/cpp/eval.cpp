@@ -210,22 +210,23 @@ bool f_isEndgame(const LeelaBoardWrapper& board) {
 int evaluate_board(const LeelaBoardWrapper& board) {
     int total = 0;
     bool isEndgame = f_isEndgame(board);
-    int pieces[64];
-    int values[64];
+    // keep this in case u need to debug evaluation (again)
+    // int pieces[64];
+    // int values[64];
     for (int sq = 0; sq < 64; ++sq) {
-        pieces[sq] = -1;
-        values[sq] = -1;
+        // pieces[sq] = -1;
+        // values[sq] = -1;
         auto square = lczero::Square::FromIdx(sq);
         auto piece_opt = board.piece_at(lczero::Square::FromIdx(sq));
         if (!piece_opt.has_value())
             continue;
         auto piece_type = piece_opt.value();
-        pieces[sq] = piece_type.idx;
+        // pieces[sq] = piece_type.idx;
         int color = board.color_at(square);
         int value = evaluate_piece(piece_type, color, square, isEndgame);
         if (color == LeelaBoardWrapper::BLACK)
             value = -value;
-        values[sq] = value;
+        // values[sq] = value;
         total += value;
     }
     return total;

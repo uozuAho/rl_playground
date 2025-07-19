@@ -34,7 +34,6 @@ Then:
         - DONE: cpp: read datafile
         - DONE: cpp: confirm cpp mich eval scores are same
             - FIXED: black king sq 39: cpp -19980, py -20020
-            - when done: remove debugging code in eval
         - DONE: cpp: train + test from datafile
         - FIXED: why cpp-generated data produces bad training results?
             - bad eval? not sure

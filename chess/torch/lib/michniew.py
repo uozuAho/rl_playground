@@ -183,21 +183,22 @@ def evaluate_board(board: chess.Board) -> int:
     total = 0
     end_game = check_end_game(board)
 
-    pieces = []
-    values = []
+    # keep this around until you're sure eval gives the same resuls in cpp
+    # pieces = []
+    # values = []
 
     for square in chess.SQUARES:
         piece = board.piece_at(square)
         if not piece:
-            pieces.append(None)
-            values.append(None)
+            # pieces.append(None)
+            # values.append(None)
             continue
-        pieces.append(piece)
+        # pieces.append(piece)
 
         value = piece_value[piece.piece_type] + evaluate_piece(piece, square, end_game)
         if piece.color == chess.BLACK:
             value = -value
-        values.append(value)
+        # values.append(value)
         total += value
 
     return total
