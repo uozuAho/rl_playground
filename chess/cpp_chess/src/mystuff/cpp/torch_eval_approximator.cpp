@@ -17,27 +17,6 @@ EvalApproximator::EvalApproximator() :
     net_->to(device_);
 }
 
-// Encode board as a flat vector (12x64 one-hot for pieces + 5 extras)
-static std::vector<float> board2vec(const LeelaBoardWrapper& board) {
-    // 12 piece types (6 per color) x 64 squares
-    std::vector<float> features(12 * 64, 0.0f);
-    // Piece type order: white P N B R Q K, black P N B R Q K
-    for (int sq = 0; sq < 64; ++sq) {
-        auto piece_opt = board.piece_at(lczero::Square::FromIdx(sq));
-        if (!piece_opt.has_value()) continue;
-        int color = board.color_at(lczero::Square::FromIdx(sq));
-        int type = piece_opt.value().idx;
-        int idx = -1;
-        if (color == LeelaBoardWrapper::WHITE) idx = (type - 1);
-        else idx = 6 + (type - 1);
-        if (idx >= 0 && idx < 12) features[idx * 64 + sq] = 1.0f;
-    }
-    // Add 5 extras: turn, castling, etc. (dummy for now)
-    features.resize(12 * 64 + 5, 0.0f);
-    features[12 * 64] = (board.turn() == LeelaBoardWrapper::WHITE) ? 1.0f : 0.0f;
-    return features;
-}
-
 // Encode board as an 8x8x8 float tensor (piece_layer, rows, cols)
 static torch::Tensor board2tensor(const LeelaBoardWrapper& board) {
     torch::Tensor state = torch::zeros({8, 8, 8}, torch::kFloat32);
