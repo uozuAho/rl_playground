@@ -22,7 +22,15 @@ Then:
 - use vscode debugger with C++ extension
 
 # to do
-- copy greedy nn bot from python. goal: play games + train much faster
+- WIP copy greedy nn bot from python
+    - goals:
+        - play games + train much faster than py
+        - beat andoma
+    - todo
+        - fix build
+        - e-greedy moves while training?
+        - (maybe) limit num halfmoves
+        - (maybe) support playing as black
 - make better bots? mcts etc.
     - use go/C#? I hate C++
 - (maybe) try gpu for speedup. train_value_net is slower than python gpu

@@ -8,7 +8,8 @@ instructed to.
 libtorch (a C++ interface to pytorch) is used for machine learning. Its code is
 in src/libtorch. Do not modify this code.
 
-My code is under src/mystuff. This is where you should add code.
+My code is under src/mystuff. This is where you should add code. All code here
+is in a namespace named mystuff.
 src/mystuff/include/leela_board_wrapper.h is a user-friendly wrapper around the
 chess implementation in src/lc0chess.
 
