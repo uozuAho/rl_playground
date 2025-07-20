@@ -1,0 +1,48 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "cschess.experiments", "cschess.experiments\cschess.experiments.csproj", "{B220AF90-C209-40A5-8028-31FDDADF0E7D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "cschess.game", "cschess.game\cschess.game.csproj", "{0196C51F-5E35-472F-84AA-9C7E1CC8E8A6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "submodules", "submodules", "{1896B54D-AA6A-4E26-83E9-D8FBE74A749D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "chesslib", "chesslib", "{B2170198-3043-4DA2-BB1F-7005F0124EE6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{F2039318-8190-4C9B-AA08-B1716C937E61}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "chess-lib", "chess-lib", "{AAC815CE-492F-497A-9842-EA6B7308AC07}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rudzoft.ChessLib", "submodules\chesslib\src\chess-lib\Rudzoft.ChessLib\Rudzoft.ChessLib.csproj", "{EF355700-303D-4881-8BEF-E137F5B97883}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B220AF90-C209-40A5-8028-31FDDADF0E7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B220AF90-C209-40A5-8028-31FDDADF0E7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B220AF90-C209-40A5-8028-31FDDADF0E7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B220AF90-C209-40A5-8028-31FDDADF0E7D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0196C51F-5E35-472F-84AA-9C7E1CC8E8A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0196C51F-5E35-472F-84AA-9C7E1CC8E8A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0196C51F-5E35-472F-84AA-9C7E1CC8E8A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0196C51F-5E35-472F-84AA-9C7E1CC8E8A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF355700-303D-4881-8BEF-E137F5B97883}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF355700-303D-4881-8BEF-E137F5B97883}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF355700-303D-4881-8BEF-E137F5B97883}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF355700-303D-4881-8BEF-E137F5B97883}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{B2170198-3043-4DA2-BB1F-7005F0124EE6} = {1896B54D-AA6A-4E26-83E9-D8FBE74A749D}
+		{F2039318-8190-4C9B-AA08-B1716C937E61} = {B2170198-3043-4DA2-BB1F-7005F0124EE6}
+		{AAC815CE-492F-497A-9842-EA6B7308AC07} = {F2039318-8190-4C9B-AA08-B1716C937E61}
+		{EF355700-303D-4881-8BEF-E137F5B97883} = {AAC815CE-492F-497A-9842-EA6B7308AC07}
+	EndGlobalSection
+EndGlobal
