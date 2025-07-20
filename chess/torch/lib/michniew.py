@@ -78,7 +78,7 @@ kingEvalWhite = [
     20, 30, 10, 0, 0, 10, 30, 20,
     20, 20, 0, 0, 0, 0, 20, 20,
     -10, -20, -20, -20, -20, -20, -20, -10,
-    20, -30, -30, -40, -40, -30, -30, -20,
+    -20, -30, -30, -40, -40, -30, -30, -20,
     -30, -40, -40, -50, -50, -40, -40, -30,
     -30, -40, -40, -50, -50, -40, -40, -30,
     -30, -40, -40, -50, -50, -40, -40, -30,
@@ -172,7 +172,7 @@ def evaluate_piece(piece: chess.Piece, square: chess.Square, end_game: bool) -> 
     return mapping[square]
 
 
-def evaluate_board(board: chess.Board) -> float:
+def evaluate_board(board: chess.Board) -> int:
     """
     Evaluates the full board and determines which player is in a most favorable position.
     The sign indicates the side:
@@ -183,13 +183,23 @@ def evaluate_board(board: chess.Board) -> float:
     total = 0
     end_game = check_end_game(board)
 
+    # keep this around until you're sure eval gives the same resuls in cpp
+    # pieces = []
+    # values = []
+
     for square in chess.SQUARES:
         piece = board.piece_at(square)
         if not piece:
+            # pieces.append(None)
+            # values.append(None)
             continue
+        # pieces.append(piece)
 
         value = piece_value[piece.piece_type] + evaluate_piece(piece, square, end_game)
-        total += value if piece.color == chess.WHITE else -value
+        if piece.color == chess.BLACK:
+            value = -value
+        # values.append(value)
+        total += value
 
     return total
 

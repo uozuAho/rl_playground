@@ -1,4 +1,4 @@
-from collections import Counter, defaultdict
+from collections import defaultdict
 import time
 
 import chess
@@ -41,14 +41,14 @@ def evaluate(
         if outcome:
             outcomes[outcome.termination] += 1
             if outcome.winner:
-                key = 'white win' if outcome.winner == chess.WHITE else 'black win'
+                key = "white win" if outcome.winner == chess.WHITE else "black win"
                 outcomes[key] += 1
         else:
-            outcomes['None'] += 1
+            outcomes["None"] += 1
     total_time = time.time() - start
     games_sec = n_games / total_time
     print(f"Played {n_games} games in {total_time:0.1f}s ({games_sec:0.2f} games/s)")
     print(f"Avg white reward {sum(white_rewards) / len(white_rewards)}")
     print("Outcomes:")
     for k, v in outcomes.items():
-        print(f'{k}: {v}')
+        print(f"{k}: {v}")

@@ -1,0 +1,235 @@
+// Shameless copy of https://github.com/healeycodes/andoma/blob/main/evaluate.py
+// ported to C++ by copilot.
+
+// this module implement's Tomasz Michniewski's Simplified Evaluation Function
+// https://www.chessprogramming.org/Simplified_Evaluation_Function
+// note that the board layouts have been flipped and the top left square is A1
+
+#include "leela_board_wrapper.h"
+#include <vector>
+#include <optional>
+#include <cmath>
+
+namespace mystuff {
+
+constexpr uint8_t   kKnightIdx = lczero::kKnight.idx,
+                    kQueenIdx = lczero::kQueen.idx,
+                    kRookIdx = lczero::kRook.idx,
+                    kBishopIdx = lczero::kBishop.idx,
+                    kPawnIdx = lczero::kPawn.idx,
+                    kKingIdx = lczero::kKing.idx;
+
+constexpr int PIECE_VALUE[] = {
+    320,  // knight
+    900,  // queen
+    500,  // rook
+    330,  // bishop
+    100,  // pawn
+    20000 // king
+};
+
+constexpr int pawnEvalWhite[64] = {
+    0,  0,  0,  0,  0,  0,  0,  0,
+    5, 10, 10, -20, -20, 10, 10,  5,
+    5, -5, -10,  0,  0, -10, -5,  5,
+    0,  0,  0, 20, 20,  0,  0,  0,
+    5,  5, 10, 25, 25, 10,  5,  5,
+    10, 10, 20, 30, 30, 20, 10, 10,
+    50, 50, 50, 50, 50, 50, 50, 50,
+    0, 0, 0, 0, 0, 0, 0, 0
+};
+constexpr int pawnEvalBlack[64] = {
+    0, 0, 0, 0, 0, 0, 0, 0,
+    50, 50, 50, 50, 50, 50, 50, 50,
+    10, 10, 20, 30, 30, 20, 10, 10,
+    5,  5, 10, 25, 25, 10,  5,  5,
+    0,  0,  0, 20, 20,  0,  0,  0,
+    5, -5, -10,  0,  0, -10, -5,  5,
+    5, 10, 10, -20, -20, 10, 10,  5,
+    0,  0,  0,  0,  0,  0,  0,  0
+};
+constexpr int knightEval[64] = {
+    -50, -40, -30, -30, -30, -30, -40, -50,
+    -40, -20, 0, 0, 0, 0, -20, -40,
+    -30, 0, 10, 15, 15, 10, 0, -30,
+    -30, 5, 15, 20, 20, 15, 5, -30,
+    -30, 0, 15, 20, 20, 15, 0, -30,
+    -30, 5, 10, 15, 15, 10, 5, -30,
+    -40, -20, 0, 5, 5, 0, -20, -40,
+    -50, -40, -30, -30, -30, -30, -40, -50
+};
+constexpr int bishopEvalWhite[64] = {
+    -20, -10, -10, -10, -10, -10, -10, -20,
+    -10, 5, 0, 0, 0, 0, 5, -10,
+    -10, 10, 10, 10, 10, 10, 10, -10,
+    -10, 0, 10, 10, 10, 10, 0, -10,
+    -10, 5, 5, 10, 10, 5, 5, -10,
+    -10, 0, 5, 10, 10, 5, 0, -10,
+    -10, 0, 0, 0, 0, 0, 0, -10,
+    -20, -10, -10, -10, -10, -10, -10, -20
+};
+constexpr int bishopEvalBlack[64] = {
+    -20, -10, -10, -10, -10, -10, -10, -20,
+    -10, 0, 0, 0, 0, 0, 0, -10,
+    -10, 0, 5, 10, 10, 5, 0, -10,
+    -10, 5, 5, 10, 10, 5, 5, -10,
+    -10, 0, 10, 10, 10, 10, 0, -10,
+    -10, 10, 10, 10, 10, 10, 10, -10,
+    -10, 5, 0, 0, 0, 0, 5, -10,
+    -20, -10, -10, -10, -10, -10, -10, -20
+};
+constexpr int rookEvalWhite[64] = {
+    0, 0, 0, 5, 5, 0, 0, 0,
+    -5, 0, 0, 0, 0, 0, 0, -5,
+    -5, 0, 0, 0, 0, 0, 0, -5,
+    -5, 0, 0, 0, 0, 0, 0, -5,
+    -5, 0, 0, 0, 0, 0, 0, -5,
+    -5, 0, 0, 0, 0, 0, 0, -5,
+    5, 10, 10, 10, 10, 10, 10, 5,
+    0, 0, 0, 0, 0, 0, 0, 0
+};
+constexpr int rookEvalBlack[64] = {
+    0, 0, 0, 0, 0, 0, 0, 0,
+    5, 10, 10, 10, 10, 10, 10, 5,
+    -5, 0, 0, 0, 0, 0, 0, -5,
+    -5, 0, 0, 0, 0, 0, 0, -5,
+    -5, 0, 0, 0, 0, 0, 0, -5,
+    -5, 0, 0, 0, 0, 0, 0, -5,
+    -5, 0, 0, 0, 0, 0, 0, -5,
+    0, 0, 0, 5, 5, 0, 0, 0
+};
+constexpr int queenEval[64] = {
+    -20, -10, -10, -5, -5, -10, -10, -20,
+    -10, 0, 0, 0, 0, 0, 0, -10,
+    -10, 0, 5, 5, 5, 5, 0, -10,
+    -5, 0, 5, 5, 5, 5, 0, -5,
+    0, 0, 5, 5, 5, 5, 0, -5,
+    -10, 5, 5, 5, 5, 5, 0, -10,
+    -10, 0, 5, 0, 0, 0, 0, -10,
+    -20, -10, -10, -5, -5, -10, -10, -20
+};
+constexpr int kingEvalWhite[64] = {
+    20, 30, 10, 0, 0, 10, 30, 20,
+    20, 20, 0, 0, 0, 0, 20, 20,
+    -10, -20, -20, -20, -20, -20, -20, -10,
+    -20, -30, -30, -40, -40, -30, -30, -20,
+    -30, -40, -40, -50, -50, -40, -40, -30,
+    -30, -40, -40, -50, -50, -40, -40, -30,
+    -30, -40, -40, -50, -50, -40, -40, -30,
+    -30, -40, -40, -50, -50, -40, -40, -30
+};
+constexpr int kingEvalBlack[64] = {
+    -30, -40, -40, -50, -50, -40, -40, -30,
+    -30, -40, -40, -50, -50, -40, -40, -30,
+    -30, -40, -40, -50, -50, -40, -40, -30,
+    -30, -40, -40, -50, -50, -40, -40, -30,
+     20, -30, -30, -40, -40, -30, -30, -20,
+    -10, -20, -20, -20, -20, -20, -20, -10,
+    20, 20, 0, 0, 0, 0, 20, 20,
+    20, 30, 10, 0, 0, 10, 30, 20
+};
+constexpr int kingEvalEndGameWhite[64] = {
+    50, -30, -30, -30, -30, -30, -30, -50,
+    -30, -30,  0,  0,  0,  0, -30, -30,
+    -30, -10, 20, 30, 30, 20, -10, -30,
+    -30, -10, 30, 40, 40, 30, -10, -30,
+    -30, -10, 30, 40, 40, 30, -10, -30,
+    -30, -10, 20, 30, 30, 20, -10, -30,
+    -30, -20, -10,  0,  0, -10, -20, -30,
+    -50, -40, -30, -20, -20, -30, -40, -50
+};
+constexpr int kingEvalEndGameBlack[64] = {
+    -50, -40, -30, -20, -20, -30, -40, -50,
+    -30, -20, -10,  0,  0, -10, -20, -30,
+    -30, -10, 20, 30, 30, 20, -10, -30,
+    -30, -10, 30, 40, 40, 30, -10, -30,
+    -30, -10, 30, 40, 40, 30, -10, -30,
+    -30, -10, 20, 30, 30, 20, -10, -30,
+    -30, -30,  0,  0,  0,  0, -30, -30,
+    50, -30, -30, -30, -30, -30, -30, -50
+};
+
+int piece_square_value(
+    lczero::PieceType piece_type,
+    int color,
+    lczero::Square square,
+    bool isEndgame)
+{
+    const auto squareIdx = square.as_idx();
+
+    switch (piece_type.idx) {
+        case kPawnIdx:
+            return color == LeelaBoardWrapper::WHITE ? pawnEvalWhite[squareIdx] : pawnEvalBlack[squareIdx];
+        case kKnightIdx:
+            return knightEval[squareIdx];
+        case kBishopIdx:
+            return color == LeelaBoardWrapper::WHITE ? bishopEvalWhite[squareIdx] : bishopEvalBlack[squareIdx];
+        case kRookIdx:
+            return color == LeelaBoardWrapper::WHITE ? rookEvalWhite[squareIdx] : rookEvalBlack[squareIdx];
+        case kQueenIdx:
+            return queenEval[squareIdx];
+        case kKingIdx:
+            if (isEndgame)
+                return color == LeelaBoardWrapper::WHITE ? kingEvalEndGameWhite[squareIdx] : kingEvalEndGameBlack[squareIdx];
+            else
+                return color == LeelaBoardWrapper::WHITE ? kingEvalWhite[squareIdx] : kingEvalBlack[squareIdx];
+        default:
+            return 0;
+    }
+}
+
+int evaluate_piece(
+    lczero::PieceType piece_type,
+    int color,
+    lczero::Square square,
+    bool isEndgame)
+{
+    return PIECE_VALUE[piece_type.idx] + piece_square_value(piece_type, color, square, isEndgame);
+}
+
+bool f_isEndgame(const LeelaBoardWrapper& board) {
+    // perf: this could be faster by using lc0 boards bit counters
+    int numQueens = 0;
+    int numMinors = 0;
+
+    for (int sq = 0; sq < 64; ++sq) {
+        const auto optPiece = board.piece_at(lczero::Square::FromIdx(sq));
+        if (optPiece.has_value()) {
+            if (optPiece.value() == lczero::kQueen) {
+                numQueens++;
+            } else if (optPiece.value() == lczero::kBishop
+                       || optPiece.value() == lczero::kKnight) {
+                numMinors++;
+            }
+        }
+    }
+
+    return numQueens == 0 || (numQueens == 2 && numMinors <= 1);
+}
+
+int evaluate_board(const LeelaBoardWrapper& board) {
+    int total = 0;
+    bool isEndgame = f_isEndgame(board);
+    // keep this in case u need to debug evaluation (again)
+    // int pieces[64];
+    // int values[64];
+    for (int sq = 0; sq < 64; ++sq) {
+        // pieces[sq] = -1;
+        // values[sq] = -1;
+        auto square = lczero::Square::FromIdx(sq);
+        auto piece_opt = board.piece_at(lczero::Square::FromIdx(sq));
+        if (!piece_opt.has_value())
+            continue;
+        auto piece_type = piece_opt.value();
+        // pieces[sq] = piece_type.idx;
+        int color = board.color_at(square);
+        int value = evaluate_piece(piece_type, color, square, isEndgame);
+        if (color == LeelaBoardWrapper::BLACK)
+            value = -value;
+        // values[sq] = value;
+        total += value;
+    }
+    return total;
+}
+
+} // namespace mystuff
