@@ -30,6 +30,7 @@ Then:
         - DONE fix build
         - get to end of training
             - fix double free of game during training
+                - sigh, i dunno what's going on, I don't want to learn C++
         - env: add test: is_game_over should agree with result
         - inline todos
         - e-greedy moves while training?
