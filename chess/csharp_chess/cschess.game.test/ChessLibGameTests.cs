@@ -2,7 +2,7 @@ using Shouldly;
 
 namespace cschess.game.test;
 
-public class UnitTest1
+public class ChessLibGameTests
 {
     [Fact]
     public void PlaysFullRandomGame()
@@ -22,12 +22,12 @@ public class UnitTest1
     }
 }
 
-public static class RandomExtensions
-{
-    public static T Choice<T>(this Random random, IEnumerable<T> source)
-    {
-        var sourceList = source.ToList();
-        var index = random.Next(sourceList.Count);
-        return sourceList[index];
-    }
-}
+// public static class RandomExtensions
+// {
+//     public static T Choice<T>(this Random random, IEnumerable<T> source)
+//     {
+//         var sourceList = source.ToList();
+//         var index = random.Next(sourceList.Count);
+//         return sourceList[index];
+//     }
+// }

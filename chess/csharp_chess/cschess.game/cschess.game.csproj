@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\submodules\chesslib\src\chess-lib\Rudzoft.ChessLib\Rudzoft.ChessLib.csproj" />
+    <ProjectReference Include="..\submodules\Chess-Coding-Adventure\Chess-Coding-Adventure\Chess-Coding-Adventure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

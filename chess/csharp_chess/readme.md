@@ -10,3 +10,5 @@ Uses [TorchSharp](https://github.com/dotnet/TorchSharp) and [ChessLib](https://g
   - remove ms dep injection dependency from chess.game
   - remove chesslib game wrapper
   - remove chesslib submodule
+  - update these docs
+  - maybe: fix build warnings
