@@ -121,7 +121,7 @@ public class ValueNetworkTrainer
 
     // Train value network
     public static (List<double> trainLosses, List<double> valLosses) TrainValueNetwork(
-        nn.Module valueNetwork,
+        ValueNetwork valueNetwork,
         List<CodingAdventureChessGame> trainPositions,
         List<double> trainTargets,
         List<CodingAdventureChessGame> testPositions,
@@ -133,25 +133,25 @@ public class ValueNetworkTrainer
     {
         valueNetwork.to(device);
         valueNetwork.train();
-        var optimizer = torch.optim.Adam(valueNetwork.parameters(), lr: lr);
+        var optimizer = optim.Adam(valueNetwork.parameters(), lr: lr);
         var criterion = nn.MSELoss();
-        var trainPositionsT = torch.tensor(trainPositions.Select(b => b.StateNP()).ToArray(), device: device);
-        var trainTargetsT = torch.tensor(trainTargets.ToArray(), dtype: ScalarType.Float32, device: device);
-        var testPositionsT = torch.tensor(testPositions.Select(b => b.StateNP()).ToArray(), device: device);
-        var testTargetsT = torch.tensor(testTargets.ToArray(), dtype: ScalarType.Float32, device: device);
+        var trainPositionsT = stack(trainPositions.Select(Board2Tensor));
+        var trainTargetsT = tensor(trainTargets, dtype: ScalarType.Float32, device: device);
+        var testPositionsT = stack(testPositions.Select(Board2Tensor));
+        var testTargetsT = tensor(testTargets, dtype: ScalarType.Float32, device: device);
         var trainLosses = new List<double>();
         var valLosses = new List<double>();
         for (int epoch = 0; epoch < epochs; epoch++)
         {
-            var indices = torch.randperm(trainPositionsT.shape[0], device: device);
+            var indices = randperm(trainPositionsT.shape[0], device: device);
             var epochLosses = new List<double>();
             for (int i = 0; i < trainPositionsT.shape[0]; i += batchSize)
             {
-                var batchIndices = indices.slice(0, i, Math.Min(i + batchSize, trainPositionsT.shape[0]));
+                var batchIndices = indices.slice(0, i, Math.Min(i + batchSize, trainPositionsT.shape[0]), 1);
                 var batchPositions = trainPositionsT.index_select(0, batchIndices);
                 var batchTargets = trainTargetsT.index_select(0, batchIndices);
                 optimizer.zero_grad();
-                var predictions = valueNetwork.forward(batchPositions).squeeze();
+                var predictions = valueNetwork.Forward(batchPositions).squeeze();
                 var loss = criterion.forward(predictions, batchTargets);
                 loss.backward();
                 optimizer.step();
@@ -159,9 +159,9 @@ public class ValueNetworkTrainer
             }
             trainLosses.Add(epochLosses.Average());
             valueNetwork.eval();
-            using (torch.no_grad())
+            using (no_grad())
             {
-                var valPredictions = valueNetwork.forward(testPositionsT).squeeze();
+                var valPredictions = valueNetwork.Forward(testPositionsT).squeeze();
                 var valLoss = criterion.forward(valPredictions, testTargetsT).ToSingle();
                 valLosses.Add(valLoss);
             }
@@ -186,26 +186,11 @@ public class ValueNetworkTrainer
         };
     }
 
-    // Main training/testing entry point
-    public static (Module valueNetwork, Dictionary<string, double> metrics) TrainAndTestValueNetwork(
-        string datasetPath = null,
-        int? datasetSize = null)
+    public static void TrainAndTestValueNetwork(string datasetPath)
     {
-        var device = torch.cuda.is_available() ? torch.CUDA : torch.CPU;
-        List<ChessGame> positions;
-        List<double> values;
-        if (datasetPath != null)
-        {
-            (positions, values) = ReadDataFile(datasetPath);
-        }
-        else if (datasetSize.HasValue)
-        {
-            (positions, values) = GenerateData(datasetSize.Value);
-        }
-        else
-        {
-            throw new Exception("Either provide a dataset file or data size");
-        }
+        var device = cuda.is_available() ? CUDA : CPU;
+        var (positions, values) = ReadDataFile(datasetPath);
+
         int splitIdx = (int)(0.8 * positions.Count);
         var trainPositions = positions.Take(splitIdx).ToList();
         var trainTargets = values.Take(splitIdx).ToList();
@@ -224,13 +209,13 @@ public class ValueNetworkTrainer
             device: device
         );
         valueNetwork.eval();
-        using (torch.no_grad())
+        using (no_grad())
         {
-            var testPositionsT = torch.tensor(testPositions.Select(b => b.StateNP()).ToArray(), device: device);
+            var testPositionsT = stack(testPositions.Select(Board2Tensor));
             var networkScoresT = valueNetwork.Forward(testPositionsT).squeeze();
-            var networkScores = networkScoresT.cpu().data<float>().ToArray();
+            var networkScores = networkScoresT.cpu().data<double>().ToArray();
             var metrics = EvaluateAccuracy(networkScores, testTargets.ToArray());
-            return (valueNetwork, metrics);
+            Console.WriteLine(metrics);
         }
     }
 }
