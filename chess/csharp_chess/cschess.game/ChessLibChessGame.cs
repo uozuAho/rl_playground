@@ -48,10 +48,10 @@ public class ChessLibChessGame
         _pos = _serviceProvider.GetRequiredService<IPosition>();
     }
 
-    public bool IsGameOver()
-    {
-        return GameEndType(pos) != GameEndTypes.None;
-    }
+    // public bool IsGameOver()
+    // {
+    //     return GameEndType(pos) != GameEndTypes.None;
+    // }
 
     public IEnumerable<T> LegalMoves<T>()
     {
