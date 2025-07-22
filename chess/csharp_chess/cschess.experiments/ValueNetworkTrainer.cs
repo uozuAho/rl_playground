@@ -95,7 +95,7 @@ public class ValueNetworkTrainer
 
     public static Tensor Board2Tensor(CodingAdventureChessGame game)
     {
-        var state = zeros(8, 8, 8, float32);
+        var tensor = zeros(8, 8, 8, float32);
         for (var i = 0; i < 64; ++i) {
             var row = i / 8;
             var col = i % 8;
@@ -104,19 +104,19 @@ public class ValueNetworkTrainer
             var color = game.ColorAt(i);
             Debug.Assert(color != Color.None);
             var pieceIdx = (int)pieceType - 1;
-            state[pieceIdx][row][col] = (float)color;
+            tensor[pieceIdx][row][col] = (float)color;
         }
         var fullmove = game.FullmoveCount();
         if (fullmove > 0) {
-            state[6].fill_(1.0f / fullmove);
+            tensor[6].fill_(1.0f / fullmove);
         }
         if (game.Turn() == Color.White) {
-            state[6][0].fill_(1.0f);
+            tensor[6][0].fill_(1.0f);
         } else {
-            state[6][0].fill_(-1.0f);
+            tensor[6][0].fill_(-1.0f);
         }
-        state[7].fill_(1.0f);
-        return state;
+        tensor[7].fill_(1.0f);
+        return tensor;
     }
 
     // Train value network
@@ -133,8 +133,10 @@ public class ValueNetworkTrainer
     {
         valueNetwork.to(device);
         valueNetwork.train();
+        var testtt = Board2Tensor(trainPositions.First());
         var optimizer = optim.Adam(valueNetwork.parameters(), lr: lr);
         var criterion = nn.MSELoss();
+        // todo: prolly can't allocate this much? https://github.com/dotnet/TorchSharp/blob/main/docfx/articles/memory.md
         var trainPositionsT = stack(trainPositions.Select(Board2Tensor));
         var trainTargetsT = tensor(trainTargets, dtype: ScalarType.Float32, device: device);
         var testPositionsT = stack(testPositions.Select(Board2Tensor));
@@ -143,6 +145,8 @@ public class ValueNetworkTrainer
         var valLosses = new List<double>();
         for (int epoch = 0; epoch < epochs; epoch++)
         {
+            Console.WriteLine($"Epoch {epoch}");
+
             var indices = randperm(trainPositionsT.shape[0], device: device);
             var epochLosses = new List<double>();
             for (int i = 0; i < trainPositionsT.shape[0]; i += batchSize)
@@ -189,7 +193,12 @@ public class ValueNetworkTrainer
     public static void TrainAndTestValueNetwork(string datasetPath)
     {
         var device = cuda.is_available() ? CUDA : CPU;
+
+        Console.WriteLine($"Training on data read from {datasetPath}");
+
         var (positions, values) = ReadDataFile(datasetPath);
+
+        Console.WriteLine($"Positions: {positions.Count}");
 
         int splitIdx = (int)(0.8 * positions.Count);
         var trainPositions = positions.Take(splitIdx).ToList();
@@ -215,7 +224,11 @@ public class ValueNetworkTrainer
             var networkScoresT = valueNetwork.Forward(testPositionsT).squeeze();
             var networkScores = networkScoresT.cpu().data<double>().ToArray();
             var metrics = EvaluateAccuracy(networkScores, testTargets.ToArray());
-            Console.WriteLine(metrics);
+
+            foreach (var (key, value) in metrics)
+            {
+                Console.WriteLine($"{key}: {value}");
+            }
         }
     }
 }
