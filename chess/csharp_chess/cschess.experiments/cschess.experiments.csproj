@@ -11,4 +11,8 @@
     <PackageReference Include="TorchSharp-cpu" Version="0.105.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\cschess.game\cschess.game.csproj" />
+  </ItemGroup>
+
 </Project>
