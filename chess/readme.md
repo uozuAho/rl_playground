@@ -20,9 +20,19 @@ agent, and my pandemic implementation is in C#.
         - use cpu
         - use gpu
 - DONE find a fast chess implementation
-    - maybe
-        - THIS ONE https://github.com/rudzen/ChessLib
+    - choice https://github.com/SebLague/Chess-Coding-Adventure
+        - barebones, no tests, but after watching vid, seems ok
+        - common-sense API. writing a random game was easy
+        - game played with random moves ends in expected number of halfmoves
+            (~400ish)
+        - plays 500 random games in ~400ms
+        - comes with a strong bot to play against
+    - options/analysis
+        - https://github.com/rudzen/ChessLib
             - perf focused, easy-ish api, extensive tests
+            - doesn't seem to implement end of game test?
+            - random moves caused suspiciously early threefold repetition, CBF
+              debugging
         - https://github.com/GameDevChef/Chess
             - not a dotnet sln, looks like some game engine
         - https://github.com/PeterHughes/SharpChess
@@ -31,7 +41,7 @@ agent, and my pandemic implementation is in C#.
             - suspicious: not sure this properly implements bug-free chess
                 - code quality bit yuck
                 - tests use mocks heavily
-                - I don't see all game rules like 2/3 fold repetition
+                - I don't see all game rules like 3 fold repetition
         - [Chess.NET](https://github.com/typedbyte/Chess.NET)
             - 'clean' architecture - AKA inscrutable. Dunno if it's possible to
             play a game with two random agents. Doesn't seem to include legal
