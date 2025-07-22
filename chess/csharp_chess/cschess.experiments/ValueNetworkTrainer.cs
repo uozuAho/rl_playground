@@ -42,17 +42,17 @@ public sealed class ValueNetwork : nn.Module
 
 public class ValueNetworkTrainer
 {
-    public static double MeanSquaredError(double[] yTrue, double[] yPred)
+    public static double MeanSquaredError(double[] yTrue, float[] yPred)
     {
         return yTrue.Zip(yPred, (a, b) => Math.Pow(a - b, 2)).Average();
     }
 
-    public static double MeanAbsoluteError(double[] yTrue, double[] yPred)
+    public static double MeanAbsoluteError(double[] yTrue, float[] yPred)
     {
         return yTrue.Zip(yPred, (a, b) => Math.Abs(a - b)).Average();
     }
 
-    public static (double correlation, double pValue) PearsonR(double[] x, double[] y)
+    public static (double correlation, double pValue) PearsonR(float[] x, double[] y)
     {
         double meanX = x.Average();
         double meanY = y.Average();
@@ -133,13 +133,12 @@ public class ValueNetworkTrainer
     {
         valueNetwork.to(device);
         valueNetwork.train();
-        var testtt = Board2Tensor(trainPositions.First());
+        // var testtt = Board2Tensor(trainPositions.First());
         var optimizer = optim.Adam(valueNetwork.parameters(), lr: lr);
         var criterion = nn.MSELoss();
-        // todo: prolly can't allocate this much? https://github.com/dotnet/TorchSharp/blob/main/docfx/articles/memory.md
-        var trainPositionsT = stack(trainPositions.Select(Board2Tensor));
+        var trainPositionsT = stack(trainPositions.Select(Board2Tensor).ToArray());
         var trainTargetsT = tensor(trainTargets, dtype: ScalarType.Float32, device: device);
-        var testPositionsT = stack(testPositions.Select(Board2Tensor));
+        var testPositionsT = stack(testPositions.Select(Board2Tensor).ToArray());
         var testTargetsT = tensor(testTargets, dtype: ScalarType.Float32, device: device);
         var trainLosses = new List<double>();
         var valLosses = new List<double>();
@@ -175,7 +174,7 @@ public class ValueNetworkTrainer
     }
 
     // Evaluate accuracy
-    public static Dictionary<string, double> EvaluateAccuracy(double[] networkScores, double[] michniewScores)
+    public static Dictionary<string, double> EvaluateAccuracy(float[] networkScores, double[] michniewScores)
     {
         var mse = MeanSquaredError(michniewScores, networkScores);
         var mae = MeanAbsoluteError(michniewScores, networkScores);
@@ -222,7 +221,7 @@ public class ValueNetworkTrainer
         {
             var testPositionsT = stack(testPositions.Select(Board2Tensor));
             var networkScoresT = valueNetwork.Forward(testPositionsT).squeeze();
-            var networkScores = networkScoresT.cpu().data<double>().ToArray();
+            var networkScores = networkScoresT.cpu().data<float>().ToArray();
             var metrics = EvaluateAccuracy(networkScores, testTargets.ToArray());
 
             foreach (var (key, value) in metrics)
