@@ -18,7 +18,7 @@ dotnet run joe
 ```
 
 # Todo
-- make bot tournament script
+- WIP make bot tournament script
     - random vs coding adventure bot
 - add code formatter
 - port python greedy bot to C#
@@ -53,3 +53,22 @@ dotnet run joe
         and loss components
     - Hyperparameter tuning: Systematically search learning rates, network
       sizes, and MCTS parameters
+
+
+# how does coding adventure bot work
+- engineUCI
+  - player = bot
+  - OnMoveChosen: respond "bestmove <move>"
+  - new game
+    - bot.NotifyNewGame
+      - searcher.ClearForNewPosition
+  - ProcessPositionCommand msg
+    - if msg contains "startpos"
+      - bot.SetPosition(regular new game)
+  - ProcessGoCommand msg
+    - if "movetime" in msg
+      - bot.ThinkTimed(time)
+    - else
+      - bot.ChooseThinkTime -> ThinkTimed
+  - if msg = quit
+    - bot.Quit

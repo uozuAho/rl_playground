@@ -8,6 +8,8 @@ namespace cschess.game;
 /// </summary>
 public class CodingAdventureChessGame : IChessGame
 {
+    public Board InternalBoard => _board;
+
     private readonly Board _board;
     private readonly MoveGenerator _moveGenerator;
 
@@ -111,7 +113,7 @@ public class Move
 {
     internal readonly Chess.Core.Move CoreMove;
 
-    internal static Move From(Chess.Core.Move move)
+    public static Move From(Chess.Core.Move move)
     {
         return new Move(move);
     }

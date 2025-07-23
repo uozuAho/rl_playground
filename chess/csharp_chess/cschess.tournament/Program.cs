@@ -1,4 +1,5 @@
-﻿using cschess.agents;
+﻿using CodingAdventureBot;
+using cschess.agents;
 using cschess.tournament;
 
 var results = Tournament.RunWith(

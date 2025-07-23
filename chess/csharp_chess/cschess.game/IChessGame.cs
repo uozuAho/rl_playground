@@ -1,3 +1,5 @@
+using Chess.Core;
+
 namespace cschess.game;
 
 public record GameState(
@@ -17,6 +19,12 @@ public interface IChessGame
     int FullmoveCount();
     int HalfmoveCount();
     Color Turn();
+
+    /// <summary>
+    /// This is just here to make initial implementation easy.
+    /// Don't use widely.
+    /// </summary>
+    Board InternalBoard { get; }
 
     void MakeMove(Move move);
 }
