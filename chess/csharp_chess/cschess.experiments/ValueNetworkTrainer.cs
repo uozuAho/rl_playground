@@ -205,6 +205,8 @@ public class ValueNetworkTrainer
         var testPositions = positions.Skip(splitIdx).ToList();
         var testTargets = values.Skip(splitIdx).ToList();
         var valueNetwork = new ValueNetwork();
+
+        var stopwatch = Stopwatch.StartNew();
         var (trainLosses, valLosses) = TrainValueNetwork(
             valueNetwork,
             trainPositions,
@@ -216,6 +218,9 @@ public class ValueNetworkTrainer
             lr: 1e-3,
             device: device
         );
+        stopwatch.Stop();
+        Console.WriteLine($"Training took {stopwatch.Elapsed}");
+
         valueNetwork.eval();
         using (no_grad())
         {
