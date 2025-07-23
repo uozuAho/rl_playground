@@ -27,16 +27,17 @@ public sealed class ValueNetwork : nn.Module
 
     public Tensor Forward(Tensor x)
     {
-        x = nn.functional.relu(((Conv2d)_conv1).forward(x));
-        x = nn.functional.relu(((Conv2d)_conv2).forward(x));
-        x = nn.functional.relu(((Conv2d)_conv3).forward(x));
-        x = x.view(x.shape[0], -1);
-        x = nn.functional.relu(((Linear)_fc1).forward(x));
-        x = ((Dropout)_dropout).forward(x);
-        x = nn.functional.relu(((Linear)_fc2).forward(x));
-        x = nn.functional.tanh(((Linear)_fc3).forward(x));
-
-        return x;
+        // todo: use Sequential instead of this mess. Not sure how to do the view at x4.
+        // Sequential is good for memory, see: https://github.com/dotnet/TorchSharp/blob/main/docfx/articles/memory.md
+        using var x1 = nn.functional.relu(((Conv2d)_conv1).forward(x));
+        using var x2 = nn.functional.relu(((Conv2d)_conv2).forward(x1));
+        using var x3 = nn.functional.relu(((Conv2d)_conv3).forward(x2));
+        using var x4 = x3.view(x3.shape[0], -1);
+        using var x5 = nn.functional.relu(((Linear)_fc1).forward(x4));
+        using var x6 = ((Dropout)_dropout).forward(x5);
+        using var x7 = nn.functional.relu(((Linear)_fc2).forward(x6));
+        var x8 = nn.functional.tanh(((Linear)_fc3).forward(x7));
+        return x8;
     }
 }
 
@@ -136,9 +137,9 @@ public class ValueNetworkTrainer
         // var testtt = Board2Tensor(trainPositions.First());
         var optimizer = optim.Adam(valueNetwork.parameters(), lr: lr);
         var criterion = nn.MSELoss();
-        var trainPositionsT = stack(trainPositions.Select(Board2Tensor).ToArray());
+        var trainPositionsT = stack(trainPositions.Select(Board2Tensor).ToArray()).to(device);
         var trainTargetsT = tensor(trainTargets, dtype: ScalarType.Float32, device: device);
-        var testPositionsT = stack(testPositions.Select(Board2Tensor).ToArray());
+        var testPositionsT = stack(testPositions.Select(Board2Tensor).ToArray()).to(device);
         var testTargetsT = tensor(testTargets, dtype: ScalarType.Float32, device: device);
         var trainLosses = new List<double>();
         var valLosses = new List<double>();
@@ -150,12 +151,13 @@ public class ValueNetworkTrainer
             var epochLosses = new List<double>();
             for (int i = 0; i < trainPositionsT.shape[0]; i += batchSize)
             {
-                var batchIndices = indices.slice(0, i, Math.Min(i + batchSize, trainPositionsT.shape[0]), 1);
-                var batchPositions = trainPositionsT.index_select(0, batchIndices);
-                var batchTargets = trainTargetsT.index_select(0, batchIndices);
+                // usings everywhere to clean up temporary tensors. See https://github.com/dotnet/TorchSharp/blob/main/docfx/articles/memory.md
+                using var batchIndices = indices.slice(0, i, Math.Min(i + batchSize, trainPositionsT.shape[0]), 1);
+                using var batchPositions = trainPositionsT.index_select(0, batchIndices);
+                using var batchTargets = trainTargetsT.index_select(0, batchIndices);
                 optimizer.zero_grad();
-                var predictions = valueNetwork.Forward(batchPositions).squeeze();
-                var loss = criterion.forward(predictions, batchTargets);
+                using var predictions = valueNetwork.Forward(batchPositions).squeeze();
+                using var loss = criterion.forward(predictions, batchTargets);
                 loss.backward();
                 optimizer.step();
                 epochLosses.Add(loss.ToSingle());
@@ -164,7 +166,7 @@ public class ValueNetworkTrainer
             valueNetwork.eval();
             using (no_grad())
             {
-                var valPredictions = valueNetwork.Forward(testPositionsT).squeeze();
+                using var valPredictions = valueNetwork.Forward(testPositionsT).squeeze();
                 var valLoss = criterion.forward(valPredictions, testTargetsT).ToSingle();
                 valLosses.Add(valLoss);
             }
@@ -192,6 +194,9 @@ public class ValueNetworkTrainer
     public static void TrainAndTestValueNetwork(string datasetPath)
     {
         var device = cuda.is_available() ? CUDA : CPU;
+        // var device = CPU;
+
+        Console.WriteLine($"Using device {device}");
 
         Console.WriteLine($"Training on data read from {datasetPath}");
 
