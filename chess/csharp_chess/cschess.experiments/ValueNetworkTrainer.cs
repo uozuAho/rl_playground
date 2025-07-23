@@ -127,10 +127,11 @@ public class ValueNetworkTrainer
         List<double> trainTargets,
         List<CodingAdventureChessGame> testPositions,
         List<double> testTargets,
+        Device device,
         int epochs = 100,
         int batchSize = 32,
-        double lr = 1e-3,
-        Device device = null)
+        double lr = 1e-3
+        )
     {
         valueNetwork.to(device);
         valueNetwork.train();
