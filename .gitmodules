@@ -1,6 +1,3 @@
-[submodule "chess/csharp_chess/submodules/chesslib"]
-	path = chess/csharp_chess/submodules/chesslib
-	url = git@github.com:rudzen/ChessLib.git
 [submodule "chess/csharp_chess/submodules/Chess-Coding-Adventure"]
 	path = chess/csharp_chess/submodules/Chess-Coding-Adventure
 	url = git@github.com:SebLague/Chess-Coding-Adventure.git
