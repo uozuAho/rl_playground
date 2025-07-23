@@ -20,6 +20,7 @@ dotnet run joe
 # Todo
 - make bot tournament script
     - random vs coding adventure bot
+- add code formatter
 - port python greedy bot to C#
 - train/tweak greedy bot. does it improve?
 - add save, load, checkpointing to greedy bot
