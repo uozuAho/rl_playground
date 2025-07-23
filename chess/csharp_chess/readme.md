@@ -6,7 +6,10 @@ The chess implementation is much faster than pychess (at least 100x).
 TorchSharp seems decent, but requires manual memory management when
 using the GPU :(
 
+# quick start
+- generate a file of FENs and score using ../torch/train_value_network.py
+- put the file here, call it joe
+- `dotnet run joe`
+
 # todo
-- if above wrapper good:
-  - update these docs
-  - maybe: fix build warnings
+- maybe: fix build warnings
