@@ -229,7 +229,7 @@ public class ValueNetworkTrainer
         valueNetwork.eval();
         using (no_grad())
         {
-            var testPositionsT = stack(testPositions.Select(Board2Tensor));
+            using var testPositionsT = stack(testPositions.Select(Board2Tensor)).to(device);
             var networkScoresT = valueNetwork.Forward(testPositionsT).squeeze();
             var networkScores = networkScoresT.cpu().data<float>().ToArray();
             var metrics = EvaluateAccuracy(networkScores, testTargets.ToArray());

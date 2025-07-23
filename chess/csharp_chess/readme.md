@@ -13,8 +13,10 @@ Uses [TorchSharp](https://github.com/dotnet/TorchSharp) and [ChessLib](https://g
       - mse: 0.0024842160542706522
         mae: 0.03746429003634781
         correlation: 0.990030127810511
-    - cs: GPU: WIP
-      - memory issues: https://github.com/dotnet/TorchSharp/blob/main/docfx/articles/memory.md
+    - cs: cpu, 8s
+      - mse: 0.0031499940663415114
+        mae: 0.0423407089842701
+        correlation: 0.9868517208824936
 - if above wrapper good:
   - remove ms dep injection dependency from chess.game
   - remove chesslib game wrapper
