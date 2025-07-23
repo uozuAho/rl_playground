@@ -8,7 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="TorchSharp-cpu" Version="0.105.1" />
+    <!-- Note: TorchSharp-cuda-linux allows device=CPU -->
+    <PackageReference Include="TorchSharp-cuda-linux" Version="0.105.1" />
   </ItemGroup>
 
   <ItemGroup>
