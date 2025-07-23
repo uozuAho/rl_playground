@@ -1,3 +1,4 @@
+using cschess.csutils;
 using Shouldly;
 
 namespace cschess.game.test;
@@ -21,15 +22,5 @@ public class CodingAdventureGameTests
         }
 
         numHalfMoves.ShouldBeGreaterThan(50);
-    }
-}
-
-public static class RandomExtensions
-{
-    public static T Choice<T>(this Random random, IEnumerable<T> source)
-    {
-        var sourceList = source.ToList();
-        var index = random.Next(sourceList.Count);
-        return sourceList[index];
     }
 }

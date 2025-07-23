@@ -15,6 +15,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Chess-Coding-Adventure", "C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chess-Coding-Adventure", "submodules\Chess-Coding-Adventure\Chess-Coding-Adventure\Chess-Coding-Adventure.csproj", "{6D3DCEE6-714D-43F0-ACCB-2F13F48CB163}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "cschess.tournament", "cschess.tournament\cschess.tournament.csproj", "{F4392A04-3EB1-482A-9A04-D802538B7CFA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "cschess.agents", "cschess.agents\cschess.agents.csproj", "{8449B4D4-66F2-45D8-ACFB-2192FF335C93}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "cschess.csutils", "cschess.csutils\cschess.csutils.csproj", "{9107DC74-BE7C-4DF9-B8A2-E32476A2C6B9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -40,6 +46,18 @@ Global
 		{6D3DCEE6-714D-43F0-ACCB-2F13F48CB163}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6D3DCEE6-714D-43F0-ACCB-2F13F48CB163}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6D3DCEE6-714D-43F0-ACCB-2F13F48CB163}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F4392A04-3EB1-482A-9A04-D802538B7CFA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4392A04-3EB1-482A-9A04-D802538B7CFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4392A04-3EB1-482A-9A04-D802538B7CFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4392A04-3EB1-482A-9A04-D802538B7CFA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8449B4D4-66F2-45D8-ACFB-2192FF335C93}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8449B4D4-66F2-45D8-ACFB-2192FF335C93}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8449B4D4-66F2-45D8-ACFB-2192FF335C93}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8449B4D4-66F2-45D8-ACFB-2192FF335C93}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9107DC74-BE7C-4DF9-B8A2-E32476A2C6B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9107DC74-BE7C-4DF9-B8A2-E32476A2C6B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9107DC74-BE7C-4DF9-B8A2-E32476A2C6B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9107DC74-BE7C-4DF9-B8A2-E32476A2C6B9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{FEC92225-235A-449F-8929-A673597F9BAF} = {1896B54D-AA6A-4E26-83E9-D8FBE74A749D}

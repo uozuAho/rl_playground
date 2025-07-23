@@ -6,7 +6,7 @@ namespace cschess.game;
 /// Wraps the coding adventure impl in an easy-to-use wrapper, while trying
 /// to keep it fast.
 /// </summary>
-public class CodingAdventureChessGame
+public class CodingAdventureChessGame : IChessGame
 {
     private readonly Board _board;
     private readonly MoveGenerator _moveGenerator;
@@ -30,6 +30,24 @@ public class CodingAdventureChessGame
     public bool IsGameOver()
     {
         return Arbiter.GetGameState(_board) != GameResult.InProgress;
+    }
+
+    public GameState GameState()
+    {
+        var state = Arbiter.GetGameState(_board);
+
+        return new GameState(
+            Description: state.ToString(),
+            IsInProgress: state == GameResult.InProgress,
+            IsDraw: Arbiter.IsDrawResult(state),
+            IsWhiteWin: Arbiter.IsWhiteWinsResult(state),
+            IsBlackWin: Arbiter.IsBlackWinsResult(state));
+    }
+
+    public bool IsDraw()
+    {
+        var state = Arbiter.GetGameState(_board);
+        return Arbiter.IsDrawResult(state);
     }
 
     public IEnumerable<Move> LegalMoves()
@@ -75,7 +93,12 @@ public class CodingAdventureChessGame
 
     public int FullmoveCount()
     {
-        return _board.PlyCount / 2;
+        return HalfmoveCount() / 2;
+    }
+
+    public int HalfmoveCount()
+    {
+        return _board.PlyCount;
     }
 
     public Color Turn()

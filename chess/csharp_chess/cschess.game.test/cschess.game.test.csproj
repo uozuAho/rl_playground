@@ -24,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\cschess.csutils\cschess.csutils.csproj" />
     <ProjectReference Include="..\cschess.game\cschess.game.csproj" />
   </ItemGroup>
 
