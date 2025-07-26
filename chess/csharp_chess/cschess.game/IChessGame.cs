@@ -7,7 +7,8 @@ public record GameState(
     bool IsInProgress,
     bool IsDraw,
     bool IsWhiteWin,
-    bool IsBlackWin);
+    bool IsBlackWin
+);
 
 public interface IChessGame
 {

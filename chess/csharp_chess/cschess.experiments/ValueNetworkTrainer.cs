@@ -8,11 +8,16 @@ namespace cschess.experiments;
 
 public sealed class ValueNetwork : nn.Module
 {
-    private nn.Module _conv1, _conv2, _conv3;
-    private nn.Module _fc1, _fc2, _fc3;
+    private nn.Module _conv1,
+        _conv2,
+        _conv3;
+    private nn.Module _fc1,
+        _fc2,
+        _fc3;
     private nn.Module _dropout;
 
-    public ValueNetwork() : base("ValueNetwork")
+    public ValueNetwork()
+        : base("ValueNetwork")
     {
         _conv1 = nn.Conv2d(8, 32, 3, stride: 1, padding: 1);
         _conv2 = nn.Conv2d(32, 64, 3, stride: 1, padding: 1);
@@ -61,7 +66,8 @@ public class ValueNetworkTrainer
         double sumSqX = x.Select(a => Math.Pow(a - meanX, 2)).Sum();
         double sumSqY = y.Select(b => Math.Pow(b - meanY, 2)).Sum();
         double denominator = Math.Sqrt(sumSqX * sumSqY);
-        if (denominator == 0) return (0.0, 1.0);
+        if (denominator == 0)
+            return (0.0, 1.0);
         double correlation = numerator / denominator;
         int n = x.Length;
         double pValue;
@@ -97,23 +103,29 @@ public class ValueNetworkTrainer
     public static Tensor Board2Tensor(CodingAdventureChessGame game)
     {
         var tensor = zeros(8, 8, 8, float32);
-        for (var i = 0; i < 64; ++i) {
+        for (var i = 0; i < 64; ++i)
+        {
             var row = i / 8;
             var col = i % 8;
             var pieceType = game.PieceAt(i);
-            if (!pieceType.HasValue) continue;
+            if (!pieceType.HasValue)
+                continue;
             var color = game.ColorAt(i);
             Debug.Assert(color != Color.None);
             var pieceIdx = (int)pieceType - 1;
             tensor[pieceIdx][row][col] = (float)color;
         }
         var fullmove = game.FullmoveCount();
-        if (fullmove > 0) {
+        if (fullmove > 0)
+        {
             tensor[6].fill_(1.0f / fullmove);
         }
-        if (game.Turn() == Color.White) {
+        if (game.Turn() == Color.White)
+        {
             tensor[6][0].fill_(1.0f);
-        } else {
+        }
+        else
+        {
             tensor[6][0].fill_(-1.0f);
         }
         tensor[7].fill_(1.0f);
@@ -131,7 +143,7 @@ public class ValueNetworkTrainer
         int epochs = 100,
         int batchSize = 32,
         double lr = 1e-3
-        )
+    )
     {
         valueNetwork.to(device);
         valueNetwork.train();
@@ -153,7 +165,12 @@ public class ValueNetworkTrainer
             for (int i = 0; i < trainPositionsT.shape[0]; i += batchSize)
             {
                 // usings everywhere to clean up temporary tensors. See https://github.com/dotnet/TorchSharp/blob/main/docfx/articles/memory.md
-                using var batchIndices = indices.slice(0, i, Math.Min(i + batchSize, trainPositionsT.shape[0]), 1);
+                using var batchIndices = indices.slice(
+                    0,
+                    i,
+                    Math.Min(i + batchSize, trainPositionsT.shape[0]),
+                    1
+                );
                 using var batchPositions = trainPositionsT.index_select(0, batchIndices);
                 using var batchTargets = trainTargetsT.index_select(0, batchIndices);
                 optimizer.zero_grad();
@@ -177,18 +194,21 @@ public class ValueNetworkTrainer
     }
 
     // Evaluate accuracy
-    public static Dictionary<string, double> EvaluateAccuracy(float[] networkScores, double[] michniewScores)
+    public static Dictionary<string, double> EvaluateAccuracy(
+        float[] networkScores,
+        double[] michniewScores
+    )
     {
         var mse = MeanSquaredError(michniewScores, networkScores);
         var mae = MeanAbsoluteError(michniewScores, networkScores);
         var (correlation, pValue) = PearsonR(networkScores, michniewScores);
         return new Dictionary<string, double>
         {
-            {"mse", mse},
-            {"mae", mae},
-            {"correlation", correlation},
-            {"p_value", pValue},
-            {"rmse", Math.Sqrt(mse)}
+            { "mse", mse },
+            { "mae", mae },
+            { "correlation", correlation },
+            { "p_value", pValue },
+            { "rmse", Math.Sqrt(mse) },
         };
     }
 

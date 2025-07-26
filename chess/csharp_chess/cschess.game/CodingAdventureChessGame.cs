@@ -43,7 +43,8 @@ public class CodingAdventureChessGame : IChessGame
             IsInProgress: state == GameResult.InProgress,
             IsDraw: Arbiter.IsDrawResult(state),
             IsWhiteWin: Arbiter.IsWhiteWinsResult(state),
-            IsBlackWin: Arbiter.IsBlackWinsResult(state));
+            IsBlackWin: Arbiter.IsBlackWinsResult(state)
+        );
     }
 
     public bool IsDraw()
@@ -75,13 +76,14 @@ public class CodingAdventureChessGame : IChessGame
             Piece.Rook => PieceType.Rook,
             Piece.Queen => PieceType.Queen,
             Piece.King => PieceType.King,
-            _ => throw new ArgumentOutOfRangeException(nameof(square), square, null)
+            _ => throw new ArgumentOutOfRangeException(nameof(square), square, null),
         };
     }
 
     public Color ColorAt(int square)
     {
-        if (!PieceAt(square).HasValue) return Color.None;
+        if (!PieceAt(square).HasValue)
+            return Color.None;
 
         var pieceInt = _board.Square[square];
 
@@ -89,7 +91,7 @@ public class CodingAdventureChessGame : IChessGame
         {
             Piece.White => Color.White,
             Piece.Black => Color.Black,
-            _ => throw new ArgumentOutOfRangeException(nameof(square), square, null)
+            _ => throw new ArgumentOutOfRangeException(nameof(square), square, null),
         };
     }
 

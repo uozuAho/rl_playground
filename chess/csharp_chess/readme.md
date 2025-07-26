@@ -15,12 +15,16 @@ using the GPU :(
 ```sh
 dotnet test
 dotnet run joe
+
+dotnet csharpier format .   # format code
 ```
 
 # Todo
-- WIP make coding adventure agent
-  - add to tournament
-- add code formatter
+- maybe: add arch rules: submodules should not have any external references
+- tournament
+  - add think time limit
+  - print avg game time
+  - inline todos
 - port python greedy bot to C#
 - train/tweak greedy bot. does it improve?
 - add save, load, checkpointing to greedy bot

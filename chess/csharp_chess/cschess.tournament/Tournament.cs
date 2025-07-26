@@ -13,23 +13,30 @@ public record TournamentEntrant(IChessAgent Agent, string Name);
 public record MatchResult(
     TournamentEntrant White,
     TournamentEntrant Black,
-    ImmutableList<GameResult> Games);
+    ImmutableList<GameResult> Games
+);
 
 public record GameResult(string FinalState, int Halfmoves, bool IsDraw, bool WhiteWon);
 
 public class Tournament
 {
-    public static TournamentResults RunWith(TournamentOptions options, params TournamentEntrant[] entrants)
+    public static TournamentResults RunWith(
+        TournamentOptions options,
+        params TournamentEntrant[] entrants
+    )
     {
         var matches = new List<MatchResult>();
 
-        Console.WriteLine($"Running Tournament. {options.NumGamesPerMatch} games per match, {entrants.Length} entrants");
+        Console.WriteLine(
+            $"Running Tournament. {options.NumGamesPerMatch} games per match, {entrants.Length} entrants"
+        );
 
         for (var i = 0; i < entrants.Length; i++)
         {
             for (var j = 0; j < entrants.Length; j++)
             {
-                if (i == j) continue;
+                if (i == j)
+                    continue;
                 var white = entrants[i];
                 var black = entrants[j];
 
@@ -67,7 +74,8 @@ public class Tournament
             FinalState: gameState.Description,
             Halfmoves: game.HalfmoveCount(),
             IsDraw: gameState.IsDraw,
-            WhiteWon: gameState.IsWhiteWin);
+            WhiteWon: gameState.IsWhiteWin
+        );
     }
 }
 
