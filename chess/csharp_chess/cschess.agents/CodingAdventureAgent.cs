@@ -6,7 +6,7 @@ namespace cschess.agents;
 
 public sealed class CodingAdventureAgent : IChessAgent
 {
-    public Move NextMove(IChessGame game)
+    public Move NextMove(IChessGame game, TimeSpan fromMilliseconds)
     {
         TimeSpan timeout = TimeSpan.FromMilliseconds(1);
         // todo: maybe later: use opening book before search

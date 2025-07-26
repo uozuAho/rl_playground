@@ -11,7 +11,7 @@ public class CodingAdventureAgentTests
         var game = CodingAdventureChessGame.StandardGame();
         var adventureAgent = new CodingAdventureAgent();
 
-        var move = adventureAgent.NextMove(game);
+        var move = adventureAgent.NextMove(game, TimeSpan.FromMilliseconds(1));
 
         move.ShouldNotBeNull();
     }

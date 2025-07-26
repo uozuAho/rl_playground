@@ -18,8 +18,8 @@ dotnet run joe
 ```
 
 # Todo
-- WIP make coding adventure agent, add to tournament
-  - add time limit to agent.NextMove
+- WIP make coding adventure agent
+  - add to tournament
 - add code formatter
 - port python greedy bot to C#
 - train/tweak greedy bot. does it improve?

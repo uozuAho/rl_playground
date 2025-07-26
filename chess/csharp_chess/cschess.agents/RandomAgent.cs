@@ -7,7 +7,7 @@ public class RandomAgent : IChessAgent
 {
     private readonly Random _random = new();
 
-    public Move NextMove(IChessGame game)
+    public Move NextMove(IChessGame game, TimeSpan timeout)
     {
         return _random.Choice(game.LegalMoves());
     }
