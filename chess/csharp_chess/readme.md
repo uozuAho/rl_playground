@@ -18,8 +18,9 @@ dotnet run joe
 ```
 
 # Todo
-- WIP make bot tournament script
-    - random vs coding adventure bot
+- WIP make coding adventure agent, add to tournament
+  - add cancellation support to Search. my current code is yuck
+  - push my submodule changes to fork
 - add code formatter
 - port python greedy bot to C#
 - train/tweak greedy bot. does it improve?
