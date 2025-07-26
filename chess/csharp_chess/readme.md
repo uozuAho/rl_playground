@@ -20,9 +20,7 @@ dotnet csharpier format .   # format code
 ```
 
 # Todo
-- maybe: add arch rules: submodules should not have any external references
 - tournament
-  - add think time limit
   - print avg game time
   - inline todos
 - port python greedy bot to C#

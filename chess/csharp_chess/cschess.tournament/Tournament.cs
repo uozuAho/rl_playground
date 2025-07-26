@@ -6,7 +6,9 @@ namespace cschess.tournament;
 
 public record TournamentResults(ImmutableList<MatchResult> Matches);
 
-public record TournamentOptions(int NumGamesPerMatch);
+public record TournamentOptions(
+    int NumGamesPerMatch,
+    TimeSpan TurnTimeLimit);
 
 public record TournamentEntrant(IChessAgent Agent, string Name);
 
@@ -46,7 +48,7 @@ public class Tournament
 
                 for (var k = 0; k < options.NumGamesPerMatch; k++)
                 {
-                    var result = PlayGame(white.Agent, black.Agent);
+                    var result = PlayGame(white.Agent, black.Agent, turnTimeLimit: options.TurnTimeLimit);
                     results.Add(result);
                 }
 
@@ -58,13 +60,16 @@ public class Tournament
         return new TournamentResults(matches.ToImmutableList());
     }
 
-    private static GameResult PlayGame(IChessAgent white, IChessAgent black)
+    private static GameResult PlayGame(IChessAgent white, IChessAgent black, TimeSpan turnTimeLimit)
     {
         var game = StuffFactory.CreateGame();
 
         while (!game.IsGameOver())
         {
-            var move = game.Turn() == Color.White ? white.NextMove(game) : black.NextMove(game);
+            var move = game.Turn() == Color.White
+                ? white.NextMove(game, turnTimeLimit)
+                : black.NextMove(game, turnTimeLimit);
+
             game.MakeMove(move);
         }
 

@@ -2,10 +2,16 @@
 using cschess.tournament;
 
 var results = Tournament.RunWith(
-    new TournamentOptions(NumGamesPerMatch: 1),
+    new TournamentOptions(
+        NumGamesPerMatch: 3,
+        TurnTimeLimit: TimeSpan.FromMilliseconds(10)),
     new TournamentEntrant(new RandomAgent(), "random"),
     new TournamentEntrant(new CodingAdventureAgent(), "CodingAdventure")
 );
+
+Console.WriteLine();
+Console.WriteLine("Results:");
+Console.WriteLine();
 
 foreach (var match in results.Matches)
 {
