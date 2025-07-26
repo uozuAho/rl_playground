@@ -21,7 +21,6 @@ dotnet csharpier format .   # format code
 
 # Todo
 - tournament
-  - print avg game time
   - inline todos
 - port python greedy bot to C#
 - train/tweak greedy bot. does it improve?

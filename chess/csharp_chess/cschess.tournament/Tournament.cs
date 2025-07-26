@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Diagnostics;
 using cschess.agents;
 using cschess.game;
 
@@ -6,9 +7,7 @@ namespace cschess.tournament;
 
 public record TournamentResults(ImmutableList<MatchResult> Matches);
 
-public record TournamentOptions(
-    int NumGamesPerMatch,
-    TimeSpan TurnTimeLimit);
+public record TournamentOptions(int NumGamesPerMatch, TimeSpan TurnTimeLimit);
 
 public record TournamentEntrant(IChessAgent Agent, string Name);
 
@@ -18,7 +17,13 @@ public record MatchResult(
     ImmutableList<GameResult> Games
 );
 
-public record GameResult(string FinalState, int Halfmoves, bool IsDraw, bool WhiteWon);
+public record GameResult(
+    string FinalState,
+    int Halfmoves,
+    bool IsDraw,
+    bool WhiteWon,
+    TimeSpan TotalTime
+);
 
 public class Tournament
 {
@@ -30,7 +35,12 @@ public class Tournament
         var matches = new List<MatchResult>();
 
         Console.WriteLine(
-            $"Running Tournament. {options.NumGamesPerMatch} games per match, {entrants.Length} entrants"
+            $"""
+             Running Tournament. Setup:
+               - entrants: {entrants.Length}
+               - games per match: {options.NumGamesPerMatch}
+               - turn time limit (s): {options.TurnTimeLimit.TotalSeconds:#.###}
+             """
         );
 
         for (var i = 0; i < entrants.Length; i++)
@@ -48,7 +58,11 @@ public class Tournament
 
                 for (var k = 0; k < options.NumGamesPerMatch; k++)
                 {
-                    var result = PlayGame(white.Agent, black.Agent, turnTimeLimit: options.TurnTimeLimit);
+                    var result = PlayGame(
+                        white.Agent,
+                        black.Agent,
+                        turnTimeLimit: options.TurnTimeLimit
+                    );
                     results.Add(result);
                 }
 
@@ -64,14 +78,17 @@ public class Tournament
     {
         var game = StuffFactory.CreateGame();
 
+        var stopwatch = Stopwatch.StartNew();
         while (!game.IsGameOver())
         {
-            var move = game.Turn() == Color.White
-                ? white.NextMove(game, turnTimeLimit)
-                : black.NextMove(game, turnTimeLimit);
+            var move =
+                game.Turn() == Color.White
+                    ? white.NextMove(game, turnTimeLimit)
+                    : black.NextMove(game, turnTimeLimit);
 
             game.MakeMove(move);
         }
+        stopwatch.Stop();
 
         var gameState = game.GameState();
 
@@ -79,7 +96,8 @@ public class Tournament
             FinalState: gameState.Description,
             Halfmoves: game.HalfmoveCount(),
             IsDraw: gameState.IsDraw,
-            WhiteWon: gameState.IsWhiteWin
+            WhiteWon: gameState.IsWhiteWin,
+            TotalTime: stopwatch.Elapsed
         );
     }
 }
