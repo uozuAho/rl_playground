@@ -1,11 +1,10 @@
-﻿using CodingAdventureBot;
-using cschess.agents;
+﻿using cschess.agents;
 using cschess.tournament;
 
 var results = Tournament.RunWith(
-    new TournamentOptions(100),
-    new TournamentEntrant(new RandomAgent(), "rng1"),
-    new TournamentEntrant(new RandomAgent(), "rng2")
+    new TournamentOptions(NumGamesPerMatch: 1),
+    new TournamentEntrant(new RandomAgent(), "random"),
+    new TournamentEntrant(new CodingAdventureAgent(), "CodingAdventure")
 );
 
 foreach (var match in results.Matches)
