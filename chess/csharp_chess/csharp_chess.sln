@@ -23,6 +23,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "cschess.csutils", "cschess.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "cschess.agents.test", "cschess.agents.test\cschess.agents.test.csproj", "{7EB3AD42-9CBB-4D19-AD59-ADA17B7387E0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chess-Coding-Adventure.Test", "submodules\Chess-Coding-Adventure\Chess-Coding-Adventure.Test\Chess-Coding-Adventure.Test.csproj", "{1159A7D4-FC96-44C3-8205-5D2B7F505728}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -64,9 +66,14 @@ Global
 		{7EB3AD42-9CBB-4D19-AD59-ADA17B7387E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7EB3AD42-9CBB-4D19-AD59-ADA17B7387E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7EB3AD42-9CBB-4D19-AD59-ADA17B7387E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1159A7D4-FC96-44C3-8205-5D2B7F505728}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1159A7D4-FC96-44C3-8205-5D2B7F505728}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1159A7D4-FC96-44C3-8205-5D2B7F505728}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1159A7D4-FC96-44C3-8205-5D2B7F505728}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{FEC92225-235A-449F-8929-A673597F9BAF} = {1896B54D-AA6A-4E26-83E9-D8FBE74A749D}
 		{6D3DCEE6-714D-43F0-ACCB-2F13F48CB163} = {FEC92225-235A-449F-8929-A673597F9BAF}
+		{1159A7D4-FC96-44C3-8205-5D2B7F505728} = {FEC92225-235A-449F-8929-A673597F9BAF}
 	EndGlobalSection
 EndGlobal
