@@ -3,7 +3,7 @@ using Shouldly;
 
 namespace cschess.agents.test;
 
-public class UnitTest1
+public class CodingAdventureAgentTests
 {
     [Fact]
     public void MakesMove()
