@@ -46,7 +46,13 @@ public sealed class SmallNetwork : nn.Module
     }
 }
 
-internal record Experience(Tensor PrevState, Tensor State, float Reward);
+/// <summary>
+///
+/// </summary>
+/// <param name="PrevState"></param>
+/// <param name="State">If null, prevstate is an endstate</param>
+/// <param name="Reward"></param>
+internal record Experience(Tensor PrevState, Tensor? State, float Reward);
 
 class ExperienceReplay
 {
@@ -66,7 +72,7 @@ class ExperienceReplay
         {
             var old = _buffer.Dequeue();
             old.PrevState.Dispose();
-            old.State.Dispose();
+            old.State?.Dispose();
         }
         _buffer.Enqueue(item);
     }
@@ -201,6 +207,10 @@ public class GreedyNnAgent : IChessAgent
                 if (game.Turn() == Color.White)
                 {
                     prevState = state;
+                    if (game.IsGameOver())
+                    {
+                        _replayBuffer.Push(new Experience(state, null, reward));
+                    }
                 }
 
                 var loss = TrainStep();
@@ -289,9 +299,12 @@ public class GreedyNnAgent : IChessAgent
             return null;
 
         var batch = _replayBuffer.Sample(_batchSize);
-        var prevStates = batch.Select(x => x.PrevState).ToArray();
-        var states = batch.Select(x => x.State).ToArray();
-        var rewards = batch.Select(x => x.Reward).ToArray();
+        var nonEndExperiences = batch.Where(x => x.State is not null).ToArray();
+        var endExperiences = batch.Where(x => x.State is null).ToArray();
+
+        var prevStates = nonEndExperiences.Select(x => x.PrevState).ToArray();
+        var states = nonEndExperiences.Select(x => x.State!).ToArray();
+        var rewards = nonEndExperiences.Select(x => x.Reward).ToArray();
         using var prevStatesT = stack(prevStates).to(_device);
         using var statesT = stack(states).to(_device);
         using var rewardsT = tensor(rewards, dtype: ScalarType.Float32).to(_device);
@@ -314,7 +327,26 @@ public class GreedyNnAgent : IChessAgent
         _optimizer.step();
         UpdateTargetNetwork();
         targetValues.Dispose();
-        return loss.ToSingle();
+        var nonEndLoss = loss.ToSingle();
+
+        if (endExperiences.Length != 0)
+        {
+            var endStates = endExperiences.Select(x => x.PrevState).ToArray();
+            var endRewards = endExperiences.Select(x => x.Reward).ToArray();
+            using var endStatesT = stack(endStates).to(_device);
+            using var endTargetsT = tensor(endRewards).unsqueeze(1).to(_device);
+
+            using var endEstimates = _valueNet.Forward(endStatesT);
+
+            using var lossEnd = nn.functional.mse_loss(endEstimates, endTargetsT);
+            _optimizer.zero_grad();
+            lossEnd.backward();
+            nn.utils.clip_grad_norm_(_valueNet.parameters(), _maxGradNorm);
+            _optimizer.step();
+            UpdateTargetNetwork();
+        }
+
+        return nonEndLoss;
     }
 
     private Dictionary<string, double> GetTrainingStats()

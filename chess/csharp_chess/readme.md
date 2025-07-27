@@ -24,10 +24,9 @@ dotnet csharpier format .   # format code
   - DONE test small run on cpu
   - DONE print stats every episode (currently pretty slow)
   - DONE train against coding adventure bot, eval against random
-  - handle end states - valnet(endstate) -> rewards(endstate)
   - test small run on gpu
   - still slow? try to optimise
-- train/tweak greedy bot. does it improve?
+- train/tweak greedy bot. is it learning/improving?
 - add save, load, checkpointing to greedy bot
 - (automatically?) add saved bots to bot tournament
 - (automatically?) log tournament results
