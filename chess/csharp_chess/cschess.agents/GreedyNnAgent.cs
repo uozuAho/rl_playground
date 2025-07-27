@@ -135,11 +135,15 @@ public class GreedyNnAgent : IChessAgent
             game.Undo();
         }
         using var stateBatch = cat(resultingStates.ToArray()).to(_device);
-        using var values = _valueNet.Forward(stateBatch).squeeze();
+        using (no_grad())
+        {
+            _valueNet.eval();
+            using var values = _valueNet.Forward(stateBatch).squeeze();
 
-        // greedily pick the highest value next state
-        var bestIdx = values.argmax().ToInt32();
-        return legalMoves[bestIdx];
+            // greedily pick the highest value next state
+            var bestIdx = values.argmax().ToInt32();
+            return legalMoves[bestIdx];
+        }
     }
 
     private float Reward(CodingAdventureChessGame state)

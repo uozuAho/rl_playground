@@ -28,4 +28,5 @@ public interface IChessGame
     Board InternalBoard { get; }
 
     void MakeMove(Move move);
+    void Undo();
 }
