@@ -21,9 +21,11 @@ dotnet csharpier format .   # format code
 
 # Todo
 - WIP port python greedy bot to C#
-  - impl + test game.undo - only support one undo for now
-  - test small run on cpu
+  - DONE test small run on cpu
+  - print stats every episode (currently pretty slow)
+  - train against coding adventure bot, eval against random
   - test small run on gpu
+  - still slow? try to optimise
 - train/tweak greedy bot. does it improve?
 - add save, load, checkpointing to greedy bot
 - (automatically?) add saved bots to bot tournament

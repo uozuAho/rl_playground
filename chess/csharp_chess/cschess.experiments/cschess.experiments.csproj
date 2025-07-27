@@ -10,6 +10,7 @@
     <PackageReference Include="TorchSharp-cuda-linux" Version="0.105.1" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\cschess.agents\cschess.agents.csproj" />
     <ProjectReference Include="..\cschess.game\cschess.game.csproj" />
   </ItemGroup>
 </Project>

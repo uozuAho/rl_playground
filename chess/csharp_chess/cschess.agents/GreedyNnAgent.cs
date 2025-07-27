@@ -104,12 +104,16 @@ public class GreedyNnAgent : IChessAgent
         int batchSize = 32,
         int experienceBufferSize = 64)
     {
-        _device = cuda.is_available() ? CUDA : CPU;
+        _device = CPU; // todo: use cuda cuda.is_available() ? CUDA : CPU;
         _valueNet = new SmallNetwork().to(_device);
         _valueNet.train();
         _targetNet = new SmallNetwork().to(_device);
         _targetNet.load_state_dict(_valueNet.state_dict());
         _targetNet.eval();
+        foreach (var parameter in _targetNet.parameters())
+        {
+            parameter.requires_grad = false;
+        }
         _optimizer = optim.Adam(_valueNet.parameters(), lr: lr);
         _gamma = gamma;
         _tau = tau;
@@ -134,7 +138,7 @@ public class GreedyNnAgent : IChessAgent
             resultingStates.Add(Board2Tensor(internalGame));
             game.Undo();
         }
-        using var stateBatch = cat(resultingStates.ToArray()).to(_device);
+        using var stateBatch = stack(resultingStates.ToArray()).to(_device);
         using (no_grad())
         {
             _valueNet.eval();
@@ -167,6 +171,7 @@ public class GreedyNnAgent : IChessAgent
 
         for (int episode = 0; episode < nEpisodes; ++episode)
         {
+            Console.WriteLine(".");
             var game = CodingAdventureChessGame.StandardGame();
             var players = new Dictionary<Color, IChessAgent>
             {
@@ -285,8 +290,8 @@ public class GreedyNnAgent : IChessAgent
         var prevStates = batch.Select(x => x.PrevState).ToArray();
         var states = batch.Select(x => x.State).ToArray();
         var rewards = batch.Select(x => x.Reward).ToArray();
-        using var statesT = cat(prevStates).to(_device);
-        using var nextStatesT = cat(states).to(_device);
+        using var statesT = stack(prevStates).to(_device);
+        using var nextStatesT = stack(states).to(_device);
         using var rewardsT = tensor(rewards, dtype: ScalarType.Float32).to(_device);
 
         _valueNet.train();

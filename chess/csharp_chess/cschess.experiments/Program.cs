@@ -1,7 +1,12 @@
-﻿using cschess.experiments;
+﻿using cschess.agents;
 
-Console.WriteLine(string.Join(",", args));
+// train value network
+// using cschess.experiments;
+// Console.WriteLine(string.Join(",", args));
+// var fenScoresPath = args[0];
+// ValueNetworkTrainer.TrainAndTestValueNetwork(fenScoresPath);
 
-var fenScoresPath = args[0];
+var nnAgent = new GreedyNnAgent();
+var randomAgent = new RandomAgent();
+nnAgent.TrainAgainst(randomAgent, 10);
 
-ValueNetworkTrainer.TrainAndTestValueNetwork(fenScoresPath);
