@@ -20,8 +20,6 @@ dotnet csharpier format .   # format code
 ```
 
 # Todo
-- tournament
-  - inline todos
 - port python greedy bot to C#
 - train/tweak greedy bot. does it improve?
 - add save, load, checkpointing to greedy bot

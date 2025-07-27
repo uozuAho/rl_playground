@@ -43,6 +43,7 @@ public class Tournament
              """
         );
 
+        // todo: swiss-style rather than round robin
         for (var i = 0; i < entrants.Length; i++)
         {
             for (var j = 0; j < entrants.Length; j++)

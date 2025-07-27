@@ -30,8 +30,6 @@ foreach (var match in results.Matches)
     // todo: visualise results like
     // X vs Y: win/draw/loss  WWWWWWWWWWWWWWWWWW..............LLLLLLLLLLLLLLLLL
 
-    // todo: ranking? ELO? total wins/loss
-
     // todo: end types
     // var asdf  = match.Games
     //     .GroupBy(x => x.FinalState)
