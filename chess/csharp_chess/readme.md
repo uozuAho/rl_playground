@@ -20,7 +20,10 @@ dotnet csharpier format .   # format code
 ```
 
 # Todo
-- port python greedy bot to C#
+- WIP port python greedy bot to C#
+  - impl + test game.undo - only support one undo for now
+  - test small run on cpu
+  - test small run on gpu
 - train/tweak greedy bot. does it improve?
 - add save, load, checkpointing to greedy bot
 - (automatically?) add saved bots to bot tournament
