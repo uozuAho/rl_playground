@@ -109,6 +109,16 @@ public class CodingAdventureChessGame : IChessGame
     {
         return _board.IsWhiteToMove ? Color.White : Color.Black;
     }
+
+    public string Fen()
+    {
+        return _board.CurrentFen;
+    }
+
+    public void Undo()
+    {
+        _board.UnmakeMove(_board.AllGameMoves[^1]);
+    }
 }
 
 public class Move

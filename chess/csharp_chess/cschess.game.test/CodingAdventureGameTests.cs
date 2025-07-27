@@ -23,4 +23,24 @@ public class CodingAdventureGameTests
 
         numHalfMoves.ShouldBeGreaterThan(50);
     }
+
+    [Fact]
+    public void UndoWorks()
+    {
+        var random = new Random();
+        var game = CodingAdventureChessGame.StandardGame();
+
+        while (!game.IsGameOver())
+        {
+            var prevFen = game.Fen();
+            var move = random.Choice(game.LegalMoves());
+            game.MakeMove(move);
+            var currentFen = game.Fen();
+            game.Undo();
+
+            game.Fen().ShouldBe(prevFen);
+            game.MakeMove(move);
+            game.Fen().ShouldBe(currentFen);
+        }
+    }
 }
