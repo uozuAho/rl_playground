@@ -20,10 +20,11 @@ dotnet csharpier format .   # format code
 ```
 
 # Todo
-- WIP port python greedy bot to C#
+- greedy nn bot
   - DONE test small run on cpu
-  - print stats every episode (currently pretty slow)
-  - train against coding adventure bot, eval against random
+  - DONE print stats every episode (currently pretty slow)
+  - DONE train against coding adventure bot, eval against random
+  - handle end states - valnet(endstate) -> rewards(endstate)
   - test small run on gpu
   - still slow? try to optimise
 - train/tweak greedy bot. does it improve?

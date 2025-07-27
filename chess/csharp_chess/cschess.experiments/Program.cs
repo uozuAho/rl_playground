@@ -1,4 +1,5 @@
 ﻿using cschess.agents;
+using cschess.tournament;
 
 // train value network
 // using cschess.experiments;
@@ -8,5 +9,21 @@
 
 var nnAgent = new GreedyNnAgent();
 var randomAgent = new RandomAgent();
-nnAgent.TrainAgainst(randomAgent, 10);
 
+MatchResult PlayMatch(IChessAgent white, string whiteName, IChessAgent black, string blackName)
+{
+    var tournamentOptions = new TournamentOptions(NumGamesPerMatch: 5, TurnTimeLimit: TimeSpan.FromMilliseconds(10));
+    return Tournament.PlaySingleMatch(tournamentOptions, new TournamentEntrant(white, whiteName),
+        new TournamentEntrant(black, blackName));
+}
+
+var match = PlayMatch(nnAgent, "GreedyNN", randomAgent, "Random");
+Console.WriteLine("Before training:");
+Console.WriteLine(match.Summary());
+
+var opponent = new CodingAdventureAgent();
+nnAgent.TrainAgainst(opponent, 10);
+
+Console.WriteLine("After training:");
+match = PlayMatch(nnAgent, "GreedyNN", randomAgent, "Random");
+Console.WriteLine(match.Summary());

@@ -12,5 +12,6 @@
   <ItemGroup>
     <ProjectReference Include="..\cschess.agents\cschess.agents.csproj" />
     <ProjectReference Include="..\cschess.game\cschess.game.csproj" />
+    <ProjectReference Include="..\cschess.tournament\cschess.tournament.csproj" />
   </ItemGroup>
 </Project>

@@ -188,12 +188,14 @@ public class GreedyNnAgent : IChessAgent
                 game.MakeMove(move);
                 var state = Board2Tensor(game);
                 var reward = Reward(game);
+                episodeReward += reward;
 
-                // Assume this agent is always White for now
                 if (game.Turn() != Color.White)
                 {
+                    // White just moved.
+                    // Assume this agent is always White for now.
+                    // Only store experience for white moves.
                     _replayBuffer.Push(new Experience(prevState, state, reward));
-                    episodeReward += reward;
                 }
 
                 if (game.Turn() == Color.White)
@@ -214,8 +216,8 @@ public class GreedyNnAgent : IChessAgent
             _episodeLosses.Add(avgLoss);
             _episodeRewards.Add(episodeReward);
 
-            // Print progress every 10 episodes
-            if ((episode + 1) % 10 == 0)
+            // Print progress every episode
+            if ((episode + 1) % 1 == 0)
             {
                 var recentCount = Math.Min(100, _episodeWins.Count);
                 var recentWins = _episodeWins.Skip(Math.Max(0, _episodeWins.Count - recentCount)).ToList();
@@ -223,8 +225,8 @@ public class GreedyNnAgent : IChessAgent
                 Console.WriteLine($"Ep {episode + 1}/{nEpisodes} | WinRate: {winRate:F3} | AvgLoss: {avgLoss:F4} | Reward: {episodeReward:F2}");
             }
 
-            // Print detailed stats every print_every episodes
-            int printEvery = 100;
+            // Print detailed stats every print_every 10 episodes
+            int printEvery = 10;
             if ((episode + 1) % printEvery == 0)
             {
                 var stats = GetTrainingStats();
@@ -290,18 +292,18 @@ public class GreedyNnAgent : IChessAgent
         var prevStates = batch.Select(x => x.PrevState).ToArray();
         var states = batch.Select(x => x.State).ToArray();
         var rewards = batch.Select(x => x.Reward).ToArray();
-        using var statesT = stack(prevStates).to(_device);
-        using var nextStatesT = stack(states).to(_device);
+        using var prevStatesT = stack(prevStates).to(_device);
+        using var statesT = stack(states).to(_device);
         using var rewardsT = tensor(rewards, dtype: ScalarType.Float32).to(_device);
 
         _valueNet.train();
-        using var currentValues = _valueNet.Forward(statesT).squeeze();
+        using var currentValues = _valueNet.Forward(prevStatesT).squeeze();
 
         Tensor targetValues;
         using (no_grad())
         {
             _targetNet.eval();
-            using var nextValues = _targetNet.Forward(nextStatesT).squeeze();
+            using var nextValues = _targetNet.Forward(statesT).squeeze();
             targetValues = rewardsT + _gamma * nextValues;
         }
 

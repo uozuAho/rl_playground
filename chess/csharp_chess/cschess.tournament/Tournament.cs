@@ -15,7 +15,22 @@ public record MatchResult(
     TournamentEntrant White,
     TournamentEntrant Black,
     ImmutableList<GameResult> Games
-);
+)
+{
+    public string Summary()
+    {
+        var numGames = Games.Count;
+        var avgHalfmoves = Games.Sum(x => x.Halfmoves) / numGames;
+        var avgGameTime = TimeSpan.FromSeconds(
+            Games.Average(x => x.TotalTime.TotalSeconds) / numGames
+        );
+        var whiteWins = Games.Count(x => x.WhiteWon);
+        var draws = Games.Count(x => x.IsDraw);
+        var blackWins = numGames - whiteWins - draws;
+        return $"{White.Name} (white) vs {Black.Name} (black): W/D/L: {whiteWins}/{draws}/{blackWins}. " +
+               $"Avg halfmoves: {avgHalfmoves}. Avg game time: {avgGameTime.TotalSeconds:#.###}s.";
+    }
+}
 
 public record GameResult(
     string FinalState,
@@ -55,24 +70,33 @@ public class Tournament
 
                 Console.WriteLine($"Match {i + 1}/{entrants.Length}: {white.Name} vs {black.Name}");
 
-                var results = new List<GameResult>(options.NumGamesPerMatch);
-
-                for (var k = 0; k < options.NumGamesPerMatch; k++)
-                {
-                    var result = PlayGame(
-                        white.Agent,
-                        black.Agent,
-                        turnTimeLimit: options.TurnTimeLimit
-                    );
-                    results.Add(result);
-                }
-
-                var matchResult = new MatchResult(white, black, results.ToImmutableList());
+                var matchResult = PlaySingleMatch(options, white, black);
                 matches.Add(matchResult);
             }
         }
 
         return new TournamentResults(matches.ToImmutableList());
+    }
+
+    public static MatchResult PlaySingleMatch(
+        TournamentOptions options,
+        TournamentEntrant white,
+        TournamentEntrant black)
+    {
+        var results = new List<GameResult>(options.NumGamesPerMatch);
+
+        for (var k = 0; k < options.NumGamesPerMatch; k++)
+        {
+            var result = PlayGame(
+                white.Agent,
+                black.Agent,
+                turnTimeLimit: options.TurnTimeLimit
+            );
+            results.Add(result);
+        }
+
+        var matchResult = new MatchResult(white, black, results.ToImmutableList());
+        return matchResult;
     }
 
     private static GameResult PlayGame(IChessAgent white, IChessAgent black, TimeSpan turnTimeLimit)

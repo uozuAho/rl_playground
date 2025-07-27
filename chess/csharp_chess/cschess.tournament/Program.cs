@@ -13,19 +13,7 @@ Console.WriteLine();
 
 foreach (var match in results.Matches)
 {
-    Console.WriteLine($"{match.White.Name} (white) vs {match.Black.Name} (black)");
-
-    var numGames = match.Games.Count;
-    var avgHalfmoves = match.Games.Sum(x => x.Halfmoves) / numGames;
-    var avgGameTime = TimeSpan.FromSeconds(
-        match.Games.Average(x => x.TotalTime.TotalSeconds) / numGames
-    );
-    var whiteWins = match.Games.Count(x => x.WhiteWon);
-    var draws = match.Games.Count(x => x.IsDraw);
-    var blackWins = numGames - whiteWins - draws;
-    Console.WriteLine(
-        $"{whiteWins}/{draws}/{blackWins}. Avg halfmoves: {avgHalfmoves}. Avg game time: {avgGameTime.TotalSeconds:#.###}s."
-    );
+    Console.WriteLine(match.Summary());
 
     // todo: visualise results like
     // X vs Y: win/draw/loss  WWWWWWWWWWWWWWWWWW..............LLLLLLLLLLLLLLLLL
