@@ -175,7 +175,9 @@ public class GreedyNnAgent : IChessAgent
         if (halfmoveLimit != null)
             throw new NotImplementedException("halfmoveLimit not implemented");
 
-        for (int episode = 0; episode < nEpisodes; ++episode)
+        var totalTrainingTimer = Stopwatch.StartNew();
+
+        for (var episode = 0; episode < nEpisodes; ++episode)
         {
             Console.WriteLine(".");
             var game = CodingAdventureChessGame.StandardGame();
@@ -249,6 +251,13 @@ public class GreedyNnAgent : IChessAgent
                 Console.WriteLine($"  Buffer Size: {_replayBuffer.Count}");
             }
         }
+        totalTrainingTimer.Stop();
+
+        Console.WriteLine($"Trained {nEpisodes} episodes ({_episodeHalfmoves.Sum()} total states) " +
+                          $"in {totalTrainingTimer.Elapsed}");
+        var gameRate = nEpisodes / (float)totalTrainingTimer.Elapsed.TotalSeconds;
+        var stepRate = _episodeHalfmoves.Sum() / totalTrainingTimer.Elapsed.TotalSeconds;
+        Console.WriteLine($"{gameRate:F2} games/sec, {stepRate:F2} steps/sec");
     }
 
     private static Tensor Board2Tensor(CodingAdventureChessGame game)

@@ -22,7 +22,7 @@ Console.WriteLine("Before training:");
 Console.WriteLine(match.Summary());
 
 var opponent = new CodingAdventureAgent();
-nnAgent.TrainAgainst(opponent, 10);
+nnAgent.TrainAgainst(opponent, 10, turnTimeLimitMs: 1);
 
 Console.WriteLine("After training:");
 match = PlayMatch(nnAgent, "GreedyNN", randomAgent, "Random");
