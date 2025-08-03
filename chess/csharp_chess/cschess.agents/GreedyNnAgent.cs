@@ -108,9 +108,15 @@ public class GreedyNnAgent : IChessAgent
         float gamma = 0.99f,
         float tau = 0.001f,
         int batchSize = 32,
-        int experienceBufferSize = 64)
+        int experienceBufferSize = 64,
+        string device = "cpu")
     {
-        _device = CPU; // todo: use cuda cuda.is_available() ? CUDA : CPU;
+        _device = device switch
+        {
+            "cpu" => CPU,
+            "gpu" => CUDA,
+            _ => throw new ArgumentOutOfRangeException(nameof(device), device, null)
+        };
         _valueNet = new SmallNetwork().to(_device);
         _valueNet.train();
         _targetNet = new SmallNetwork().to(_device);

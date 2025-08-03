@@ -24,9 +24,9 @@ dotnet csharpier format .   # format code
   - DONE test small run on cpu
   - DONE print stats every episode (currently pretty slow)
   - DONE train against coding adventure bot, eval against random
-  - test small run on gpu
-    - cpu train: 2.33 games/sec, 71.25 steps/sec
-  - still slow? try to optimise
+  - optimise
+    - cpu: 2.33 games/sec, 71.25 steps/sec
+    - gpu: 2.64 games/sec, 87.70 steps/sec
   - train/tweak greedy bot. is it learning/improving?
 - add save, load, checkpointing to greedy bot
 - (automatically?) add saved bots to bot tournament

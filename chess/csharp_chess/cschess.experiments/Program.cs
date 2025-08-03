@@ -7,7 +7,7 @@ using cschess.tournament;
 // var fenScoresPath = args[0];
 // ValueNetworkTrainer.TrainAndTestValueNetwork(fenScoresPath);
 
-var nnAgent = new GreedyNnAgent();
+var nnAgent = new GreedyNnAgent(device: "gpu");
 var randomAgent = new RandomAgent();
 
 MatchResult PlayMatch(IChessAgent white, string whiteName, IChessAgent black, string blackName)
