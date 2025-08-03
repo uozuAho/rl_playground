@@ -268,7 +268,8 @@ public class GreedyNnAgent : IChessAgent
 
     private static Tensor Board2Tensor(CodingAdventureChessGame game)
     {
-        var tensor = zeros(8, 8, 8, float32);
+        var data = new float[8, 8, 8];
+
         for (var i = 0; i < 64; ++i)
         {
             var row = i / 8;
@@ -279,22 +280,25 @@ public class GreedyNnAgent : IChessAgent
             var color = game.ColorAt(i);
             Debug.Assert(color != Color.None);
             var pieceIdx = (int)pieceType - 1;
-            tensor[pieceIdx][row][col] = (float)color;
+            data[pieceIdx, row, col] = (float)color;
         }
+
         var fullmove = game.FullmoveCount();
         if (fullmove > 0)
         {
-            tensor[6].fill_(1.0f / fullmove);
+            for (var row = 0; row < 8; ++row)
+            for (var col = 0; col < 8; ++col)
+                data[6, row, col] = 1.0f / fullmove;
         }
-        if (game.Turn() == Color.White)
-        {
-            tensor[6][0].fill_(1.0f);
-        }
-        else
-        {
-            tensor[6][0].fill_(-1.0f);
-        }
-        tensor[7].fill_(1.0f);
+        var turnVal = game.Turn() == Color.White ? 1.0f : -1.0f;
+        for (var col = 0; col < 8; ++col)
+            data[6, 0, col] = turnVal;
+
+        for (var row = 0; row < 8; ++row)
+        for (var col = 0; col < 8; ++col)
+            data[7, row, col] = 1.0f;
+
+        var tensor = torch.tensor(data, dtype: ScalarType.Float32);
         return tensor;
     }
 
