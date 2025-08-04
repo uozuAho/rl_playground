@@ -31,6 +31,9 @@ dotnet csharpier format .   # format code
       - remove individial tensor element get/set in board2tensor
         - cpu: 2.77 games/sec, 89.85 steps/sec
         - gpu: 3.21 games/sec, 107.11 steps/sec
+      - sequential model
+        - cpu: 2.52 games/sec, 87.03 steps/sec
+        - gpu: 3.12 games/sec, 114.09 steps/sec
   - train/tweak greedy bot. is it learning/improving?
 - add save, load, checkpointing to greedy bot
 - (automatically?) add saved bots to bot tournament
