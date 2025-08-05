@@ -9,5 +9,5 @@ uv sync
 uv run simple.py
 cd..
 cd csharp
-dotnet run
+dotnet run simple
 ```
