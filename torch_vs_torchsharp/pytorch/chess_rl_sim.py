@@ -4,6 +4,7 @@
 from abc import ABC, abstractmethod
 import random
 import collections
+import time
 from typing import Deque
 import numpy as np
 import torch
@@ -18,7 +19,6 @@ BLACK = -1
 
 
 def main():
-    # todo: print games,states per sec
     # todo: run cpu once, gpu once
     agent = GreedyChessAgent()
     opponent = RandomAgent()
@@ -138,12 +138,6 @@ class GreedyChessAgent:
         # Gradient clipping
         self.max_grad_norm = 1.0
 
-        # Training metrics
-        self.episode_wins: list[int] = []
-        self.episode_game_lengths: list[int] = []
-        self.episode_losses: list[float] = []
-        self.episode_rewards: list[float] = []
-        self.episode_count = 0
 
     def get_action(self, env: FakeChessGame) -> int:
         assert self.player == WHITE
@@ -186,22 +180,23 @@ class GreedyChessAgent:
         self,
         opponent: ChessAgent,
         n_episodes: int,
-        print_every=100,
     ):
         pbar = tqdm(range(n_episodes), desc="Training Episodes")
-        for episode in pbar:
+        start = time.time()
+        total_steps = 0
+        for _ in pbar:
             game = FakeChessGame()
             done = False
             players = {WHITE: self, BLACK: opponent}
             prev_state = game.state_np()
             game_length = 0
-            episode_losses = []
             episode_reward = 0.0
 
             while not done:
                 player: ChessAgent = players[game.turn]  # type: ignore
                 move = player.get_action(game)
                 done, reward = game.step(move)
+                total_steps += 1
                 state = game.state_np()
                 game_length += 1
 
@@ -212,44 +207,12 @@ class GreedyChessAgent:
                 if game.turn == self.player:
                     prev_state = state
 
-                loss = self.train_step()
-                if loss is not None:
-                    episode_losses.append(loss)
-
-            # Track metrics for this episode
-            self.episode_count += 1
-            winner = game.winner()
-            self.episode_wins.append(1 if winner == WHITE else 0)
-            self.episode_game_lengths.append(game_length)
-            avg_loss = (
-                sum(episode_losses) / len(episode_losses) if episode_losses else 0.0
-            )
-            self.episode_losses.append(avg_loss)
-            self.episode_rewards.append(episode_reward)
-
-            # Update progress bar with current metrics
-            if (episode + 1) % 10 == 0:
-                recent_wins = self.episode_wins[-min(100, len(self.episode_wins)) :]
-                win_rate = sum(recent_wins) / len(recent_wins) if recent_wins else 0
-                pbar.set_postfix(
-                    {
-                        "Win Rate": f"{win_rate:.3f}",
-                        "Avg Loss": f"{avg_loss:.4f}",
-                        "Game Len": game_length,
-                        "Reward": f"{episode_reward:.2f}",
-                    }
-                )
-
-            # Print detailed metrics periodically
-            if (episode + 1) % print_every == 0:
-                stats = self.get_training_stats()
-                print(f"\nEpisode {episode + 1}/{n_episodes}")
-                print(f"  Win Rate (recent): {stats['recent_win_rate']:.3f}")
-                print(f"  Win Rate (overall): {stats['overall_win_rate']:.3f}")
-                print(f"  Avg Game Length: {stats['recent_avg_game_length']:.1f}")
-                print(f"  Avg Loss: {stats['recent_avg_loss']:.4f}")
-                print(f"  Avg Reward: {stats['recent_avg_reward']:.3f}")
-                print(f"  Buffer Size: {len(self.replay_buffer)}")
+                self.train_step()
+        end = time.time()
+        duration = end - start
+        ep_rate = n_episodes / duration
+        pos_rate = total_steps / duration
+        print(f"Done training in {duration:.2f}s. {ep_rate:.2f} eps/sec, {pos_rate:.2f} moves/sec")
 
     def train_step(self):
         if len(self.replay_buffer) < self.batch_size:
@@ -288,25 +251,6 @@ class GreedyChessAgent:
 
     def add_experience(self, state, next_state, reward):
         self.replay_buffer.push(state, next_state, reward)
-
-    def get_training_stats(self):
-        if not self.episode_wins:
-            return {}
-
-        recent_episodes = min(100, len(self.episode_wins))
-        recent_wins = self.episode_wins[-recent_episodes:]
-        recent_lengths = self.episode_game_lengths[-recent_episodes:]
-        recent_losses = self.episode_losses[-recent_episodes:]
-        recent_rewards = self.episode_rewards[-recent_episodes:]
-
-        return {
-            "total_episodes": len(self.episode_wins),
-            "recent_win_rate": sum(recent_wins) / len(recent_wins),
-            "recent_avg_game_length": sum(recent_lengths) / len(recent_lengths),
-            "recent_avg_loss": sum(recent_losses) / len(recent_losses),
-            "recent_avg_reward": sum(recent_rewards) / len(recent_rewards),
-            "overall_win_rate": sum(self.episode_wins) / len(self.episode_wins),
-        }
 
 
 if __name__ == "__main__":
