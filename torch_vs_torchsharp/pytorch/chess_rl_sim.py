@@ -19,9 +19,14 @@ BLACK = -1
 
 
 def main():
-    # todo: run cpu once, gpu once
-    agent = GreedyChessAgent()
+    print("cpu:")
+    agent = GreedyChessAgent(device="cpu")
     opponent = RandomAgent()
+    agent.train_against(opponent, 100)
+
+    print()
+    print("gpu:")
+    agent = GreedyChessAgent(device="cuda")
     agent.train_against(opponent, 100)
 
 
@@ -117,9 +122,9 @@ class ExperienceReplay:
 
 
 class GreedyChessAgent:
-    def __init__(self, player=WHITE, lr=1e-3, gamma=0.99, tau=0.001, batch_size=32):
+    def __init__(self, player=WHITE, lr=1e-3, gamma=0.99, tau=0.001, batch_size=32, device="cpu"):
         self.player = player
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device(device)
 
         # Networks
         self.value_net = ValueNetwork().to(self.device)
