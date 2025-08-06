@@ -11,3 +11,6 @@ cd..
 cd csharp
 dotnet run simple
 ```
+
+# todo
+- WIP make an RL-like example, where new samples need to be converted to tensors
