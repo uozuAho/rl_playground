@@ -108,7 +108,7 @@ class ValueNetwork(nn.Module):
 
 
 class ExperienceReplay:
-    def __init__(self, capacity=10000):
+    def __init__(self, capacity=128):
         self.buffer: Deque = collections.deque(maxlen=capacity)
 
     def push(self, state, next_state, reward):
