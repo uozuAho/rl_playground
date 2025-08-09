@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using cschess.csutils;
 using cschess.game;
 using TorchSharp;
 using TorchSharp.Modules;
@@ -165,17 +166,18 @@ public class GreedyNnAgent : IChessAgent
         return 0.0f;
     }
 
+    /// <summary>
+    /// Train against the given opponents. Opponents are chosen randomly each episode.
+    /// </summary>
     public void TrainAgainst(
-        IChessAgent opponent,
+        IChessAgent[] opponents,
         int nEpisodes,
         int? halfmoveLimit = null,
         int turnTimeLimitMs = 10,
         Action<List<EpisodeStats>>? epCallback = null
     )
     {
-        if (halfmoveLimit != null)
-            throw new NotImplementedException("halfmoveLimit not implemented");
-
+        var random = new Random();
         var epStats = new List<EpisodeStats>();
         var totalTrainingTimer = Stopwatch.StartNew();
         var epTime = TimeSpan.Zero;
@@ -186,6 +188,7 @@ public class GreedyNnAgent : IChessAgent
             using var d = NewDisposeScope();
 
             var game = CodingAdventureChessGame.StandardGame();
+            var opponent = random.Choice(opponents);
             var players = new Dictionary<Color, IChessAgent>
             {
                 { Color.White, this },
@@ -195,7 +198,7 @@ public class GreedyNnAgent : IChessAgent
             var episodeLosses = new List<float>();
             var episodeReward = 0.0f;
 
-            while (!game.IsGameOver())
+            while (!game.IsGameOver() && game.HalfmoveCount() < (halfmoveLimit ?? int.MaxValue))
             {
                 var move = players[game.Turn()]
                     .NextMove(game, TimeSpan.FromMilliseconds(turnTimeLimitMs));
@@ -224,16 +227,15 @@ public class GreedyNnAgent : IChessAgent
                 var loss = TrainStep();
                 if (loss.HasValue)
                     episodeLosses.Add(loss.Value);
-
-                var end = totalTrainingTimer.Elapsed;
-                epTime = end - start;
             }
+            var end = totalTrainingTimer.Elapsed;
+            epTime = end - start;
 
             var gameState = game.GameState();
             epStats.Add(new EpisodeStats
             {
                 Win = gameState.IsWhiteWin,
-                Draw = gameState.IsDraw,
+                Draw = gameState.IsDraw || gameState.IsInProgress,  // in progress means halfmove limit
                 Loss = gameState.IsBlackWin,
                 Reward = episodeReward,
                 Halfmoves = game.HalfmoveCount(),

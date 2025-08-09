@@ -22,8 +22,8 @@ void TrainGreedyNn()
     var nnAgent = new GreedyNnAgent(device: device);
     var randomAgent = new RandomAgent();
 
-    var opponent = new CodingAdventureAgent();
-    nnAgent.TrainAgainst(opponent, 100, turnTimeLimitMs: 1, epCallback: Eval);
+    var opponents = new IChessAgent[] { new CodingAdventureAgent(), randomAgent };
+    nnAgent.TrainAgainst(opponents, 100, turnTimeLimitMs: 1, halfmoveLimit: 100, epCallback: Eval);
     return;
 
     MatchResult PlayMatch(IChessAgent white, string whiteName, IChessAgent black, string blackName)
