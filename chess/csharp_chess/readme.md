@@ -35,7 +35,6 @@ dotnet csharpier format .   # format code
         - cpu: 2.52 games/sec, 87.03 steps/sec
         - gpu: 3.12 games/sec, 114.09 steps/sec
       - **todo**
-        - convert to tensor as late as possible, use float arrays instead
         - wrap tensor calcs in `using (var d = torch.NewDisposeScope())`, see https://github.com/dotnet/TorchSharpExamples/blob/main/src/CSharp/CSharpExamples/MNIST.cs#L107
           - and https://github.com/dotnet/TorchSharp/blob/main/docfx/articles/memory.md
         - maybe: reuse tensors? can't find any docs. give it a try. See

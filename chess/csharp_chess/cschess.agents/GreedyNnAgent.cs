@@ -46,7 +46,7 @@ public sealed class SmallNetwork : nn.Module
 /// <param name="PrevState"></param>
 /// <param name="State">If null, prevstate is an endstate</param>
 /// <param name="Reward"></param>
-internal record Experience(Tensor PrevState, Tensor? State, float Reward);
+internal record Experience(float[,,] PrevState, float[,,]? State, float Reward);
 
 class ExperienceReplay
 {
@@ -64,9 +64,7 @@ class ExperienceReplay
     {
         if (_buffer.Count >= _capacity)
         {
-            var old = _buffer.Dequeue();
-            old.PrevState.Dispose();
-            old.State?.Dispose();
+            _buffer.Dequeue();
         }
         _buffer.Enqueue(item);
     }
@@ -141,7 +139,7 @@ public class GreedyNnAgent : IChessAgent
         foreach (var move in legalMoves)
         {
             game.MakeMove(move);
-            resultingStates.Add(Board2Tensor(internalGame));
+            resultingStates.Add(tensor(Board2Array(internalGame)));
             game.Undo();
         }
         using var stateBatch = stack(resultingStates.ToArray()).to(_device);
@@ -186,7 +184,7 @@ public class GreedyNnAgent : IChessAgent
                 { Color.White, this },
                 { Color.Black, opponent }
             };
-            var prevState = Board2Tensor(game);
+            var prevState = Board2Array(game);
             var episodeLosses = new List<float>();
             var episodeReward = 0.0f;
 
@@ -194,7 +192,7 @@ public class GreedyNnAgent : IChessAgent
             {
                 var move = players[game.Turn()].NextMove(game, TimeSpan.FromMilliseconds(turnTimeLimitMs));
                 game.MakeMove(move);
-                var state = Board2Tensor(game);
+                var state = Board2Array(game);
                 var reward = Reward(game);
                 episodeReward += reward;
 
@@ -260,7 +258,7 @@ public class GreedyNnAgent : IChessAgent
         Console.WriteLine($"{gameRate:F2} games/sec, {stepRate:F2} steps/sec");
     }
 
-    private static Tensor Board2Tensor(CodingAdventureChessGame game)
+    private static float[,,] Board2Array(CodingAdventureChessGame game)
     {
         var data = new float[8, 8, 8];
 
@@ -292,8 +290,8 @@ public class GreedyNnAgent : IChessAgent
         for (var col = 0; col < 8; ++col)
             data[7, row, col] = 1.0f;
 
-        var tensor = torch.tensor(data, dtype: ScalarType.Float32);
-        return tensor;
+        // var tensor = torch.tensor(data, dtype: ScalarType.Float32);
+        return data;
     }
 
     private void UpdateTargetNetwork()
@@ -315,8 +313,8 @@ public class GreedyNnAgent : IChessAgent
         var nonEndExperiences = batch.Where(x => x.State is not null).ToArray();
         var endExperiences = batch.Where(x => x.State is null).ToArray();
 
-        var prevStates = nonEndExperiences.Select(x => x.PrevState).ToArray();
-        var states = nonEndExperiences.Select(x => x.State!).ToArray();
+        var prevStates = nonEndExperiences.Select(x => tensor(x.PrevState)).ToArray();
+        var states = nonEndExperiences.Select(x => tensor(x.State!)).ToArray();
         var rewards = nonEndExperiences.Select(x => x.Reward).ToArray();
         using var prevStatesT = stack(prevStates).to(_device);
         using var statesT = stack(states).to(_device);
@@ -344,7 +342,7 @@ public class GreedyNnAgent : IChessAgent
 
         if (endExperiences.Length != 0)
         {
-            var endStates = endExperiences.Select(x => x.PrevState).ToArray();
+            var endStates = endExperiences.Select(x => tensor(x.PrevState)).ToArray();
             var endRewards = endExperiences.Select(x => x.Reward).ToArray();
             using var endStatesT = stack(endStates).to(_device);
             using var endTargetsT = tensor(endRewards).unsqueeze(1).to(_device);
