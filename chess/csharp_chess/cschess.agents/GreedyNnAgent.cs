@@ -142,11 +142,11 @@ public class GreedyNnAgent : IChessAgent
             resultingStates.Add(tensor(Board2Array(internalGame)));
             game.Undo();
         }
-        using var stateBatch = stack(resultingStates.ToArray()).to(_device);
+        var stateBatch = stack(resultingStates.ToArray()).to(_device);
         using (no_grad())
         {
             _valueNet.eval();
-            using var values = _valueNet.Forward(stateBatch).squeeze();
+            var values = _valueNet.Forward(stateBatch).squeeze();
 
             // greedily pick the highest value next state
             var bestIdx = values.argmax().ToInt32();
@@ -294,7 +294,6 @@ public class GreedyNnAgent : IChessAgent
         for (var col = 0; col < 8; ++col)
             data[7, row, col] = 1.0f;
 
-        // var tensor = torch.tensor(data, dtype: ScalarType.Float32);
         return data;
     }
 
@@ -320,22 +319,22 @@ public class GreedyNnAgent : IChessAgent
         var prevStates = nonEndExperiences.Select(x => tensor(x.PrevState)).ToArray();
         var states = nonEndExperiences.Select(x => tensor(x.State!)).ToArray();
         var rewards = nonEndExperiences.Select(x => x.Reward).ToArray();
-        using var prevStatesT = stack(prevStates).to(_device);
-        using var statesT = stack(states).to(_device);
-        using var rewardsT = tensor(rewards, dtype: ScalarType.Float32).to(_device);
+        var prevStatesT = stack(prevStates).to(_device);
+        var statesT = stack(states).to(_device);
+        var rewardsT = tensor(rewards, dtype: ScalarType.Float32).to(_device);
 
         _valueNet.train();
-        using var currentValues = _valueNet.Forward(prevStatesT).squeeze();
+        var currentValues = _valueNet.Forward(prevStatesT).squeeze();
 
         Tensor targetValues;
         using (no_grad())
         {
             _targetNet.eval();
-            using var nextValues = _targetNet.Forward(statesT).squeeze();
+            var nextValues = _targetNet.Forward(statesT).squeeze();
             targetValues = rewardsT + _gamma * nextValues;
         }
 
-        using var loss = nn.functional.mse_loss(currentValues, targetValues);
+        var loss = nn.functional.mse_loss(currentValues, targetValues);
         _optimizer.zero_grad();
         loss.backward();
         nn.utils.clip_grad_norm_(_valueNet.parameters(), _maxGradNorm);
@@ -348,12 +347,12 @@ public class GreedyNnAgent : IChessAgent
         {
             var endStates = endExperiences.Select(x => tensor(x.PrevState)).ToArray();
             var endRewards = endExperiences.Select(x => x.Reward).ToArray();
-            using var endStatesT = stack(endStates).to(_device);
-            using var endTargetsT = tensor(endRewards).unsqueeze(1).to(_device);
+            var endStatesT = stack(endStates).to(_device);
+            var endTargetsT = tensor(endRewards).unsqueeze(1).to(_device);
 
-            using var endEstimates = _valueNet.Forward(endStatesT);
+            var endEstimates = _valueNet.Forward(endStatesT);
 
-            using var lossEnd = nn.functional.mse_loss(endEstimates, endTargetsT);
+            var lossEnd = nn.functional.mse_loss(endEstimates, endTargetsT);
             _optimizer.zero_grad();
             lossEnd.backward();
             nn.utils.clip_grad_norm_(_valueNet.parameters(), _maxGradNorm);

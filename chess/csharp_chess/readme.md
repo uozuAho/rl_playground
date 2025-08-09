@@ -34,8 +34,9 @@ dotnet csharpier format .   # format code
       - sequential model
         - cpu: 2.52 games/sec, 87.03 steps/sec
         - gpu: 3.12 games/sec, 114.09 steps/sec
+      - add dispose scope, remove individual usings
+        - gpu: 2.44 games/sec, 88.00 steps/sec
       - **todo**
-        - remove using statements everywhere
         - maybe: reuse tensors? can't find any docs. give it a try. See
           torch_vs_torchsharp. Only do this if training slows down dramatically
           with more episodes.
