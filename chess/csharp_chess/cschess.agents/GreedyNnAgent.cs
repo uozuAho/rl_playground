@@ -89,12 +89,6 @@ public class GreedyNnAgent : IChessAgent
     private readonly float _maxGradNorm = 1.0f;
     private readonly Device _device;
 
-    // Training metrics
-    private readonly List<int> _episodeWins = [];
-    private readonly List<int> _episodeHalfmoves = [];
-    private readonly List<float> _episodeLosses = [];
-    private readonly List<float> _episodeRewards = [];
-
     public GreedyNnAgent(
         float lr = 1e-3f,
         float gamma = 0.99f,
@@ -181,10 +175,13 @@ public class GreedyNnAgent : IChessAgent
         if (halfmoveLimit != null)
             throw new NotImplementedException("halfmoveLimit not implemented");
 
+        var epStats = new List<EpisodeStats>();
         var totalTrainingTimer = Stopwatch.StartNew();
+        var epTime = TimeSpan.Zero;
 
         for (var episode = 0; episode < nEpisodes; ++episode)
         {
+            var start = totalTrainingTimer.Elapsed;
             using var d = NewDisposeScope();
 
             var game = CodingAdventureChessGame.StandardGame();
@@ -226,57 +223,55 @@ public class GreedyNnAgent : IChessAgent
                 var loss = TrainStep();
                 if (loss.HasValue)
                     episodeLosses.Add(loss.Value);
+
+                var end = totalTrainingTimer.Elapsed;
+                epTime = end - start;
             }
 
-            // Track metrics for this episode
             var gameState = game.GameState();
-            _episodeWins.Add(gameState.IsWhiteWin ? 1 : 0);
-            _episodeHalfmoves.Add(game.HalfmoveCount());
-            var avgLoss = episodeLosses.Count > 0 ? episodeLosses.Average() : 0.0f;
-            _episodeLosses.Add(avgLoss);
-            _episodeRewards.Add(episodeReward);
+            epStats.Add(new EpisodeStats
+            {
+                Win = gameState.IsWhiteWin,
+                Draw = gameState.IsDraw,
+                Loss = gameState.IsBlackWin,
+                Reward = episodeReward,
+                Halfmoves = game.HalfmoveCount(),
+                AvgLoss = episodeLosses.Count > 0 ? episodeLosses.Average() : 0,
+                Duration = epTime
+            });
 
-            // Print progress every episode
             if ((episode + 1) % 1 == 0)
             {
-                var recentCount = Math.Min(100, _episodeWins.Count);
-                var recentWins = _episodeWins
-                    .Skip(Math.Max(0, _episodeWins.Count - recentCount))
-                    .ToList();
-                float winRate =
-                    recentWins.Count > 0 ? recentWins.Sum() / (float)recentWins.Count : 0f;
-                Console.WriteLine(
-                    $"Ep {episode + 1}/{nEpisodes} | WinRate: {winRate:F3} | AvgLoss: {avgLoss:F4} | Reward: {episodeReward:F2}"
-                );
-            }
-
-            // Print detailed stats every print_every 10 episodes
-            int printEvery = 10;
-            if ((episode + 1) % printEvery == 0)
-            {
-                var stats = GetTrainingStats();
-                var gameRate = 1000 * (episode + 1) / totalTrainingTimer.ElapsedMilliseconds;
-                var posRate =
-                    1000 * _episodeHalfmoves.Sum() / totalTrainingTimer.ElapsedMilliseconds;
-                Console.WriteLine($"\nEpisode {episode + 1}/{nEpisodes}");
-                Console.WriteLine($"  Speed: {gameRate:F2} games/sec, {posRate:F2} positions/sec");
-                Console.WriteLine($"  Win Rate (recent): {stats["recent_win_rate"]:F3}");
-                Console.WriteLine($"  Win Rate (overall): {stats["overall_win_rate"]:F3}");
-                Console.WriteLine($"  Avg Game Length: {stats["recent_avg_game_length"]:F1}");
-                Console.WriteLine($"  Avg Loss: {stats["recent_avg_loss"]:F4}");
-                Console.WriteLine($"  Avg Reward: {stats["recent_avg_reward"]:F3}");
-                Console.WriteLine($"  Buffer Size: {_replayBuffer.Count}");
+                PrintSummary(nEpisodes, epStats, episode);
             }
         }
         totalTrainingTimer.Stop();
 
+        var wins = epStats.Sum(x => x.Win ? 1 : 0);
+        var losses = epStats.Sum(x => x.Loss ? 1 : 0);
+        var draws = epStats.Sum(x => x.Draw ? 1 : 0);
+        var epRate = nEpisodes / totalTrainingTimer.Elapsed.TotalSeconds;
+        var posRate = epStats.Sum(x => x.Halfmoves) / totalTrainingTimer.Elapsed.TotalSeconds;
+        Console.WriteLine($"Trained {nEpisodes} eps in {totalTrainingTimer.Elapsed} ({epRate:F2} games/s, {posRate:F2} pos/s)");
+        Console.WriteLine($"Wins: {wins}");
+        Console.WriteLine($"Draws: {draws}");
+        Console.WriteLine($"Losses: {losses}");
+    }
+
+    private static void PrintSummary(int nEpisodes, List<EpisodeStats> epStats, int episode)
+    {
+        const int recentWindowSize = 5;
+        var wins = epStats.Sum(x => x.Win ? 1 : 0);
+        var losses = epStats.Sum(x => x.Loss ? 1 : 0);
+        var draws = epStats.Sum(x => x.Draw ? 1 : 0);
+        var avgHalfmoves = epStats.TakeLast(recentWindowSize).Average(x => x.Halfmoves);
+        var avgLoss = epStats.TakeLast(recentWindowSize).Average(x => x.AvgLoss);
+        var avgDuration = epStats.TakeLast(recentWindowSize).Average(x => x.Duration.TotalSeconds);
+        var epRate = 1 / avgDuration;
+        var posRate = avgHalfmoves / avgDuration;
         Console.WriteLine(
-            $"Trained {nEpisodes} episodes ({_episodeHalfmoves.Sum()} total states) "
-                + $"in {totalTrainingTimer.Elapsed}"
+            $"Ep {episode + 1}/{nEpisodes} | W/D/L: {wins}/{draws}/{losses} | AvgLoss: {avgLoss:F4} | {epRate:F2} games/s, {posRate:F2} pos/s"
         );
-        var finalGameRate = nEpisodes / (float)totalTrainingTimer.Elapsed.TotalSeconds;
-        var stepRate = _episodeHalfmoves.Sum() / totalTrainingTimer.Elapsed.TotalSeconds;
-        Console.WriteLine($"{finalGameRate:F2} games/sec, {stepRate:F2} steps/sec");
     }
 
     private static float[,,] Board2Array(CodingAdventureChessGame game)
@@ -379,36 +374,15 @@ public class GreedyNnAgent : IChessAgent
 
         return nonEndLoss;
     }
+}
 
-    private Dictionary<string, double> GetTrainingStats()
-    {
-        if (_episodeWins.Count == 0)
-            return new Dictionary<string, double>();
-
-        var recentEpisodes = Math.Min(100, _episodeWins.Count);
-        var recentWins = _episodeWins
-            .Skip(Math.Max(0, _episodeWins.Count - recentEpisodes))
-            .ToList();
-        var recentLengths = _episodeHalfmoves
-            .Skip(Math.Max(0, _episodeHalfmoves.Count - recentEpisodes))
-            .ToList();
-        var recentLosses = _episodeLosses
-            .Skip(Math.Max(0, _episodeLosses.Count - recentEpisodes))
-            .ToList();
-        var recentRewards = _episodeRewards
-            .Skip(Math.Max(0, _episodeRewards.Count - recentEpisodes))
-            .ToList();
-
-        return new Dictionary<string, double>
-        {
-            ["total_episodes"] = _episodeWins.Count,
-            ["recent_win_rate"] =
-                recentWins.Count > 0 ? recentWins.Sum() / (float)recentWins.Count : 0,
-            ["recent_avg_game_length"] = recentLengths.Count > 0 ? recentLengths.Average() : 0.0,
-            ["recent_avg_loss"] = recentLosses.Count > 0 ? recentLosses.Average() : 0,
-            ["recent_avg_reward"] = recentRewards.Count > 0 ? recentRewards.Average() : 0,
-            ["overall_win_rate"] =
-                _episodeWins.Count > 0 ? _episodeWins.Sum() / (float)_episodeWins.Count : 0,
-        };
-    }
+public record EpisodeStats
+{
+    public bool Win { get; init; }
+    public bool Draw { get; init; }
+    public bool Loss { get; init; }
+    public int Halfmoves { get; init; }
+    public float AvgLoss { get; init; }
+    public float Reward { get; init; }
+    public TimeSpan Duration { get; init; }
 }

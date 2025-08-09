@@ -25,8 +25,8 @@ dotnet csharpier format .   # format code
   - DONE train against coding adventure bot, eval against random
   - train/tweak greedy bot. is it learning/improving?
     - do long training run
-      - fix intermediate perf (training speed) printout, ensure perf isn't degrading over time
-      - log stats to file for later plot
+      - periodically evaluate vs random bot
+      - plot/log stats to file for later plot
 - maybe: optimise. reuse tensors? can't find any docs. give it a try. See
   torch_vs_torchsharp. Only do this if training slows down dramatically
   with more episodes.
