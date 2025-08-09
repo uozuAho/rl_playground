@@ -14,7 +14,7 @@ switch (toRun)
         Simple.Run();
         break;
     case "chess":
-        ChessRlSim.Run();
+        ChessRlSim.Run(args);
         break;
     default:
         Console.WriteLine("Unknown Command");

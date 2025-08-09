@@ -19,12 +19,14 @@ BLACK = -1
 
 
 def main():
+    opponent = RandomAgent()
+
     print("cpu:")
     agent = GreedyChessAgent(device="cpu")
-    opponent = RandomAgent()
     agent.train_against(opponent, 100)
 
-    print()
+    # print()
+
     print("gpu:")
     agent = GreedyChessAgent(device="cuda")
     agent.train_against(opponent, 100)

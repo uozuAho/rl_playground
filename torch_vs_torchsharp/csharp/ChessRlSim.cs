@@ -7,17 +7,26 @@ namespace csharp;
 
 public static class ChessRlSim
 {
-    public static void Run()
+    public static void Run(string[] args)
     {
-        Console.WriteLine("cpu:");
-        var agent = new GreedyChessAgent(device: "cpu");
-        var opponent = new RandomAgent();
-        agent.TrainAgainst(opponent, 100);
+        var device = args.Contains("cpu") ? "cpu" : args.Contains("gpu") ? "gpu" : "both";
 
-        Console.WriteLine();
-        Console.WriteLine("gpu:");
-        agent = new GreedyChessAgent(device: "cuda");
-        agent.TrainAgainst(opponent, 100);
+        if (device is "cpu" or "both")
+        {
+            Console.WriteLine("cpu:");
+            var agent = new GreedyChessAgent(device: "cpu");
+            var opponent = new RandomAgent();
+            agent.TrainAgainst(opponent, 100);
+        }
+
+        if (device is "gpu" or "both")
+        {
+            Console.WriteLine();
+            Console.WriteLine("gpu:");
+            var agent = new GreedyChessAgent(device: "cuda");
+            var opponent = new RandomAgent();
+            agent.TrainAgainst(opponent, 100);
+        }
     }
 }
 
