@@ -36,5 +36,6 @@ dotnet trace report chess_cpu.nettrace topN -n 20 > profile_cpu.txt
            using a hybrid approach: NewDisposeScope every X episodes
             faster, but still slows down with number of episodes. at 2000eps, dispose every 100:
             Done training in 62.24s. 32.13 eps/sec, 1638.76 moves/sec
+                I noticed that disposing tensors takes longer over time. why?
         python maintains ~40eps/sec over 2000 eps:
             Done training in 48.15s. 41.54 eps/sec, 2118.52 moves/sec

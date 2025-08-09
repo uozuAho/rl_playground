@@ -224,6 +224,7 @@ public class GreedyChessAgent : IChessAgent
                 .Select(arr => tensor(arr, dtype: ScalarType.Float32))
                 .ToArray())
             .to(_device);
+
         using (no_grad())
         {
             var values = _valueNet.Forward(stateTensors).squeeze();
@@ -254,8 +255,11 @@ public class GreedyChessAgent : IChessAgent
         {
             if (ep > 0 && ep % numEpsPerDispose == 0)
             {
+                var num = d.DisposablesCount;
+                Console.WriteLine($"Disposing {num} tensors");
                 d.Dispose();
                 d = NewDisposeScope();
+                Console.WriteLine("yip");
             }
 
             var game = new FakeChessGame();
