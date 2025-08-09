@@ -177,7 +177,8 @@ public class GreedyNnAgent : IChessAgent
 
         for (var episode = 0; episode < nEpisodes; ++episode)
         {
-            Console.WriteLine(".");
+            using var d = NewDisposeScope();
+
             var game = CodingAdventureChessGame.StandardGame();
             var players = new Dictionary<Color, IChessAgent>
             {
@@ -240,7 +241,10 @@ public class GreedyNnAgent : IChessAgent
             if ((episode + 1) % printEvery == 0)
             {
                 var stats = GetTrainingStats();
+                var gameRate = 1000 * (episode + 1) / totalTrainingTimer.ElapsedMilliseconds;
+                var posRate = 1000 * _episodeHalfmoves.Sum() / totalTrainingTimer.ElapsedMilliseconds;
                 Console.WriteLine($"\nEpisode {episode + 1}/{nEpisodes}");
+                Console.WriteLine($"  Speed: {gameRate:F2} games/sec, {posRate:F2} positions/sec");
                 Console.WriteLine($"  Win Rate (recent): {stats["recent_win_rate"]:F3}");
                 Console.WriteLine($"  Win Rate (overall): {stats["overall_win_rate"]:F3}");
                 Console.WriteLine($"  Avg Game Length: {stats["recent_avg_game_length"]:F1}");
@@ -253,9 +257,9 @@ public class GreedyNnAgent : IChessAgent
 
         Console.WriteLine($"Trained {nEpisodes} episodes ({_episodeHalfmoves.Sum()} total states) " +
                           $"in {totalTrainingTimer.Elapsed}");
-        var gameRate = nEpisodes / (float)totalTrainingTimer.Elapsed.TotalSeconds;
+        var finalGameRate = nEpisodes / (float)totalTrainingTimer.Elapsed.TotalSeconds;
         var stepRate = _episodeHalfmoves.Sum() / totalTrainingTimer.Elapsed.TotalSeconds;
-        Console.WriteLine($"{gameRate:F2} games/sec, {stepRate:F2} steps/sec");
+        Console.WriteLine($"{finalGameRate:F2} games/sec, {stepRate:F2} steps/sec");
     }
 
     private static float[,,] Board2Array(CodingAdventureChessGame game)
