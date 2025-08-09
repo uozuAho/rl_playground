@@ -38,7 +38,9 @@ dotnet csharpier format .   # format code
         - convert to tensor as late as possible, use float arrays instead
         - wrap tensor calcs in `using (var d = torch.NewDisposeScope())`, see https://github.com/dotnet/TorchSharpExamples/blob/main/src/CSharp/CSharpExamples/MNIST.cs#L107
           - and https://github.com/dotnet/TorchSharp/blob/main/docfx/articles/memory.md
-        - maybe: reuse tensors? can't find any docs. give it a try.
+        - maybe: reuse tensors? can't find any docs. give it a try. See
+          torch_vs_torchsharp. Only do this if training slows down dramatically
+          with more episodes.
   - train/tweak greedy bot. is it learning/improving?
 - add save, load, checkpointing to greedy bot
 - (automatically?) add saved bots to bot tournament
