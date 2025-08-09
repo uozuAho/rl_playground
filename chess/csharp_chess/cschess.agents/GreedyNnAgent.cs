@@ -1,8 +1,8 @@
 using System.Diagnostics;
-using TorchSharp;
-using static TorchSharp.torch;
 using cschess.game;
+using TorchSharp;
 using TorchSharp.Modules;
+using static TorchSharp.torch;
 
 namespace cschess.agents;
 
@@ -101,13 +101,14 @@ public class GreedyNnAgent : IChessAgent
         float tau = 0.001f,
         int batchSize = 32,
         int experienceBufferSize = 64,
-        string device = "cpu")
+        string device = "cpu"
+    )
     {
         _device = device switch
         {
             "cpu" => CPU,
             "gpu" => CUDA,
-            _ => throw new ArgumentOutOfRangeException(nameof(device), device, null)
+            _ => throw new ArgumentOutOfRangeException(nameof(device), device, null),
         };
         _valueNet = new SmallNetwork().to(_device);
         _valueNet.train();
@@ -158,8 +159,14 @@ public class GreedyNnAgent : IChessAgent
     {
         var gameState = state.GameState();
         // assumes greedy agent is white
-        if (gameState.IsWhiteWin) { return 1.0f; }
-        if (gameState.IsBlackWin) { return -1.0f; }
+        if (gameState.IsWhiteWin)
+        {
+            return 1.0f;
+        }
+        if (gameState.IsBlackWin)
+        {
+            return -1.0f;
+        }
 
         return 0.0f;
     }
@@ -168,7 +175,8 @@ public class GreedyNnAgent : IChessAgent
         IChessAgent opponent,
         int nEpisodes,
         int? halfmoveLimit = null,
-        int turnTimeLimitMs = 10)
+        int turnTimeLimitMs = 10
+    )
     {
         if (halfmoveLimit != null)
             throw new NotImplementedException("halfmoveLimit not implemented");
@@ -183,7 +191,7 @@ public class GreedyNnAgent : IChessAgent
             var players = new Dictionary<Color, IChessAgent>
             {
                 { Color.White, this },
-                { Color.Black, opponent }
+                { Color.Black, opponent },
             };
             var prevState = Board2Array(game);
             var episodeLosses = new List<float>();
@@ -191,7 +199,8 @@ public class GreedyNnAgent : IChessAgent
 
             while (!game.IsGameOver())
             {
-                var move = players[game.Turn()].NextMove(game, TimeSpan.FromMilliseconds(turnTimeLimitMs));
+                var move = players[game.Turn()]
+                    .NextMove(game, TimeSpan.FromMilliseconds(turnTimeLimitMs));
                 game.MakeMove(move);
                 var state = Board2Array(game);
                 var reward = Reward(game);
@@ -231,9 +240,14 @@ public class GreedyNnAgent : IChessAgent
             if ((episode + 1) % 1 == 0)
             {
                 var recentCount = Math.Min(100, _episodeWins.Count);
-                var recentWins = _episodeWins.Skip(Math.Max(0, _episodeWins.Count - recentCount)).ToList();
-                float winRate = recentWins.Count > 0 ? recentWins.Sum() / (float)recentWins.Count : 0f;
-                Console.WriteLine($"Ep {episode + 1}/{nEpisodes} | WinRate: {winRate:F3} | AvgLoss: {avgLoss:F4} | Reward: {episodeReward:F2}");
+                var recentWins = _episodeWins
+                    .Skip(Math.Max(0, _episodeWins.Count - recentCount))
+                    .ToList();
+                float winRate =
+                    recentWins.Count > 0 ? recentWins.Sum() / (float)recentWins.Count : 0f;
+                Console.WriteLine(
+                    $"Ep {episode + 1}/{nEpisodes} | WinRate: {winRate:F3} | AvgLoss: {avgLoss:F4} | Reward: {episodeReward:F2}"
+                );
             }
 
             // Print detailed stats every print_every 10 episodes
@@ -242,7 +256,8 @@ public class GreedyNnAgent : IChessAgent
             {
                 var stats = GetTrainingStats();
                 var gameRate = 1000 * (episode + 1) / totalTrainingTimer.ElapsedMilliseconds;
-                var posRate = 1000 * _episodeHalfmoves.Sum() / totalTrainingTimer.ElapsedMilliseconds;
+                var posRate =
+                    1000 * _episodeHalfmoves.Sum() / totalTrainingTimer.ElapsedMilliseconds;
                 Console.WriteLine($"\nEpisode {episode + 1}/{nEpisodes}");
                 Console.WriteLine($"  Speed: {gameRate:F2} games/sec, {posRate:F2} positions/sec");
                 Console.WriteLine($"  Win Rate (recent): {stats["recent_win_rate"]:F3}");
@@ -255,8 +270,10 @@ public class GreedyNnAgent : IChessAgent
         }
         totalTrainingTimer.Stop();
 
-        Console.WriteLine($"Trained {nEpisodes} episodes ({_episodeHalfmoves.Sum()} total states) " +
-                          $"in {totalTrainingTimer.Elapsed}");
+        Console.WriteLine(
+            $"Trained {nEpisodes} episodes ({_episodeHalfmoves.Sum()} total states) "
+                + $"in {totalTrainingTimer.Elapsed}"
+        );
         var finalGameRate = nEpisodes / (float)totalTrainingTimer.Elapsed.TotalSeconds;
         var stepRate = _episodeHalfmoves.Sum() / totalTrainingTimer.Elapsed.TotalSeconds;
         Console.WriteLine($"{finalGameRate:F2} games/sec, {stepRate:F2} steps/sec");
@@ -369,19 +386,29 @@ public class GreedyNnAgent : IChessAgent
             return new Dictionary<string, double>();
 
         var recentEpisodes = Math.Min(100, _episodeWins.Count);
-        var recentWins = _episodeWins.Skip(Math.Max(0, _episodeWins.Count - recentEpisodes)).ToList();
-        var recentLengths = _episodeHalfmoves.Skip(Math.Max(0, _episodeHalfmoves.Count - recentEpisodes)).ToList();
-        var recentLosses = _episodeLosses.Skip(Math.Max(0, _episodeLosses.Count - recentEpisodes)).ToList();
-        var recentRewards = _episodeRewards.Skip(Math.Max(0, _episodeRewards.Count - recentEpisodes)).ToList();
+        var recentWins = _episodeWins
+            .Skip(Math.Max(0, _episodeWins.Count - recentEpisodes))
+            .ToList();
+        var recentLengths = _episodeHalfmoves
+            .Skip(Math.Max(0, _episodeHalfmoves.Count - recentEpisodes))
+            .ToList();
+        var recentLosses = _episodeLosses
+            .Skip(Math.Max(0, _episodeLosses.Count - recentEpisodes))
+            .ToList();
+        var recentRewards = _episodeRewards
+            .Skip(Math.Max(0, _episodeRewards.Count - recentEpisodes))
+            .ToList();
 
         return new Dictionary<string, double>
         {
             ["total_episodes"] = _episodeWins.Count,
-            ["recent_win_rate"] = recentWins.Count > 0 ? recentWins.Sum() / (float)recentWins.Count : 0,
+            ["recent_win_rate"] =
+                recentWins.Count > 0 ? recentWins.Sum() / (float)recentWins.Count : 0,
             ["recent_avg_game_length"] = recentLengths.Count > 0 ? recentLengths.Average() : 0.0,
             ["recent_avg_loss"] = recentLosses.Count > 0 ? recentLosses.Average() : 0,
             ["recent_avg_reward"] = recentRewards.Count > 0 ? recentRewards.Average() : 0,
-            ["overall_win_rate"] = _episodeWins.Count > 0 ? _episodeWins.Sum() / (float)_episodeWins.Count : 0
+            ["overall_win_rate"] =
+                _episodeWins.Count > 0 ? _episodeWins.Sum() / (float)_episodeWins.Count : 0,
         };
     }
 }

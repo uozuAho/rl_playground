@@ -27,8 +27,8 @@ public record MatchResult(
         var whiteWins = Games.Count(x => x.WhiteWon);
         var draws = Games.Count(x => x.IsDraw);
         var blackWins = numGames - whiteWins - draws;
-        return $"{White.Name} (white) vs {Black.Name} (black): W/D/L: {whiteWins}/{draws}/{blackWins}. " +
-               $"Avg halfmoves: {avgHalfmoves}. Avg game time: {avgGameTime.TotalSeconds:#.###}s.";
+        return $"{White.Name} (white) vs {Black.Name} (black): W/D/L: {whiteWins}/{draws}/{blackWins}. "
+            + $"Avg halfmoves: {avgHalfmoves}. Avg game time: {avgGameTime.TotalSeconds:#.###}s.";
     }
 }
 
@@ -51,11 +51,11 @@ public class Tournament
 
         Console.WriteLine(
             $"""
-             Running Tournament. Setup:
-               - entrants: {entrants.Length}
-               - games per match: {options.NumGamesPerMatch}
-               - turn time limit (s): {options.TurnTimeLimit.TotalSeconds:#.###}
-             """
+            Running Tournament. Setup:
+              - entrants: {entrants.Length}
+              - games per match: {options.NumGamesPerMatch}
+              - turn time limit (s): {options.TurnTimeLimit.TotalSeconds:#.###}
+            """
         );
 
         // todo: swiss-style rather than round robin
@@ -81,17 +81,14 @@ public class Tournament
     public static MatchResult PlaySingleMatch(
         TournamentOptions options,
         TournamentEntrant white,
-        TournamentEntrant black)
+        TournamentEntrant black
+    )
     {
         var results = new List<GameResult>(options.NumGamesPerMatch);
 
         for (var k = 0; k < options.NumGamesPerMatch; k++)
         {
-            var result = PlayGame(
-                white.Agent,
-                black.Agent,
-                turnTimeLimit: options.TurnTimeLimit
-            );
+            var result = PlayGame(white.Agent, black.Agent, turnTimeLimit: options.TurnTimeLimit);
             results.Add(result);
         }
 

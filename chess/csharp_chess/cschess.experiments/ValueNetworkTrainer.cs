@@ -248,21 +248,25 @@ public class ValueNetworkTrainer
         );
         stopwatch.Stop();
         var epochRate = numEpochs / stopwatch.Elapsed.TotalSeconds;
-        var batchRate = numEpochs * trainPositions.Count / (double)batchSize / stopwatch.Elapsed.TotalSeconds;
+        var batchRate =
+            numEpochs * trainPositions.Count / (double)batchSize / stopwatch.Elapsed.TotalSeconds;
         var posRate = numEpochs * trainPositions.Count / stopwatch.Elapsed.TotalSeconds;
         Console.WriteLine($"Training positions: {trainPositions.Count}");
         Console.WriteLine($"Test positions: {testPositions.Count}");
-        Console.WriteLine($"Training took {stopwatch.Elapsed}\n" +
-                          $"    - positions: {trainPositions.Count}\n" +
-                          $"    - batch size: {batchSize}\n" +
-                          $"    - epochs/sec: {epochRate:F2}\n" +
-                          $"    - batches/sec: {batchRate:F2}\n" +
-                          $"    - positions/sec: {posRate:F2}");
+        Console.WriteLine(
+            $"Training took {stopwatch.Elapsed}\n"
+                + $"    - positions: {trainPositions.Count}\n"
+                + $"    - batch size: {batchSize}\n"
+                + $"    - epochs/sec: {epochRate:F2}\n"
+                + $"    - batches/sec: {batchRate:F2}\n"
+                + $"    - positions/sec: {posRate:F2}"
+        );
 
         valueNetwork.eval();
         using (no_grad())
         {
-            using var testPositionsT = stack(testPositions.Select(Board2Tensor).ToArray()).to(device);
+            using var testPositionsT = stack(testPositions.Select(Board2Tensor).ToArray())
+                .to(device);
             var networkScoresT = valueNetwork.Forward(testPositionsT).squeeze();
             var networkScores = networkScoresT.cpu().data<float>().ToArray();
             var metrics = EvaluateAccuracy(networkScores, testTargets.ToArray());

@@ -1,6 +1,6 @@
 ﻿using cschess.agents;
-using cschess.tournament;
 using cschess.experiments;
+using cschess.tournament;
 
 // TrainValueNet();
 TrainGreedyNn();
@@ -14,16 +14,25 @@ void TrainValueNet()
 
 void TrainGreedyNn()
 {
-    var device = args.Contains("cpu") ? "cpu" : args.Contains("gpu") ? "gpu" : "cpu";
+    var device =
+        args.Contains("cpu") ? "cpu"
+        : args.Contains("gpu") ? "gpu"
+        : "cpu";
     Console.WriteLine($"Using device: {device}");
     var nnAgent = new GreedyNnAgent(device: device);
     var randomAgent = new RandomAgent();
 
     MatchResult PlayMatch(IChessAgent white, string whiteName, IChessAgent black, string blackName)
     {
-        var tournamentOptions = new TournamentOptions(NumGamesPerMatch: 5, TurnTimeLimit: TimeSpan.FromMilliseconds(10));
-        return Tournament.PlaySingleMatch(tournamentOptions, new TournamentEntrant(white, whiteName),
-            new TournamentEntrant(black, blackName));
+        var tournamentOptions = new TournamentOptions(
+            NumGamesPerMatch: 5,
+            TurnTimeLimit: TimeSpan.FromMilliseconds(10)
+        );
+        return Tournament.PlaySingleMatch(
+            tournamentOptions,
+            new TournamentEntrant(white, whiteName),
+            new TournamentEntrant(black, blackName)
+        );
     }
 
     var match = PlayMatch(nnAgent, "GreedyNN", randomAgent, "Random");
