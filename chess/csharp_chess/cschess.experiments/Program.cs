@@ -22,6 +22,10 @@ void TrainGreedyNn()
     var nnAgent = new GreedyNnAgent(device: device);
     var randomAgent = new RandomAgent();
 
+    var opponent = new CodingAdventureAgent();
+    nnAgent.TrainAgainst(opponent, 100, turnTimeLimitMs: 1, epCallback: Eval);
+    return;
+
     MatchResult PlayMatch(IChessAgent white, string whiteName, IChessAgent black, string blackName)
     {
         var tournamentOptions = new TournamentOptions(
@@ -35,14 +39,13 @@ void TrainGreedyNn()
         );
     }
 
-    var match = PlayMatch(nnAgent, "GreedyNN", randomAgent, "Random");
-    Console.WriteLine("Before training:");
-    Console.WriteLine(match.Summary());
+    void Eval(List<EpisodeStats> episodes)
+    {
+        // eval against random every 10
+        if (episodes.Count % 10 != 0) return;
 
-    var opponent = new CodingAdventureAgent();
-    nnAgent.TrainAgainst(opponent, 100, turnTimeLimitMs: 1);
-
-    Console.WriteLine("After training:");
-    match = PlayMatch(nnAgent, "GreedyNN", randomAgent, "Random");
-    Console.WriteLine(match.Summary());
+        var match = PlayMatch(nnAgent, "GreedyNN", randomAgent, "Random");
+        Console.WriteLine("Eval vs random:");
+        Console.WriteLine(match.Summary());
+    }
 }

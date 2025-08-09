@@ -169,7 +169,8 @@ public class GreedyNnAgent : IChessAgent
         IChessAgent opponent,
         int nEpisodes,
         int? halfmoveLimit = null,
-        int turnTimeLimitMs = 10
+        int turnTimeLimitMs = 10,
+        Action<List<EpisodeStats>>? epCallback = null
     )
     {
         if (halfmoveLimit != null)
@@ -239,6 +240,8 @@ public class GreedyNnAgent : IChessAgent
                 AvgLoss = episodeLosses.Count > 0 ? episodeLosses.Average() : 0,
                 Duration = epTime
             });
+
+            epCallback?.Invoke(epStats);
 
             if ((episode + 1) % 1 == 0)
             {
