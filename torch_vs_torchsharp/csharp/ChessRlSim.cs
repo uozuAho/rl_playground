@@ -25,7 +25,7 @@ public static class ChessRlSim
             Console.WriteLine("gpu:");
             var agent = new GreedyChessAgent(device: "cuda");
             var opponent = new RandomAgent();
-            agent.TrainAgainst(opponent, 100);
+            agent.TrainAgainst(opponent, 2000);
         }
     }
 }
@@ -246,8 +246,18 @@ public class GreedyChessAgent : IChessAgent
     {
         var sw = Stopwatch.StartNew();
         var totalSteps = 0;
+        var numEpsPerDispose = 100;
+
+        var d = NewDisposeScope();
+
         for (var ep = 0; ep < nEpisodes; ep++)
         {
+            if (ep > 0 && ep % numEpsPerDispose == 0)
+            {
+                d.Dispose();
+                d = NewDisposeScope();
+            }
+
             var game = new FakeChessGame();
             var done = false;
             var players = new Dictionary<int, IChessAgent>
@@ -256,6 +266,7 @@ public class GreedyChessAgent : IChessAgent
                 { FakeChessGame.Black, opponent }
             };
             var prevState = game.AsFloatArray();
+
             while (!done)
             {
                 var playerAgent = players[game.turn];

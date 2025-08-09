@@ -21,15 +21,15 @@ BLACK = -1
 def main():
     opponent = RandomAgent()
 
-    print("cpu:")
-    agent = GreedyChessAgent(device="cpu")
-    agent.train_against(opponent, 100)
+    # print("cpu:")
+    # agent = GreedyChessAgent(device="cpu")
+    # agent.train_against(opponent, 100)
 
     # print()
 
     print("gpu:")
     agent = GreedyChessAgent(device="cuda")
-    agent.train_against(opponent, 100)
+    agent.train_against(opponent, 2000)
 
 
 class FakeChessGame:
