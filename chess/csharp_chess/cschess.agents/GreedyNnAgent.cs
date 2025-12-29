@@ -182,10 +182,11 @@ public class GreedyNnAgent : IChessAgent
         var totalTrainingTimer = Stopwatch.StartNew();
         var epTime = TimeSpan.Zero;
 
+        var d = NewDisposeScope();
+
         for (var episode = 0; episode < nEpisodes; ++episode)
         {
             var start = totalTrainingTimer.Elapsed;
-            using var d = NewDisposeScope();
 
             var game = CodingAdventureChessGame.StandardGame();
             var opponent = random.Choice(opponents);
@@ -198,8 +199,18 @@ public class GreedyNnAgent : IChessAgent
             var episodeLosses = new List<float>();
             var episodeReward = 0.0f;
 
+            d.Dispose();
+            d = NewDisposeScope();
+
             while (!game.IsGameOver() && game.HalfmoveCount() < (halfmoveLimit ?? int.MaxValue))
             {
+                if ((game.HalfmoveCount() + 1) % 100 == 0)
+                {
+                    // prevent GPU OOM during long episodes
+                    d.Dispose();
+                    d = NewDisposeScope();
+                }
+
                 var move = players[game.Turn()]
                     .NextMove(game, TimeSpan.FromMilliseconds(turnTimeLimitMs));
                 game.MakeMove(move);
@@ -250,6 +261,9 @@ public class GreedyNnAgent : IChessAgent
                 PrintSummary(nEpisodes, epStats, episode);
             }
         }
+
+        d.Dispose();
+
         totalTrainingTimer.Stop();
 
         var wins = epStats.Sum(x => x.Win ? 1 : 0);

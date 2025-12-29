@@ -25,11 +25,11 @@ dotnet csharpier format .   # format code
   - DONE train against coding adventure bot, eval against random
   - train/tweak greedy bot. is it learning/improving?
     - do long training run
-      - support longer games in training: prevent OOM during long game
       - plot/log stats to file for later plot
 - maybe: optimise. reuse tensors? can't find any docs. give it a try. See
   torch_vs_torchsharp. Only do this if training slows down dramatically
   with more episodes.
+  - pytorch caches, torchsharp doesn't? See https://docs.pytorch.org/docs/stable//notes/cuda.html#cuda-memory-management
 - add save, load, checkpointing to greedy bot
 - (automatically?) add saved bots to bot tournament
 - (automatically?) log tournament results
