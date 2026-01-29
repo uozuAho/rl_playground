@@ -1,0 +1,79 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "cschess.experiments", "cschess.experiments\cschess.experiments.csproj", "{B220AF90-C209-40A5-8028-31FDDADF0E7D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "cschess.game", "cschess.game\cschess.game.csproj", "{0196C51F-5E35-472F-84AA-9C7E1CC8E8A6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "submodules", "submodules", "{1896B54D-AA6A-4E26-83E9-D8FBE74A749D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "cschess.game.test", "cschess.game.test\cschess.game.test.csproj", "{1A80518C-B0A7-487B-8439-8560DC6C75CF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Chess-Coding-Adventure", "Chess-Coding-Adventure", "{FEC92225-235A-449F-8929-A673597F9BAF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chess-Coding-Adventure", "submodules\Chess-Coding-Adventure\Chess-Coding-Adventure\Chess-Coding-Adventure.csproj", "{6D3DCEE6-714D-43F0-ACCB-2F13F48CB163}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "cschess.tournament", "cschess.tournament\cschess.tournament.csproj", "{F4392A04-3EB1-482A-9A04-D802538B7CFA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "cschess.agents", "cschess.agents\cschess.agents.csproj", "{8449B4D4-66F2-45D8-ACFB-2192FF335C93}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "cschess.csutils", "cschess.csutils\cschess.csutils.csproj", "{9107DC74-BE7C-4DF9-B8A2-E32476A2C6B9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "cschess.agents.test", "cschess.agents.test\cschess.agents.test.csproj", "{7EB3AD42-9CBB-4D19-AD59-ADA17B7387E0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chess-Coding-Adventure.Test", "submodules\Chess-Coding-Adventure\Chess-Coding-Adventure.Test\Chess-Coding-Adventure.Test.csproj", "{1159A7D4-FC96-44C3-8205-5D2B7F505728}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B220AF90-C209-40A5-8028-31FDDADF0E7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B220AF90-C209-40A5-8028-31FDDADF0E7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B220AF90-C209-40A5-8028-31FDDADF0E7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B220AF90-C209-40A5-8028-31FDDADF0E7D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0196C51F-5E35-472F-84AA-9C7E1CC8E8A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0196C51F-5E35-472F-84AA-9C7E1CC8E8A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0196C51F-5E35-472F-84AA-9C7E1CC8E8A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0196C51F-5E35-472F-84AA-9C7E1CC8E8A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A80518C-B0A7-487B-8439-8560DC6C75CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A80518C-B0A7-487B-8439-8560DC6C75CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A80518C-B0A7-487B-8439-8560DC6C75CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A80518C-B0A7-487B-8439-8560DC6C75CF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D3DCEE6-714D-43F0-ACCB-2F13F48CB163}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D3DCEE6-714D-43F0-ACCB-2F13F48CB163}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D3DCEE6-714D-43F0-ACCB-2F13F48CB163}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D3DCEE6-714D-43F0-ACCB-2F13F48CB163}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F4392A04-3EB1-482A-9A04-D802538B7CFA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4392A04-3EB1-482A-9A04-D802538B7CFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4392A04-3EB1-482A-9A04-D802538B7CFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4392A04-3EB1-482A-9A04-D802538B7CFA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8449B4D4-66F2-45D8-ACFB-2192FF335C93}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8449B4D4-66F2-45D8-ACFB-2192FF335C93}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8449B4D4-66F2-45D8-ACFB-2192FF335C93}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8449B4D4-66F2-45D8-ACFB-2192FF335C93}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9107DC74-BE7C-4DF9-B8A2-E32476A2C6B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9107DC74-BE7C-4DF9-B8A2-E32476A2C6B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9107DC74-BE7C-4DF9-B8A2-E32476A2C6B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9107DC74-BE7C-4DF9-B8A2-E32476A2C6B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7EB3AD42-9CBB-4D19-AD59-ADA17B7387E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7EB3AD42-9CBB-4D19-AD59-ADA17B7387E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7EB3AD42-9CBB-4D19-AD59-ADA17B7387E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7EB3AD42-9CBB-4D19-AD59-ADA17B7387E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1159A7D4-FC96-44C3-8205-5D2B7F505728}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1159A7D4-FC96-44C3-8205-5D2B7F505728}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1159A7D4-FC96-44C3-8205-5D2B7F505728}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1159A7D4-FC96-44C3-8205-5D2B7F505728}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{FEC92225-235A-449F-8929-A673597F9BAF} = {1896B54D-AA6A-4E26-83E9-D8FBE74A749D}
+		{6D3DCEE6-714D-43F0-ACCB-2F13F48CB163} = {FEC92225-235A-449F-8929-A673597F9BAF}
+		{1159A7D4-FC96-44C3-8205-5D2B7F505728} = {FEC92225-235A-449F-8929-A673597F9BAF}
+	EndGlobalSection
+EndGlobal
