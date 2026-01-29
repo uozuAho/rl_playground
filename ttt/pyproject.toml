@@ -6,34 +6,36 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "gymnasium>=1.0.0",
+    "matplotlib>=3.10.0",
     "numpy>=2.2.2",
     "optuna-dashboard>=0.17.0",
     "optuna>=4.2.1",
+    "pandas-stubs~=2.2.3",
+    "pandas>=2.2.3",
     "plotly>=6.0.0",
     "sb3-contrib>=2.5.0",
     "scikit-learn>=1.6.1",
     "stable-baselines3>=2.5.0",
     "torch>=2.6.0",
     "torchinfo>=1.8.0",
+    "tqdm>=4.67.1",
 ]
 
 [dependency-groups]
 dev = [
     "duckdb>=1.2.2",
-    "mypy>=1.15.0",
     "pytest>=8.3.4",
     "ruff>=0.11.2",
+    "ty>=0.0.8",
 ]
 
 [tool.ruff.lint]
 ignore = ["E701"]  # multiple statements per line
 
-[tool.mypy]
-files = [
-    "test",
-    "ttt",
-    "utils",
-]
-
 [tool.ruff]
 exclude = ["bot-showdown.py"]
+
+[tool.pytest.ini_options]
+markers = [
+    "slow",
+]

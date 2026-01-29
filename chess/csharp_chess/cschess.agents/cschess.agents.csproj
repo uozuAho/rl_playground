@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\cschess.csutils\cschess.csutils.csproj" />
+    <ProjectReference Include="..\cschess.game\cschess.game.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="TorchSharp-cuda-linux" Version="0.105.1" />
+  </ItemGroup>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+</Project>

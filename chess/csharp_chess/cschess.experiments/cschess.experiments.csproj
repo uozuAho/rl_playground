@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Note: TorchSharp-cuda-linux allows device=CPU -->
+    <PackageReference Include="TorchSharp-cuda-linux" Version="0.105.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\cschess.agents\cschess.agents.csproj" />
+    <ProjectReference Include="..\cschess.game\cschess.game.csproj" />
+    <ProjectReference Include="..\cschess.tournament\cschess.tournament.csproj" />
+  </ItemGroup>
+</Project>
