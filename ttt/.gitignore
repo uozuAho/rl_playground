@@ -6,3 +6,5 @@
 bot-showdown.txt
 *.json
 trained_models/*
+.idea
+experiment_logs
