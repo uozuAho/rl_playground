@@ -1,0 +1,7 @@
+write a connect four implementation. use a numpy array to represent
+the game state.  use a functional style that takes the game state as a parameter,
+instead of making a game class.
+
+add convenience functions that convert the game state to and from a string
+
+add just a few basic tests that show how to use the game api
