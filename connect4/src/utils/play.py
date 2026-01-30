@@ -16,7 +16,7 @@ def play_games_parallel(agent_1: Agent, agent_2: Agent, n_games: int):
             states[i] = c4.make_move(states[i], action, turn)
             if c4.is_terminal(states[i]):
                 dones[i] = True
-                winners[i] = c4.winner(states[i])
+                winners[i] = c4.calc_winner(states[i])
         turn = c4.other_player(turn)
     assert all(x is not False for x in winners)
     return winners

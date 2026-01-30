@@ -69,7 +69,7 @@ def get_valid_moves(state: GameState) -> list[int]:
     return [col for col in range(COLS) if is_valid_move(state, col)]
 
 
-def winner(state: GameState) -> Player | None:
+def calc_winner(state: GameState) -> Player | None:
     # Check horizontal
     for row in range(ROWS):
         for col in range(COLS - 3):
@@ -108,11 +108,12 @@ def winner(state: GameState) -> Player | None:
 
 
 def is_draw(state: GameState) -> bool:
-    return len(get_valid_moves(state)) == 0 and winner(state) is None
+    return len(get_valid_moves(state)) == 0 and calc_winner(state) is None
 
 
+# todo: replace this by reading done
 def is_terminal(state: GameState) -> bool:
-    return winner(state) is not None or is_draw(state)
+    return calc_winner(state) is not None or is_draw(state)
 
 
 def to_string(state: GameState) -> str:
@@ -127,10 +128,14 @@ def from_string(s: str) -> GameState:
     chars = {".": EMPTY, "X": PLAYER1, "O": PLAYER2}
     lines = s.strip().split("\n")
     state = new_game()
+    numx = s.count("X")
+    numo = s.count("O")
+    assert numx - numo in [0, 1]
     for i, line in enumerate(lines):
         for j, char in enumerate(line):
             state.board[i, j] = chars[char]
-    # todo: current player and is done
+    state.current_player = PLAYER1 if numx == numo else PLAYER2
+    state.done = len(get_valid_moves(state)) == 0 and calc_winner(state) is None
     return state
 
 
