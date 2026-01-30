@@ -116,11 +116,6 @@ def is_draw(state: GameState) -> bool:
     return len(get_valid_moves(state)) == 0 and calc_winner(state) is None
 
 
-# todo: replace this by reading done
-def is_terminal(state: GameState) -> bool:
-    return calc_winner(state) is not None or is_draw(state)
-
-
 def to_string(state: GameState) -> str:
     chars = {EMPTY: ".", PLAYER1: "X", PLAYER2: "O"}
     lines = []

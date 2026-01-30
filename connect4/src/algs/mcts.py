@@ -50,7 +50,7 @@ class MCTSNode:
         return len(self.children) > 0
 
     def is_terminal(self) -> bool:
-        return c4.is_terminal(self.state)
+        return self.state.done
 
 
 class _MctsSimState:

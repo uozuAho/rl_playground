@@ -1,7 +1,7 @@
 import env.connect4 as c4
 
 
-def test_asdf():
+def test_string_move():
     str1 = """.......
 .......
 .......
@@ -63,7 +63,7 @@ def test_string_conversion():
 def test_full_game():
     state = c4.new_game()
 
-    while not c4.is_terminal(state):
+    while not state.done:
         valid_moves = c4.get_valid_moves(state)
         assert len(valid_moves) > 0
         move = valid_moves[0]
@@ -71,6 +71,3 @@ def test_full_game():
         state = c4.make_move(state, move)
 
     assert c4.calc_winner(state) is not None or c4.is_draw(state)
-
-
-# todo test valid board construction
