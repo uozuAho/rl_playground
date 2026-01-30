@@ -4,21 +4,51 @@ import typing as t
 ROWS = 6
 COLS = 7
 EMPTY = 0
-PLAYER1 = 1
-PLAYER2 = -1
-
-type GameState = np.ndarray
 type Player = t.Literal[1, -1]
+PLAYER1: Player = 1
+PLAYER2: Player = -1
+
+
+class GameState:
+    board: np.ndarray
+    current_player: Player
+    done: bool
+    winner: Player | None
+
+    @staticmethod
+    def new():
+        s = GameState()
+        s.board = np.zeros((ROWS, COLS), dtype=np.int8)
+        s.current_player = PLAYER1
+        s.done = False
+        s.winner = None
+        return s
+
+    def copy(self):
+        s = GameState()
+        s.board = self.board.copy()
+        s.current_player = self.current_player
+        s.done = self.done
+        s.winner = self.winner
+        return s
+
+    def equals(self, other: GameState):
+        return (
+            np.array_equal(self.board, other.board)
+            and self.current_player == other.current_player
+            and self.done == other.done
+            and self.winner == other.winner
+        )
 
 
 def new_game() -> GameState:
-    return np.zeros((ROWS, COLS), dtype=np.int8)
+    return GameState.new()
 
 
 def is_valid_move(state: GameState, col: int) -> bool:
     if col < 0 or col >= COLS:
         return False
-    return state[0, col] == EMPTY
+    return state.board[0, col] == EMPTY
 
 
 def make_move(state: GameState, col: int, player: int) -> GameState:
@@ -27,14 +57,15 @@ def make_move(state: GameState, col: int, player: int) -> GameState:
 
     new_state = state.copy()
     for row in range(ROWS - 1, -1, -1):
-        if new_state[row, col] == EMPTY:
-            new_state[row, col] = player
+        if new_state.board[row, col] == EMPTY:
+            new_state.board[row, col] = player
             break
+    # todo: done, winner, current player
+
     return new_state
 
 
 def get_valid_moves(state: GameState) -> list[int]:
-    """Return a list of valid column indices."""
     return [col for col in range(COLS) if is_valid_move(state, col)]
 
 
@@ -42,30 +73,36 @@ def winner(state: GameState) -> Player | None:
     # Check horizontal
     for row in range(ROWS):
         for col in range(COLS - 3):
-            if state[row, col] != EMPTY:
-                if np.all(state[row, col : col + 4] == state[row, col]):
-                    return state[row, col]
+            if state.board[row, col] != EMPTY:
+                if np.all(state.board[row, col : col + 4] == state.board[row, col]):
+                    return state.board[row, col]
 
     # Check vertical
     for row in range(ROWS - 3):
         for col in range(COLS):
-            if state[row, col] != EMPTY:
-                if np.all(state[row : row + 4, col] == state[row, col]):
-                    return state[row, col]
+            if state.board[row, col] != EMPTY:
+                if np.all(state.board[row : row + 4, col] == state.board[row, col]):
+                    return state.board[row, col]
 
     # Check diagonal (bottom-left to top-right)
     for row in range(3, ROWS):
         for col in range(COLS - 3):
-            if state[row, col] != EMPTY:
-                if all(state[row - i, col + i] == state[row, col] for i in range(4)):
-                    return state[row, col]
+            if state.board[row, col] != EMPTY:
+                if all(
+                    state.board[row - i, col + i] == state.board[row, col]
+                    for i in range(4)
+                ):
+                    return state.board[row, col]
 
     # Check diagonal (top-left to bottom-right)
     for row in range(ROWS - 3):
         for col in range(COLS - 3):
-            if state[row, col] != EMPTY:
-                if all(state[row + i, col + i] == state[row, col] for i in range(4)):
-                    return state[row, col]
+            if state.board[row, col] != EMPTY:
+                if all(
+                    state.board[row + i, col + i] == state.board[row, col]
+                    for i in range(4)
+                ):
+                    return state.board[row, col]
 
     return None
 
@@ -81,20 +118,25 @@ def is_terminal(state: GameState) -> bool:
 def to_string(state: GameState) -> str:
     chars = {EMPTY: ".", PLAYER1: "X", PLAYER2: "O"}
     lines = []
-    for row in state:
+    for row in state.board:
         lines.append("".join(chars[cell] for cell in row))
     return "\n".join(lines)
 
 
-def from_string(s: str) -> np.ndarray:
+def from_string(s: str) -> GameState:
     chars = {".": EMPTY, "X": PLAYER1, "O": PLAYER2}
     lines = s.strip().split("\n")
-    state = np.zeros((ROWS, COLS), dtype=np.int8)
+    state = new_game()
     for i, line in enumerate(lines):
         for j, char in enumerate(line):
-            state[i, j] = chars[char]
+            state.board[i, j] = chars[char]
+    # todo: current player and is done
     return state
 
 
 def other_player(player: Player):
     return PLAYER2 if player == PLAYER1 else PLAYER1
+
+
+def are_equal(s1: GameState, s2: GameState):
+    return s1.equals(s2)

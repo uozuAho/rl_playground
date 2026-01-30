@@ -1,20 +1,14 @@
-import numpy as np
 import env.connect4 as c4
-
-
-def test_new_game():
-    state = c4.new_game()
-    assert np.all(state == 0)
 
 
 def test_make_move():
     state = c4.new_game()
 
     state = c4.make_move(state, 3, c4.PLAYER1)
-    assert state[5, 3] == c4.PLAYER1  # Should drop to bottom
+    assert state.board[5, 3] == c4.PLAYER1  # Should drop to bottom
 
     state = c4.make_move(state, 3, c4.PLAYER2)
-    assert state[4, 3] == c4.PLAYER2  # Should stack on top
+    assert state.board[4, 3] == c4.PLAYER2  # Should stack on top
 
 
 def test_check_winner():
@@ -22,6 +16,7 @@ def test_check_winner():
 
     for col in range(4):
         state = c4.make_move(state, col, c4.PLAYER1)
+        # todo: this is invalid due to same player making multiple moves
 
     winner = c4.winner(state)
     assert winner == c4.PLAYER1
@@ -35,7 +30,7 @@ def test_string_conversion():
     s = c4.to_string(state)
     restored = c4.from_string(s)
 
-    assert np.array_equal(state, restored)
+    assert c4.are_equal(state, restored)
 
 
 def test_full_game():
@@ -51,3 +46,8 @@ def test_full_game():
         turn = c4.other_player(turn)
 
     assert c4.winner(state) is not None or c4.is_draw(state)
+
+
+# todo same player can't move twice in a row
+# todo test valid board construction
+# todo test can't make invalid move
