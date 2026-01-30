@@ -1,5 +1,5 @@
 import numpy as np
-import connect4 as c4
+import env.connect4 as c4
 
 
 def test_new_game():
