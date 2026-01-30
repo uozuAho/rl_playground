@@ -1,3 +1,5 @@
+import pytest
+
 import env.connect4 as c4
 
 
@@ -35,12 +37,11 @@ def test_make_move():
     assert state.board[4, 3] == c4.PLAYER2  # Should stack on top
 
 
-# todo: reenable this
-# def test_throw_when_wrong_player_moves():
-#     state = c4.new_game()
-#     state = c4.make_move(state, 3, c4.PLAYER1)
-#     with pytest.raises(Exception):
-#         c4.make_move(state, 3, c4.PLAYER1)
+def test_throw_when_wrong_player_moves():
+    state = c4.new_game()
+    state = c4.make_move(state, 3, c4.PLAYER1)
+    with pytest.raises(Exception):
+        c4.make_move(state, 3, c4.PLAYER1)
 
 
 def test_check_winner():

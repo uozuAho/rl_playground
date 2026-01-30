@@ -45,14 +45,16 @@ def new_game() -> GameState:
     return GameState.new()
 
 
-def is_valid_move(state: GameState, col: int) -> bool:
+def is_valid_move(state: GameState, col: int, player: Player) -> bool:
+    if player != state.current_player:
+        return False
     if col < 0 or col >= COLS:
         return False
     return state.board[0, col] == EMPTY
 
 
-def make_move(state: GameState, col: int, player: int) -> GameState:
-    if not is_valid_move(state, col):
+def make_move(state: GameState, col: int, player: Player) -> GameState:
+    if not is_valid_move(state, col, player):
         raise ValueError(f"Invalid move: column {col}")
 
     new_state = state.copy()
@@ -60,7 +62,12 @@ def make_move(state: GameState, col: int, player: int) -> GameState:
         if new_state.board[row, col] == EMPTY:
             new_state.board[row, col] = player
             break
-    # todo: done, winner, current player
+
+    new_state.winner = calc_winner(new_state)
+    new_state.done = (
+        new_state.winner is not None or len(get_valid_moves(new_state)) == 0
+    )
+    new_state.current_player = other_player(state.current_player)
 
     return new_state
 
