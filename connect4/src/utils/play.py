@@ -1,3 +1,5 @@
+import numpy as np
+
 from agents.agent import Agent
 import env.connect4 as c4
 
@@ -19,4 +21,7 @@ def play_games_parallel(agent_1: Agent, agent_2: Agent, n_games: int):
                 winners[i] = c4.calc_winner(states[i])
         turn = c4.other_player(turn)
     assert all(x is not False for x in winners)
-    return winners
+    w = np.count_nonzero(winners == np.int8(c4.PLAYER1))
+    ll = np.count_nonzero(winners == np.int8(c4.PLAYER2))
+    d = np.count_nonzero(winners == np.int8(0))
+    return w, ll, d
