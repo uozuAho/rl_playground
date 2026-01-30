@@ -13,7 +13,7 @@ def play_games_parallel(agent_1: Agent, agent_2: Agent, n_games: int):
         agent = agent_1 if turn == c4.PLAYER1 else agent_2
         actions = agent.get_actions(active_envs)
         for i, action in zip(active_idx, actions):
-            states[i] = c4.make_move(states[i], action, turn)
+            states[i] = c4.make_move(states[i], action)
             if c4.is_terminal(states[i]):
                 dones[i] = True
                 winners[i] = c4.calc_winner(states[i])
