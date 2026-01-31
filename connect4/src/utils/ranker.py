@@ -50,18 +50,18 @@ class AgentStats:
 
 def full_round_robin(agents: list[tuple[str, Agent]], games_per_matchup: int):
     stats = [
-            AgentStats(
-                agent=agent,
-                name=name,
-            )
-            for name, agent in agents
-        ]
+        AgentStats(
+            agent=agent,
+            name=name,
+        )
+        for name, agent in agents
+    ]
     for i in range(len(stats) - 1):
         for j in range(i + 1, len(stats)):
             a1, a2 = stats[i], stats[j]
             games_per_side = games_per_matchup // 2
 
-            w,ll,d = play_games_parallel(a1.agent, a2.agent, games_per_side)
+            w, ll, d = play_games_parallel(a1.agent, a2.agent, games_per_side)
             a1.x_wins += w
             a1.x_losses += ll
             a1.x_draws += d
@@ -89,9 +89,7 @@ def print_rankings(stats: list[AgentStats]):
     )
     print("-" * 120)
 
-    for i, rating in enumerate(
-        sorted(stats, key=lambda a: a.score(), reverse=True), 1
-    ):
+    for i, rating in enumerate(sorted(stats, key=lambda a: a.score(), reverse=True), 1):
         overall_wld = f"{rating.wins}-{rating.losses}-{rating.draws}"
         x_wld = f"{rating.x_wins}-{rating.x_losses}-{rating.x_draws}"
         o_wld = f"{rating.o_wins}-{rating.o_losses}-{rating.o_draws}"

@@ -71,3 +71,17 @@ def test_full_game():
         state = c4.make_move(state, move)
 
     assert c4.calc_winner(state) is not None or c4.is_draw(state)
+    assert state.done
+    assert state.winner in [None, c4.PLAYER1, c4.PLAYER2]
+
+
+def test_can_draw():
+    state = c4.from_string("""XOXOXOO
+XOXOXOX
+OXOXOXO
+OXOXOXO
+XOXOXOX
+XOXOXOX""")
+
+    assert state.done
+    assert state.winner is None

@@ -5,7 +5,7 @@ ROWS = 6
 COLS = 7
 EMPTY = 0
 type Player = t.Literal[1, -1]
-type Action = int   # put piece in col x, 0-6
+type Action = int  # put piece in col x, 0-6
 ACTION_SIZE = COLS
 PLAYER1: Player = 1
 PLAYER2: Player = -1
@@ -137,7 +137,8 @@ def from_string(s: str) -> GameState:
         for j, char in enumerate(line):
             state.board[i, j] = chars[char]
     state.current_player = PLAYER1 if numx == numo else PLAYER2
-    state.done = len(get_valid_moves(state)) == 0 and calc_winner(state) is None
+    state.winner = calc_winner(state)
+    state.done = state.winner is not None or len(get_valid_moves(state)) == 0
     return state
 
 

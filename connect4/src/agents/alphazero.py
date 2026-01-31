@@ -8,7 +8,6 @@ import numpy as np
 import torch
 from torch import nn
 import torch.nn.functional as F
-from torch.optim import Adam
 
 import env.connect4 as c4
 from agents import mcts_agent
@@ -61,6 +60,7 @@ def train(
     """Self play n_games, train over the resulting data for n_epochs.
     Returns: avg_policy_loss, avg_value_loss
     """
+
     def batch_mcts_eval(envs):
         return _batch_eval_for_mcts(model, envs, device)
 
@@ -162,7 +162,9 @@ def _valid_actions_mask(state: c4.GameState):
 
 
 def _self_play_n_games(
-    eval_fn: types.BatchEvaluateFunc, n_games: int, n_mcts_sims: int,
+    eval_fn: types.BatchEvaluateFunc,
+    n_games: int,
+    n_mcts_sims: int,
 ) -> typing.Iterable[GameStep]:
     states = [c4.new_game() for _ in range(n_games)]
     game_overs = [False for _ in range(n_games)]
@@ -182,9 +184,7 @@ def _self_play_n_games(
             state = root.state
             valid_mask = _valid_actions_mask(root.state)
             probs = _mcts_probs(root)
-            trajectories[i].append(
-                (state, valid_mask, probs)
-            )
+            trajectories[i].append((state, valid_mask, probs))
             action = np.random.choice(c4.ACTION_SIZE, p=probs)
             new_state = c4.make_move(state, action)
             states[i] = new_state
@@ -197,10 +197,10 @@ def _self_play_n_games(
         assert end_state.done
         for state, mask, probs in t:
             winner = winners[i]
-            final_reward = 0 if winner is None else 1 if state.current_player == winner else -1
-            yield GameStep(
-                state, mask, probs, final_reward
+            final_reward = (
+                0 if winner is None else 1 if state.current_player == winner else -1
             )
+            yield GameStep(state, mask, probs, final_reward)
 
 
 def _state2tensor(state: c4.GameState):
