@@ -5,7 +5,8 @@ ROWS = 6
 COLS = 7
 EMPTY = 0
 type Player = t.Literal[1, -1]
-type Action = int  # put piece in col x, 0-6
+type Action = int   # put piece in col x, 0-6
+ACTION_SIZE = COLS
 PLAYER1: Player = 1
 PLAYER2: Player = -1
 

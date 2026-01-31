@@ -1,4 +1,4 @@
-from agents.rando import RandomAgent
+from agents.simple import RandomAgent
 from utils.play import play_games_parallel
 
 

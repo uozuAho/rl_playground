@@ -10,3 +10,11 @@ class RandomAgent(Agent):
 
     def get_actions(self, states: list[c4.GameState]):
         return [self.get_action(s) for s in states]
+
+
+class FirstLegalActionAgent(Agent):
+    def get_action(self, state: c4.GameState):
+        return c4.get_valid_moves(state)[0]
+
+    def get_actions(self, states: list[c4.GameState]):
+        return [self.get_action(s) for s in states]
