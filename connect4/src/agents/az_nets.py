@@ -18,25 +18,55 @@ class AzNet(Protocol):
     def pv_batch(self, states: list[c4.GameState]) -> list[types.PV]:
         pass
 
+    def forward_batch(
+        self, states: list[c4.GameState]
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Returns the raw NN tensor outputs (p logits, value)"""
+        pass
+
+    def eval(self):
+        """Set NN to eval mode"""
+        pass
+
+    def train(self):
+        """Set NN to train mode"""
+        pass
+
 
 class ResNet(AzNet):
     def __init__(self, num_res_blocks, num_hidden, device):
-        self._model = _ResNetModule(num_res_blocks, num_hidden, device)
+        self.model = _ResNetModule(num_res_blocks, num_hidden, device)
         self.device = device
 
     def pv(self, state: c4.GameState) -> types.PV:
         enc_state = self._state2tensor(state)
         # unsqueeze to batch of 1
         minput = enc_state.unsqueeze(0).to(self.device)
-        plogits, val = self._model(minput)
+        plogits, val = self.model(minput)
         return plogits.softmax(dim=1).squeeze().tolist(), val.item()
 
     def pv_batch(self, states: list[c4.GameState]) -> list[types.PV]:
-        minput = torch.stack([self._state2tensor(s) for s in states])
-        plogits, val = self._model(minput)
+        plogits, val = self.forward_batch(states)
         return list(
             zip(plogits.softmax(dim=1).squeeze().tolist(), val.squeeze().tolist())
         )
+
+    def forward_batch(self, states: list[c4.GameState]):
+        minput = torch.stack([self._state2tensor(s) for s in states])
+        return self.model(minput)
+
+    def eval(self):
+        self.model.eval()
+
+    def train(self):
+        self.model.train()
+
+    @staticmethod
+    def load(path: Path, device):
+        d = torch.load(path, weights_only=True)
+        n = _ResNetModule(d["num_res_blocks"], d["num_hidden"], device)
+        n.load_state_dict(d["state_dict"])
+        return n
 
     def _state2tensor(self, state: c4.GameState):
         board = state.board
