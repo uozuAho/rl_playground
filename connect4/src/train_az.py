@@ -12,6 +12,7 @@ from agents.az_nets import ResNet, AzNet
 from agents.simple import RandomAgent, FirstLegalActionAgent
 from utils.play import play_games_parallel
 
+
 @dataclass
 class TrainConfig:
     num_res_blocks: int
@@ -41,28 +42,31 @@ def main():
         learning_rate=0.001,
         weight_decay=0.0001,
         num_iterations=1,
-        n_mcts_sims=10,
-        n_games_per_iteration=10,
+        n_mcts_sims=20,
+        n_games_per_iteration=20,
         n_epochs_per_iteration=1,
         epoch_batch_size=5,
         mask_invalid_actions=False,
-        experiment_description=""
+        experiment_description="",
     )
     eval_config = EvalConfig(
         n_games=10,
         n_mcts_sims=10,
-        opponents=[
-                ("random", RandomAgent()),
-            ("first legal", FirstLegalActionAgent())
-            ]
+        opponents=[("random", RandomAgent()), ("first legal", FirstLegalActionAgent())],
     )
     device = "cpu"
     # device = "cuda"
 
     net = ResNet(
-        num_res_blocks=train_config.num_res_blocks, num_hidden=train_config.num_hidden, device=device
+        num_res_blocks=train_config.num_res_blocks,
+        num_hidden=train_config.num_hidden,
+        device=device,
     )
-    optimiser = Adam(net.model.parameters(), lr=train_config.learning_rate, weight_decay=train_config.weight_decay)
+    optimiser = Adam(
+        net.model.parameters(),
+        lr=train_config.learning_rate,
+        weight_decay=train_config.weight_decay,
+    )
 
     train_metrics = TrainingMetrics()
     eval_metrics = EvalMetrics()
@@ -79,6 +83,7 @@ def main():
             eval_metrics.add(emetrics)
     except KeyboardInterrupt:
         plot_training_metrics(train_config, eval_config, train_metrics, eval_metrics)
+
 
 @dataclass
 class TrainingMetrics:
@@ -123,7 +128,9 @@ def train(
         iter_policy_losses.append(pl)
         iter_value_losses.append(vl)
 
-        train_metrics.games_played.append((iteration + 1) * train_config.n_games_per_iteration)
+        train_metrics.games_played.append(
+            (iteration + 1) * train_config.n_games_per_iteration
+        )
         avg_pl = sum(iter_policy_losses) / len(iter_policy_losses)
         avg_vl = sum(iter_value_losses) / len(iter_value_losses)
         train_metrics.policy_losses.append(avg_pl)
@@ -131,12 +138,17 @@ def train(
 
     return train_metrics
 
+
 @dataclass
 class EvalMetrics:
     # dict["vs opponent": [rate per evaluation]]
     win_rates: dict[str, list[float]] = field(default_factory=lambda: defaultdict(list))
-    loss_rates: dict[str, list[float]] = field(default_factory=lambda: defaultdict(list))
-    draw_rates: dict[str, list[float]] = field(default_factory=lambda: defaultdict(list))
+    loss_rates: dict[str, list[float]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
+    draw_rates: dict[str, list[float]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
 
     def add(self, metrics: EvalMetrics):
         for k in metrics.win_rates:
@@ -145,6 +157,7 @@ class EvalMetrics:
             self.loss_rates[k].extend(metrics.loss_rates[k])
         for k in metrics.draw_rates:
             self.draw_rates[k].extend(metrics.draw_rates[k])
+
 
 @dataclass
 class MatchResults:
@@ -170,21 +183,24 @@ class MatchResults:
     def draw_rate(self):
         return self.draws / self.games_played
 
+
 def eval_net(net: AzNet, config: EvalConfig, device):
     metrics = EvalMetrics()
     aza = make_az_agent(net, config.n_mcts_sims, device)
     for oname, oagent in config.opponents:
-        w,ll,d = play_games_parallel(aza, oagent, config.n_games)
+        w, ll, d = play_games_parallel(aza, oagent, config.n_games)
         mr = MatchResults(p1_name="az", p2_name=oname, p1_wins=w, p1_losses=ll, draws=d)
-        metrics.win_rates[f'vs {oname}'].append(mr.p1_win_rate)
-        metrics.loss_rates[f'vs {oname}'].append(mr.p1_loss_rate)
-        metrics.draw_rates[f'vs {oname}'].append(mr.draw_rate)
+        metrics.win_rates[f"vs {oname}"].append(mr.p1_win_rate)
+        metrics.loss_rates[f"vs {oname}"].append(mr.p1_loss_rate)
+        metrics.draw_rates[f"vs {oname}"].append(mr.draw_rate)
     return metrics
 
 
 def print_eval_metrics(results: list[MatchResults]):
     for r in results:
-        print(f"{r.p1_name} vs {r.p2_name}. p1 WLD: {r.p1_win_rate:.2f} {r.p1_loss_rate:.2f} {r.draw_rate:.2f}")
+        print(
+            f"{r.p1_name} vs {r.p2_name}. p1 WLD: {r.p1_win_rate:.2f} {r.p1_loss_rate:.2f} {r.draw_rate:.2f}"
+        )
 
 
 def plot_training_metrics(
@@ -208,7 +224,9 @@ def plot_training_metrics(
     axes[0, 1].grid(True)
 
     for k in eval_metrics.win_rates:
-        axes[1, 0].plot(train_metrics.games_played, eval_metrics.win_rates[k], marker="o", label=k)
+        axes[1, 0].plot(
+            train_metrics.games_played, eval_metrics.win_rates[k], marker="o", label=k
+        )
     axes[1, 0].set_xlabel("Games")
     axes[1, 0].set_ylabel("Win Rate")
     axes[1, 0].set_title("Win Rates")
@@ -217,7 +235,9 @@ def plot_training_metrics(
     axes[1, 0].grid(True)
 
     for k in eval_metrics.loss_rates:
-        axes[1, 1].plot(train_metrics.games_played, eval_metrics.loss_rates[k], marker="o", label=k)
+        axes[1, 1].plot(
+            train_metrics.games_played, eval_metrics.loss_rates[k], marker="o", label=k
+        )
     axes[1, 1].set_xlabel("Games")
     axes[1, 1].set_ylabel("Loss Rate")
     axes[1, 1].set_title("Loss Rates")
