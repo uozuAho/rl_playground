@@ -1,6 +1,8 @@
+import sys
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
+from pprint import pprint
 
 from torch.optim import Adam
 import matplotlib.pyplot as plt
@@ -93,27 +95,55 @@ class MatchResults:
         return self.draws / self.games_played
 
 
-def main():
-    train_config = TrainConfig(
+profile_train_config = TrainConfig(
         num_res_blocks=1,
         num_hidden=1,
         learning_rate=0.001,
         weight_decay=0.0001,
         num_iterations=1,
-        n_mcts_sims=20,
-        n_games_per_iteration=20,
+        n_mcts_sims=10,
+        n_games_per_iteration=10,
         n_epochs_per_iteration=1,
-        epoch_batch_size=5,
+        epoch_batch_size=10,
+        mask_invalid_actions=False,
+        experiment_description="profile",
+    )
+
+default_train_config = TrainConfig(
+        num_res_blocks=1,
+        num_hidden=1,
+        learning_rate=0.001,
+        weight_decay=0.0001,
+        num_iterations=1,
+        n_mcts_sims=10,
+        n_games_per_iteration=10,
+        n_epochs_per_iteration=1,
+        epoch_batch_size=12,
         mask_invalid_actions=False,
         experiment_description="",
     )
-    eval_config = EvalConfig(
+
+profile_eval_config = EvalConfig(
+        n_games=10,
+        n_mcts_sims=10,
+        opponents=[("random", RandomAgent())],
+    )
+
+
+def main(mode):
+    print("mode:", mode)
+    train_config = profile_train_config if mode == "profile" else default_train_config
+    eval_config = profile_eval_config if mode == "profile" else EvalConfig(
         n_games=10,
         n_mcts_sims=10,
         opponents=[("random", RandomAgent()), ("first legal", FirstLegalActionAgent())],
     )
     # device = "cpu"
     device = "cuda"
+    if mode == "profile":
+        pprint(train_config)
+        pprint(eval_config)
+        print("device:", device)
 
     net = ResNet(
         num_res_blocks=train_config.num_res_blocks,
@@ -140,7 +170,8 @@ def main():
             emetrics = eval_net(net, eval_config, device)
             eval_metrics.add(emetrics)
     except KeyboardInterrupt:
-        plot_training_metrics(train_config, eval_config, train_metrics, eval_metrics)
+        if mode != "profile":
+            plot_training_metrics(train_config, eval_config, train_metrics, eval_metrics)
 
 
 def train(
@@ -187,12 +218,15 @@ def train(
 def eval_net(net: AzNet, config: EvalConfig, device):
     metrics = EvalMetrics()
     aza = make_az_agent(net, config.n_mcts_sims, device)
+    start = time.perf_counter()
     for oname, oagent in config.opponents:
         w, ll, d = play_games_parallel(aza, oagent, config.n_games)
         mr = MatchResults(p1_name="az", p2_name=oname, p1_wins=w, p1_losses=ll, draws=d)
         metrics.win_rates[f"vs {oname}"].append(mr.p1_win_rate)
         metrics.loss_rates[f"vs {oname}"].append(mr.p1_loss_rate)
         metrics.draw_rates[f"vs {oname}"].append(mr.draw_rate)
+    dur = time.perf_counter() - start
+    print(f"eval: {config.n_games * len(config.opponents) / dur} games/sec")
     return metrics
 
 
@@ -249,7 +283,8 @@ def plot_training_metrics(
     config_text += f"Res Blocks: {train_config.num_res_blocks}\n"
     config_text += f"Hidden Units: {train_config.num_hidden}\n"
     config_text += f"Batch Size: {train_config.epoch_batch_size}\n"
-    config_text += f"MCTS Sims: {train_config.n_mcts_sims}\n"
+    config_text += f"Train MCTS Sims: {train_config.n_mcts_sims}\n"
+    config_text += f"Eval MCTS Sims: {eval_config.n_mcts_sims}\n"
     config_text += f"Games/itr: {train_config.n_games_per_iteration}\n"
     config_text += f"Epochs/itr: {train_config.n_epochs_per_iteration}\n"
     config_text += f"LR: {train_config.learning_rate}\n"
@@ -273,4 +308,7 @@ def plot_training_metrics(
 
 
 if __name__ == "__main__":
-    main()
+    if "profile" in sys.argv:
+        main("profile")
+    else:
+        main("normal")
