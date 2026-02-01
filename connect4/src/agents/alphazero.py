@@ -133,6 +133,7 @@ def _batch_eval_for_mcts(
 def _mcts_probs(root: mcts.MCTSNode) -> list[float]:
     probs = [0] * c4.ACTION_SIZE
     total_visits = sum(c.visits for c in root.children.values())
+    assert total_visits > 0
     for a, n in root.children.items():
         probs[a] = n.visits / total_visits
     assert maths.is_prob_dist(probs)
@@ -176,8 +177,6 @@ def _self_play_n_games(
                 winners[i] = new_state.winner
     assert not any(x is False for x in winners)
     for i, t in enumerate(trajectories):
-        end_state = t[-1]
-        assert end_state.done
         for state, mask, probs in t:
             winner = winners[i]
             final_reward = (

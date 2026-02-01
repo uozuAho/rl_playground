@@ -47,9 +47,10 @@ class ResNet(AzNet):
 
     def pv_batch(self, states: list[c4.GameState]) -> list[types.PV]:
         plogits, val = self.forward_batch(states)
-        return list(
-            zip(plogits.softmax(dim=1).squeeze().tolist(), val.squeeze().tolist())
-        )
+        vals = val.squeeze().tolist()
+        if type(vals) is float:
+            vals = [vals]  # annoying torch quirk. I'm probably not using it properly
+        return list(zip(plogits.softmax(dim=1).tolist(), vals))
 
     def forward_batch(self, states: list[c4.GameState]):
         minput = torch.stack([self._state2tensor(s) for s in states])

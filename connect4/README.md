@@ -1,5 +1,6 @@
 todo
 - WIP copy az code from ttt here
+    - next train eval plot
 - something's fishy - agents never draw...
 - does it win? compare to azfs
   - more opponent agent ideas

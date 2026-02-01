@@ -17,12 +17,12 @@ def test_resnet_pv():
 
 def test_resnet_pv_batch():
     net = az_nets.ResNet(num_res_blocks=1, num_hidden=1, device="cpu")
-    batch_size = 2
-    states = [c4.new_game() for _ in range(batch_size)]
-    with torch.no_grad():
-        pvs = net.pv_batch(states)
-    assert len(pvs) == batch_size
-    for p, v in pvs:
-        assert len(p) == c4.ACTION_SIZE
-        assert is_prob_dist(p)
-        assert type(v) is float
+    for batch_size in range(1, 3):
+        states = [c4.new_game() for _ in range(batch_size)]
+        with torch.no_grad():
+            pvs = net.pv_batch(states)
+        assert len(pvs) == batch_size
+        for p, v in pvs:
+            assert len(p) == c4.ACTION_SIZE
+            assert is_prob_dist(p)
+            assert type(v) is float
