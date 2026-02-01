@@ -34,7 +34,7 @@ class GameState:
         s.winner = self.winner
         return s
 
-    def equals(self, other: GameState):
+    def equals(self, other: "GameState"):
         return (
             np.array_equal(self.board, other.board)
             and self.current_player == other.current_player

@@ -35,6 +35,64 @@ class EvalConfig:
     opponents: list[tuple[str, Agent]]
 
 
+@dataclass
+class TrainingMetrics:
+    games_played: list[int] = field(default_factory=list)
+    policy_losses: list[float] = field(default_factory=list)
+    value_losses: list[float] = field(default_factory=list)
+
+    def add(self, metrics: "TrainingMetrics"):
+        n_games = 0 if len(self.games_played) == 0 else self.games_played[-1]
+        self.games_played.extend(x + n_games for x in metrics.games_played)
+        self.policy_losses.extend(metrics.policy_losses)
+        self.value_losses.extend(metrics.value_losses)
+
+
+@dataclass
+class EvalMetrics:
+    # dict["vs opponent": [rate per evaluation]]
+    win_rates: dict[str, list[float]] = field(default_factory=lambda: defaultdict(list))
+    loss_rates: dict[str, list[float]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
+    draw_rates: dict[str, list[float]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
+
+    def add(self, metrics: "EvalMetrics"):
+        for k in metrics.win_rates:
+            self.win_rates[k].extend(metrics.win_rates[k])
+        for k in metrics.loss_rates:
+            self.loss_rates[k].extend(metrics.loss_rates[k])
+        for k in metrics.draw_rates:
+            self.draw_rates[k].extend(metrics.draw_rates[k])
+
+
+@dataclass
+class MatchResults:
+    p1_name: str
+    p2_name: str
+    p1_wins: int
+    p1_losses: int
+    draws: int
+
+    @property
+    def games_played(self):
+        return self.p1_wins + self.p1_losses + self.draws
+
+    @property
+    def p1_win_rate(self):
+        return self.p1_wins / self.games_played
+
+    @property
+    def p1_loss_rate(self):
+        return self.p1_losses / self.games_played
+
+    @property
+    def draw_rate(self):
+        return self.draws / self.games_played
+
+
 def main():
     train_config = TrainConfig(
         num_res_blocks=1,
@@ -54,8 +112,8 @@ def main():
         n_mcts_sims=10,
         opponents=[("random", RandomAgent()), ("first legal", FirstLegalActionAgent())],
     )
-    device = "cpu"
-    # device = "cuda"
+    # device = "cpu"
+    device = "cuda"
 
     net = ResNet(
         num_res_blocks=train_config.num_res_blocks,
@@ -83,19 +141,6 @@ def main():
             eval_metrics.add(emetrics)
     except KeyboardInterrupt:
         plot_training_metrics(train_config, eval_config, train_metrics, eval_metrics)
-
-
-@dataclass
-class TrainingMetrics:
-    games_played: list[int] = field(default_factory=list)
-    policy_losses: list[float] = field(default_factory=list)
-    value_losses: list[float] = field(default_factory=list)
-
-    def add(self, metrics: TrainingMetrics):
-        n_games = 0 if len(self.games_played) == 0 else self.games_played[-1]
-        self.games_played.extend(x + n_games for x in metrics.games_played)
-        self.policy_losses.extend(metrics.policy_losses)
-        self.value_losses.extend(metrics.value_losses)
 
 
 def train(
@@ -137,51 +182,6 @@ def train(
         train_metrics.value_losses.append(avg_vl)
 
     return train_metrics
-
-
-@dataclass
-class EvalMetrics:
-    # dict["vs opponent": [rate per evaluation]]
-    win_rates: dict[str, list[float]] = field(default_factory=lambda: defaultdict(list))
-    loss_rates: dict[str, list[float]] = field(
-        default_factory=lambda: defaultdict(list)
-    )
-    draw_rates: dict[str, list[float]] = field(
-        default_factory=lambda: defaultdict(list)
-    )
-
-    def add(self, metrics: EvalMetrics):
-        for k in metrics.win_rates:
-            self.win_rates[k].extend(metrics.win_rates[k])
-        for k in metrics.loss_rates:
-            self.loss_rates[k].extend(metrics.loss_rates[k])
-        for k in metrics.draw_rates:
-            self.draw_rates[k].extend(metrics.draw_rates[k])
-
-
-@dataclass
-class MatchResults:
-    p1_name: str
-    p2_name: str
-    p1_wins: int
-    p1_losses: int
-    draws: int
-
-    @property
-    def games_played(self):
-        return self.p1_wins + self.p1_losses + self.draws
-
-    @property
-    def p1_win_rate(self):
-        return self.p1_wins / self.games_played
-
-    @property
-    def p1_loss_rate(self):
-        return self.p1_losses / self.games_played
-
-    @property
-    def draw_rate(self):
-        return self.draws / self.games_played
 
 
 def eval_net(net: AzNet, config: EvalConfig, device):
