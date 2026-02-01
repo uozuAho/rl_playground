@@ -1,4 +1,5 @@
 import time
+from collections import defaultdict
 from dataclasses import dataclass, field
 
 from torch.optim import Adam
@@ -10,7 +11,6 @@ from agents.alphazero import make_az_agent
 from agents.az_nets import ResNet, AzNet
 from agents.simple import RandomAgent
 from utils.play import play_games_parallel
-import env.connect4 as c4
 
 @dataclass
 class TrainConfig:
@@ -41,18 +41,18 @@ def main():
         learning_rate=0.001,
         weight_decay=0.0001,
         num_iterations=1,
-        n_mcts_sims=2,
-        n_games_per_iteration=2,
+        n_mcts_sims=10,
+        n_games_per_iteration=10,
         n_epochs_per_iteration=1,
         epoch_batch_size=5,
         mask_invalid_actions=False,
         experiment_description=""
     )
     eval_config = EvalConfig(
-        n_games=1,
-        n_mcts_sims=2,
+        n_games=10,
+        n_mcts_sims=10,
         opponents=[
-                ("random", RandomAgent())
+                ("random", RandomAgent()),
             ]
     )
     device = "cpu"
@@ -63,26 +63,33 @@ def main():
     )
     optimiser = Adam(net.model.parameters(), lr=train_config.learning_rate, weight_decay=train_config.weight_decay)
 
+    train_metrics = TrainingMetrics()
+    eval_metrics = EvalMetrics()
     try:
         while True:
-            train(
+            tmetrics = train(
                 net,
                 optimiser,
                 train_config,
                 device=device,
             )
-            results = list(eval_net(net, eval_config, device))
-            print_eval_metrics(results)
+            train_metrics.add(tmetrics)
+            emetrics = eval_net(net, eval_config, device)
+            eval_metrics.add(emetrics)
     except KeyboardInterrupt:
-        pass
-        # print("saving & stopping...")
-        # az.save(model, num_res_blocks, num_hidden, saved_model_path)
+        plot_training_metrics(train_config, eval_config, train_metrics, eval_metrics)
 
 @dataclass
 class TrainingMetrics:
     games_played: list[int] = field(default_factory=list)
     policy_losses: list[float] = field(default_factory=list)
     value_losses: list[float] = field(default_factory=list)
+
+    def add(self, metrics: TrainingMetrics):
+        n_games = 0 if len(self.games_played) == 0 else self.games_played[-1]
+        self.games_played.extend(x + n_games for x in metrics.games_played)
+        self.policy_losses.extend(metrics.policy_losses)
+        self.value_losses.extend(metrics.value_losses)
 
 
 def train(
@@ -121,6 +128,22 @@ def train(
         train_metrics.policy_losses.append(avg_pl)
         train_metrics.value_losses.append(avg_vl)
 
+    return train_metrics
+
+@dataclass
+class EvalMetrics:
+    # dict["vs opponent": [rate per evaluation]]
+    win_rates: dict[str, list[float]] = field(default_factory=lambda: defaultdict(list))
+    loss_rates: dict[str, list[float]] = field(default_factory=lambda: defaultdict(list))
+    draw_rates: dict[str, list[float]] = field(default_factory=lambda: defaultdict(list))
+
+    def add(self, metrics: EvalMetrics):
+        for k in metrics.win_rates:
+            self.win_rates[k].extend(metrics.win_rates[k])
+        for k in metrics.loss_rates:
+            self.loss_rates[k].extend(metrics.loss_rates[k])
+        for k in metrics.draw_rates:
+            self.draw_rates[k].extend(metrics.draw_rates[k])
 
 @dataclass
 class MatchResults:
@@ -147,10 +170,15 @@ class MatchResults:
         return self.draws / self.games_played
 
 def eval_net(net: AzNet, config: EvalConfig, device):
+    metrics = EvalMetrics()
     aza = make_az_agent(net, config.n_mcts_sims, device)
     for oname, oagent in config.opponents:
         w,ll,d = play_games_parallel(aza, oagent, config.n_games)
-        yield MatchResults(p1_name="az", p2_name=oname, p1_wins=w, p1_losses=ll, draws=d)
+        mr = MatchResults(p1_name="az", p2_name=oname, p1_wins=w, p1_losses=ll, draws=d)
+        metrics.win_rates[f'vs {oname}'].append(mr.p1_win_rate)
+        metrics.loss_rates[f'vs {oname}'].append(mr.p1_loss_rate)
+        metrics.draw_rates[f'vs {oname}'].append(mr.draw_rate)
+    return metrics
 
 
 def print_eval_metrics(results: list[MatchResults]):
@@ -158,79 +186,69 @@ def print_eval_metrics(results: list[MatchResults]):
         print(f"{r.p1_name} vs {r.p2_name}. p1 WLD: {r.p1_win_rate:.2f} {r.p1_loss_rate:.2f} {r.draw_rate:.2f}")
 
 
-# def plot_training_metrics(
-#     games_played,
-#     policy_losses,
-#     value_losses,
-#     win_rates,
-#     loss_rates,
-#     win_rates_m10rr,
-#     loss_rates_m10rr,
-#     win_rates_perfect,
-#     loss_rates_perfect,
-#     config,
-#     custom_text="bleep bloop",
-# ):
-#     fig, axes = plt.subplots(2, 2, figsize=(12, 8))
-#
-#     axes[0, 0].plot(games_played, policy_losses, marker="o")
-#     axes[0, 0].set_xlabel("Games")
-#     axes[0, 0].set_ylabel("Policy Loss")
-#     axes[0, 0].set_title("Policy Loss")
-#     axes[0, 0].grid(True)
-#
-#     axes[0, 1].plot(games_played, value_losses, marker="o")
-#     axes[0, 1].set_xlabel("Games")
-#     axes[0, 1].set_ylabel("Value Loss")
-#     axes[0, 1].set_title("Value Loss")
-#     axes[0, 1].grid(True)
-#
-#     axes[1, 0].plot(games_played, win_rates, marker="o", label="vs Random")
-#     axes[1, 0].plot(games_played, win_rates_m10rr, marker="s", label="vs m10rr")
-#     axes[1, 0].plot(games_played, win_rates_perfect, marker="^", label="vs Perfect")
-#     axes[1, 0].set_xlabel("Games")
-#     axes[1, 0].set_ylabel("Win Rate")
-#     axes[1, 0].set_title("Win Rates")
-#     axes[1, 0].set_ylim([0, 1])
-#     axes[1, 0].legend()
-#     axes[1, 0].grid(True)
-#
-#     axes[1, 1].plot(games_played, loss_rates, marker="o", label="vs Random")
-#     axes[1, 1].plot(games_played, loss_rates_m10rr, marker="s", label="vs m10rr")
-#     axes[1, 1].plot(games_played, loss_rates_perfect, marker="^", label="vs Perfect")
-#     axes[1, 1].set_xlabel("Games")
-#     axes[1, 1].set_ylabel("Loss Rate")
-#     axes[1, 1].set_title("Loss Rates")
-#     axes[1, 1].set_ylim([0, 1])
-#     axes[1, 1].legend()
-#     axes[1, 1].grid(True)
-#
-#     config_text = "Configuration:\n"
-#     config_text += f"Res Blocks: {config['num_res_blocks']}\n"
-#     config_text += f"Hidden Units: {config['num_hidden']}\n"
-#     config_text += f"Batch Size: {config['batch_size']}\n"
-#     config_text += f"MCTS Sims: {config['n_mcts_sims']}\n"
-#     config_text += f"Games/Update: {config['n_games_per_update']}\n"
-#     config_text += f"Epochs/Update: {config['n_epochs_per_update']}\n"
-#     config_text += f"LR: {config['learning_rate']}\n"
-#     config_text += f"Weight Decay: {config['weight_decay']}"
-#
-#     if custom_text:
-#         config_text += f"\n\n{custom_text}"
-#
-#     fig.text(
-#         0.02,
-#         0.02,
-#         config_text,
-#         fontsize=8,
-#         family="monospace",
-#         verticalalignment="bottom",
-#         bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.5),
-#     )
-#
-#     plt.tight_layout(rect=(0, 0.08, 1, 1))  # Leave space for text box
-#     plt.savefig(PROJECT_ROOT / "experiment_logs/train_az.png", dpi=150)
-#     plt.show()
+def plot_training_metrics(
+    train_config: TrainConfig,
+    eval_config: EvalConfig,
+    train_metrics: TrainingMetrics,
+    eval_metrics: EvalMetrics,
+):
+    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+
+    axes[0, 0].plot(train_metrics.games_played, train_metrics.policy_losses, marker="o")
+    axes[0, 0].set_xlabel("Games")
+    axes[0, 0].set_ylabel("Policy Loss")
+    axes[0, 0].set_title("Policy Loss")
+    axes[0, 0].grid(True)
+
+    axes[0, 1].plot(train_metrics.games_played, train_metrics.value_losses, marker="o")
+    axes[0, 1].set_xlabel("Games")
+    axes[0, 1].set_ylabel("Value Loss")
+    axes[0, 1].set_title("Value Loss")
+    axes[0, 1].grid(True)
+
+    for k in eval_metrics.win_rates:
+        axes[1, 0].plot(train_metrics.games_played, eval_metrics.win_rates[k], marker="o", label=k)
+    axes[1, 0].set_xlabel("Games")
+    axes[1, 0].set_ylabel("Win Rate")
+    axes[1, 0].set_title("Win Rates")
+    axes[1, 0].set_ylim([0, 1])
+    axes[1, 0].legend()
+    axes[1, 0].grid(True)
+
+    for k in eval_metrics.loss_rates:
+        axes[1, 1].plot(train_metrics.games_played, eval_metrics.loss_rates[k], marker="o", label=k)
+    axes[1, 1].set_xlabel("Games")
+    axes[1, 1].set_ylabel("Loss Rate")
+    axes[1, 1].set_title("Loss Rates")
+    axes[1, 1].set_ylim([0, 1])
+    axes[1, 1].legend()
+    axes[1, 1].grid(True)
+
+    config_text = "Configuration:\n"
+    config_text += f"Res Blocks: {train_config.num_res_blocks}\n"
+    config_text += f"Hidden Units: {train_config.num_hidden}\n"
+    config_text += f"Batch Size: {train_config.epoch_batch_size}\n"
+    config_text += f"MCTS Sims: {train_config.n_mcts_sims}\n"
+    config_text += f"Games/itr: {train_config.n_games_per_iteration}\n"
+    config_text += f"Epochs/itr: {train_config.n_epochs_per_iteration}\n"
+    config_text += f"LR: {train_config.learning_rate}\n"
+    config_text += f"Weight Decay: {train_config.weight_decay}"
+
+    if train_config.experiment_description:
+        config_text += f"\n\n{train_config.experiment_description}"
+
+    fig.text(
+        0.02,
+        0.02,
+        config_text,
+        fontsize=8,
+        family="monospace",
+        verticalalignment="bottom",
+        bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.5),
+    )
+
+    plt.tight_layout(rect=(0, 0.08, 1, 1))  # Leave space for text box
+    plt.show()
 
 
 if __name__ == "__main__":
