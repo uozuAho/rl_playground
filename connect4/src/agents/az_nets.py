@@ -29,14 +29,14 @@ class ResNet(AzNet):
         # unsqueeze to batch of 1
         minput = enc_state.unsqueeze(0).to(self.device)
         plogits, val = self._model(minput)
-        # todo softmax
-        return plogits.squeeze().tolist(), val.item()
+        return plogits.softmax(dim=1).squeeze().tolist(), val.item()
 
     def pv_batch(self, states: list[c4.GameState]) -> list[types.PV]:
         minput = torch.stack([self._state2tensor(s) for s in states])
-        # todo softmax
         plogits, val = self._model(minput)
-        return list(zip(plogits.squeeze().tolist(), val.squeeze().tolist()))
+        return list(
+            zip(plogits.softmax(dim=1).squeeze().tolist(), val.squeeze().tolist())
+        )
 
     def _state2tensor(self, state: c4.GameState):
         board = state.board

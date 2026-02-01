@@ -2,6 +2,7 @@ import torch
 
 from agents import az_nets
 import env.connect4 as c4
+from utils.maths import is_prob_dist
 
 
 def test_resnet_pv():
@@ -10,7 +11,7 @@ def test_resnet_pv():
     with torch.no_grad():
         p, v = net.pv(state)
     assert len(p) == c4.ACTION_SIZE
-    assert all(type(x) is float for x in p)
+    assert is_prob_dist(p)
     assert type(v) is float
 
 
@@ -23,5 +24,5 @@ def test_resnet_pv_batch():
     assert len(pvs) == batch_size
     for p, v in pvs:
         assert len(p) == c4.ACTION_SIZE
-        assert all(type(x) is float for x in p)
+        assert is_prob_dist(p)
         assert type(v) is float
