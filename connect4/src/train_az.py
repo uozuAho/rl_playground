@@ -97,47 +97,54 @@ class MatchResults:
 
 
 profile_train_config = TrainConfig(
-        num_res_blocks=1,
-        num_hidden=1,
-        learning_rate=0.001,
-        weight_decay=0.0001,
-        num_iterations=1,
-        n_mcts_sims=10,
-        n_games_per_iteration=10,
-        n_epochs_per_iteration=1,
-        epoch_batch_size=10,
-        mask_invalid_actions=False,
-        experiment_description="profile",
-    )
+    num_res_blocks=1,
+    num_hidden=1,
+    learning_rate=0.001,
+    weight_decay=0.0001,
+    num_iterations=1,
+    n_mcts_sims=10,
+    n_games_per_iteration=10,
+    n_epochs_per_iteration=1,
+    epoch_batch_size=10,
+    mask_invalid_actions=False,
+    experiment_description="profile",
+)
 
 default_train_config = TrainConfig(
-        num_res_blocks=1,
-        num_hidden=1,
-        learning_rate=0.001,
-        weight_decay=0.0001,
-        num_iterations=1,
-        n_mcts_sims=10,
-        n_games_per_iteration=10,
-        n_epochs_per_iteration=1,
-        epoch_batch_size=12,
-        mask_invalid_actions=False,
-        experiment_description="",
-    )
+    num_res_blocks=1,
+    num_hidden=1,
+    learning_rate=0.001,
+    weight_decay=0.0001,
+    num_iterations=1,
+    n_mcts_sims=10,
+    n_games_per_iteration=10,
+    n_epochs_per_iteration=1,
+    epoch_batch_size=12,
+    mask_invalid_actions=False,
+    experiment_description="",
+)
 
 profile_eval_config = EvalConfig(
-        n_games=10,
-        n_mcts_sims=10,
-        opponents=[("random", RandomAgent())],
-    )
+    n_games=10,
+    n_mcts_sims=10,
+    opponents=[("random", RandomAgent())],
+)
 
 
 def main(mode):
     print("mode:", mode)
     train_config = profile_train_config if mode == "profile" else default_train_config
-    eval_config = profile_eval_config if mode == "profile" else EvalConfig(
-        n_games=10,
-        n_mcts_sims=10,
-        opponents=[("random", RandomAgent()), ("first legal", FirstLegalActionAgent())],
+    eval_config = (
+        profile_eval_config
+        if mode == "profile"
+        else EvalConfig(
+            n_games=10,
+            n_mcts_sims=10,
+            opponents=[
+                ("random", RandomAgent()),
+                ("first legal", FirstLegalActionAgent()),
+            ],
+        )
     )
     # device = "cpu"
     device = "cuda"
@@ -174,7 +181,9 @@ def main(mode):
                 break
     except KeyboardInterrupt:
         if mode != "profile":
-            plot_training_metrics(train_config, eval_config, train_metrics, eval_metrics)
+            plot_training_metrics(
+                train_config, eval_config, train_metrics, eval_metrics
+            )
 
 
 def train(

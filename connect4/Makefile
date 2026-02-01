@@ -14,3 +14,6 @@ pc:
 
 profile:
 	uv run python -m cProfile src/train_az.py profile > profile.txt
+
+claude:
+	./claude_follow_instructions.sh
