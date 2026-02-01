@@ -9,7 +9,7 @@ from agents.agent import Agent
 import agents.alphazero as az
 from agents.alphazero import make_az_agent
 from agents.az_nets import ResNet, AzNet
-from agents.simple import RandomAgent
+from agents.simple import RandomAgent, FirstLegalActionAgent
 from utils.play import play_games_parallel
 
 @dataclass
@@ -53,6 +53,7 @@ def main():
         n_mcts_sims=10,
         opponents=[
                 ("random", RandomAgent()),
+            ("first legal", FirstLegalActionAgent())
             ]
     )
     device = "cpu"
