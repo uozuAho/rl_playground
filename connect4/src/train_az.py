@@ -1,3 +1,4 @@
+import itertools
 import sys
 import time
 from collections import defaultdict
@@ -159,7 +160,7 @@ def main(mode):
     train_metrics = TrainingMetrics()
     eval_metrics = EvalMetrics()
     try:
-        while True:
+        for i in itertools.count():
             tmetrics = train(
                 net,
                 optimiser,
@@ -169,6 +170,8 @@ def main(mode):
             train_metrics.add(tmetrics)
             emetrics = eval_net(net, eval_config, device)
             eval_metrics.add(emetrics)
+            if mode == "profile" and i > 5:
+                break
     except KeyboardInterrupt:
         if mode != "profile":
             plot_training_metrics(train_config, eval_config, train_metrics, eval_metrics)
