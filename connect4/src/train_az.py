@@ -8,6 +8,7 @@ from pprint import pprint
 from torch.optim import Adam
 import matplotlib.pyplot as plt
 
+from agents import mcts_agent
 from agents.agent import Agent
 import agents.alphazero as az
 from agents.alphazero import make_az_agent
@@ -47,12 +48,22 @@ class TrainingMetrics:
     games_played: list[int] = field(default_factory=list)
     policy_losses: list[float] = field(default_factory=list)
     value_losses: list[float] = field(default_factory=list)
+    total_training_time: float = 0
+
+    @property
+    def total_games_played(self):
+        return self.games_played[-1]
+
+    @property
+    def games_per_sec(self):
+        return self.total_games_played / self.total_training_time
 
     def add(self, metrics: "TrainingMetrics"):
         n_games = 0 if len(self.games_played) == 0 else self.games_played[-1]
         self.games_played.extend(x + n_games for x in metrics.games_played)
         self.policy_losses.extend(metrics.policy_losses)
         self.value_losses.extend(metrics.value_losses)
+        self.total_training_time += metrics.total_training_time
 
     def trim(self):
         minlen = min(len(x) for x in (self.games_played, self.value_losses, self.policy_losses))
@@ -72,6 +83,12 @@ class EvalMetrics:
     draw_rates: dict[str, list[float]] = field(
         default_factory=lambda: defaultdict(list)
     )
+    games_played: int = 0
+    total_play_time: float = 0
+
+    @property
+    def games_per_sec(self):
+        return self.games_played / self.total_play_time
 
     def add(self, metrics: "EvalMetrics"):
         for k in metrics.win_rates:
@@ -80,6 +97,8 @@ class EvalMetrics:
             self.loss_rates[k].extend(metrics.loss_rates[k])
         for k in metrics.draw_rates:
             self.draw_rates[k].extend(metrics.draw_rates[k])
+        self.games_played += metrics.games_played
+        self.total_play_time += metrics.total_play_time
 
     def trim(self, n: int | None):
         n = n if n is not None else min(len(x) for x in (self.win_rates, self.loss_rates, self.draw_rates))
@@ -116,20 +135,6 @@ class MatchResults:
         return self.draws / self.games_played
 
 
-profile_train_config = TrainConfig(
-    num_res_blocks=1,
-    num_hidden=1,
-    learning_rate=0.001,
-    weight_decay=0.0001,
-    num_iterations=1,
-    n_mcts_sims=20,
-    n_games_per_iteration=10,
-    n_epochs_per_iteration=1,
-    epoch_batch_size=10,
-    mask_invalid_actions=False,
-    experiment_description="profile",
-)
-
 default_train_config = TrainConfig(
     num_res_blocks=1,
     num_hidden=1,
@@ -144,6 +149,31 @@ default_train_config = TrainConfig(
     experiment_description="",
 )
 
+
+profile_train_config = TrainConfig(
+    num_res_blocks=1,
+    num_hidden=1,
+    learning_rate=0.001,
+    weight_decay=0.0001,
+    num_iterations=1,
+    n_mcts_sims=20,
+    n_games_per_iteration=10,
+    n_epochs_per_iteration=1,
+    epoch_batch_size=10,
+    mask_invalid_actions=False,
+    experiment_description="profile",
+)
+
+default_eval_config = EvalConfig(
+    n_games=20,
+    n_mcts_sims=10,
+    opponents=[
+        ("random", RandomAgent()),
+        ("first legal", FirstLegalActionAgent()),
+        ("mctsu10", mcts_agent.make_uniform_agent(10))
+    ],
+)
+
 profile_eval_config = EvalConfig(
     n_games=10,
     n_mcts_sims=10,
@@ -155,18 +185,7 @@ def main(mode):
     print("mode:", mode)
     EXPERIMENTS_DIR.mkdir(exist_ok=True)
     train_config = profile_train_config if mode == "profile" else default_train_config
-    eval_config = (
-        profile_eval_config
-        if mode == "profile"
-        else EvalConfig(
-            n_games=10,
-            n_mcts_sims=10,
-            opponents=[
-                ("random", RandomAgent()),
-                ("first legal", FirstLegalActionAgent()),
-            ],
-        )
-    )
+    eval_config = profile_eval_config if mode == "profile" else default_eval_config
     # device = "cpu"
     device = "cuda"
     if mode == "profile":
@@ -198,8 +217,9 @@ def main(mode):
             )
             train_metrics.add(tmetrics)
             emetrics = eval_net(net, eval_config, device)
-            print_eval_metrics(emetrics)
             eval_metrics.add(emetrics)
+            print_train_metrics(train_metrics)
+            print_eval_metrics(eval_metrics)
             if mode == "profile" and time.perf_counter() - start > 5:
                 break
     except KeyboardInterrupt:
@@ -237,7 +257,7 @@ def train(
         )
         end = time.perf_counter()
         dur = end - start
-        print(f"train: {train_config.n_games_per_iteration / dur} games/sec")
+        train_metrics.total_training_time += dur
         iter_policy_losses.append(pl)
         iter_value_losses.append(vl)
 
@@ -263,14 +283,25 @@ def eval_net(net: AzNet, config: EvalConfig, device):
         metrics.loss_rates[f"vs {oname}"].append(mr.p1_loss_rate)
         metrics.draw_rates[f"vs {oname}"].append(mr.draw_rate)
     dur = time.perf_counter() - start
-    print(f"eval: {config.n_games * len(config.opponents) / dur} games/sec")
+    metrics.games_played = config.n_games * len(config.opponents)
+    metrics.total_play_time += dur
     return metrics
 
 
+def print_train_metrics(metrics: TrainingMetrics):
+    ngames = metrics.games_played[-1]
+    ploss = metrics.policy_losses[-1]
+    vloss = metrics.value_losses[-1]
+    gsec = metrics.games_per_sec
+    print(f"train: {ngames} games. {gsec:.2f} games/sec. pv loss {ploss:.3f} {vloss:.3f}")
+
+
 def print_eval_metrics(metrics: EvalMetrics):
+    namecol_w = 3 + max(len(k) for k in metrics.win_rates)
+    print(f"eval: {metrics.games_per_sec:.2f} games/sec")
     for k in metrics.win_rates:
         w,ll,d = metrics.win_rates[k][-1], metrics.loss_rates[k][-1], metrics.draw_rates[k][-1]
-        print(f"{k} WLD: {w:5.2f} {ll:5.2f} {d:5.2f}")
+        print(f"{k.ljust(namecol_w)} WLD: {w:5.2f} {ll:5.2f} {d:5.2f}")
 
 
 def plot_training_metrics(
@@ -324,7 +355,8 @@ def plot_training_metrics(
     config_text += f"Games/itr: {train_config.n_games_per_iteration}\n"
     config_text += f"Epochs/itr: {train_config.n_epochs_per_iteration}\n"
     config_text += f"LR: {train_config.learning_rate}\n"
-    config_text += f"Weight Decay: {train_config.weight_decay}"
+    config_text += f"Weight Decay: {train_config.weight_decay}\n"
+    config_text += f"Train games/s: {train_metrics.games_per_sec:.2f}"
 
     if train_config.experiment_description:
         config_text += f"\n\n{train_config.experiment_description}"
