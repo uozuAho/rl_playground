@@ -58,12 +58,14 @@ def make_move(state: GameState, col: int) -> GameState:
         raise ValueError(f"Invalid move: column {col}")
 
     new_state = state.copy()
+    placed_row = -1
     for row in range(ROWS - 1, -1, -1):
         if new_state.board[row, col] == EMPTY:
             new_state.board[row, col] = state.current_player
+            placed_row = row
             break
 
-    new_state.winner = calc_winner(new_state)
+    new_state.winner = calc_winner_at_position(new_state, placed_row, col)
     new_state.done = (
         new_state.winner is not None or len(get_valid_moves(new_state)) == 0
     )
@@ -74,6 +76,95 @@ def make_move(state: GameState, col: int) -> GameState:
 
 def get_valid_moves(state: GameState) -> list[int]:
     return [col for col in range(COLS) if is_valid_move(state, col)]
+
+
+def calc_winner_at_position(state: GameState, row: int, col: int) -> Player | None:
+    """Check if placing a piece at (row, col) creates a winner by checking 4 directions."""
+    player = state.board[row, col]
+    if player == EMPTY:
+        return None
+
+    # Check horizontal
+    count = 1
+    # Check left
+    for c in range(col - 1, -1, -1):
+        if state.board[row, c] == player:
+            count += 1
+        else:
+            break
+    # Check right
+    for c in range(col + 1, COLS):
+        if state.board[row, c] == player:
+            count += 1
+        else:
+            break
+    if count >= 4:
+        return player
+
+    # Check vertical
+    count = 1
+    # Check up
+    for r in range(row - 1, -1, -1):
+        if state.board[r, col] == player:
+            count += 1
+        else:
+            break
+    # Check down
+    for r in range(row + 1, ROWS):
+        if state.board[r, col] == player:
+            count += 1
+        else:
+            break
+    if count >= 4:
+        return player
+
+    # Check diagonal (top-left to bottom-right)
+    count = 1
+    # Check up-left
+    r, c = row - 1, col - 1
+    while r >= 0 and c >= 0:
+        if state.board[r, c] == player:
+            count += 1
+            r -= 1
+            c -= 1
+        else:
+            break
+    # Check down-right
+    r, c = row + 1, col + 1
+    while r < ROWS and c < COLS:
+        if state.board[r, c] == player:
+            count += 1
+            r += 1
+            c += 1
+        else:
+            break
+    if count >= 4:
+        return player
+
+    # Check diagonal (bottom-left to top-right)
+    count = 1
+    # Check down-left
+    r, c = row + 1, col - 1
+    while r < ROWS and c >= 0:
+        if state.board[r, c] == player:
+            count += 1
+            r += 1
+            c -= 1
+        else:
+            break
+    # Check up-right
+    r, c = row - 1, col + 1
+    while r >= 0 and c < COLS:
+        if state.board[r, c] == player:
+            count += 1
+            r -= 1
+            c += 1
+        else:
+            break
+    if count >= 4:
+        return player
+
+    return None
 
 
 def calc_winner(state: GameState) -> Player | None:
