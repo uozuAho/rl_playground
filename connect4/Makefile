@@ -12,6 +12,9 @@ pc:
 	uv run ruff check --fix
 	uv run pytest
 
+train:
+	uv run src/train_az.py
+
 profile:
 	uv run python -m cProfile src/train_az.py profile > profile.txt
 

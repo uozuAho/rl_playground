@@ -50,6 +50,13 @@ class TrainingMetrics:
         self.policy_losses.extend(metrics.policy_losses)
         self.value_losses.extend(metrics.value_losses)
 
+    def trim(self):
+        minlen = min(len(x) for x in (self.games_played, self.value_losses, self.policy_losses))
+        self.games_played = self.games_played[:minlen]
+        self.policy_losses = self.policy_losses[:minlen]
+        self.value_losses = self.value_losses[:minlen]
+        return minlen
+
 
 @dataclass
 class EvalMetrics:
@@ -69,6 +76,15 @@ class EvalMetrics:
             self.loss_rates[k].extend(metrics.loss_rates[k])
         for k in metrics.draw_rates:
             self.draw_rates[k].extend(metrics.draw_rates[k])
+
+    def trim(self, n: int | None):
+        n = n if n is not None else min(len(x) for x in (self.win_rates, self.loss_rates, self.draw_rates))
+        for k in self.win_rates:
+            self.win_rates[k] = self.win_rates[k][:n]
+        for k in self.loss_rates:
+            self.loss_rates[k] = self.loss_rates[k][:n]
+        for k in self.draw_rates:
+            self.draw_rates[k] = self.draw_rates[k][:n]
 
 
 @dataclass
@@ -116,10 +132,10 @@ default_train_config = TrainConfig(
     learning_rate=0.001,
     weight_decay=0.0001,
     num_iterations=1,
-    n_mcts_sims=10,
-    n_games_per_iteration=10,
-    n_epochs_per_iteration=1,
-    epoch_batch_size=12,
+    n_mcts_sims=20,
+    n_games_per_iteration=100,
+    n_epochs_per_iteration=2,
+    epoch_batch_size=64,
     mask_invalid_actions=False,
     experiment_description="",
 )
@@ -181,6 +197,8 @@ def main(mode):
                 break
     except KeyboardInterrupt:
         if mode != "profile":
+            n = train_metrics.trim()
+            eval_metrics.trim(n)
             plot_training_metrics(
                 train_config, eval_config, train_metrics, eval_metrics
             )
