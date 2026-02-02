@@ -1,8 +1,8 @@
-import itertools
 import sys
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
+from pathlib import Path
 from pprint import pprint
 
 from torch.optim import Adam
@@ -14,6 +14,10 @@ from agents.alphazero import make_az_agent
 from agents.az_nets import ResNet, AzNet
 from agents.simple import RandomAgent, FirstLegalActionAgent
 from utils.play import play_games_parallel
+
+
+PROJ_ROOT = Path(__file__).parent.parent
+EXPERIMENTS_DIR = PROJ_ROOT/"experiments"
 
 
 @dataclass
@@ -118,7 +122,7 @@ profile_train_config = TrainConfig(
     learning_rate=0.001,
     weight_decay=0.0001,
     num_iterations=1,
-    n_mcts_sims=10,
+    n_mcts_sims=20,
     n_games_per_iteration=10,
     n_epochs_per_iteration=1,
     epoch_batch_size=10,
@@ -149,6 +153,7 @@ profile_eval_config = EvalConfig(
 
 def main(mode):
     print("mode:", mode)
+    EXPERIMENTS_DIR.mkdir(exist_ok=True)
     train_config = profile_train_config if mode == "profile" else default_train_config
     eval_config = (
         profile_eval_config
@@ -182,8 +187,9 @@ def main(mode):
 
     train_metrics = TrainingMetrics()
     eval_metrics = EvalMetrics()
+    start = time.perf_counter()
     try:
-        for i in itertools.count():
+        while True:
             tmetrics = train(
                 net,
                 optimiser,
@@ -192,8 +198,9 @@ def main(mode):
             )
             train_metrics.add(tmetrics)
             emetrics = eval_net(net, eval_config, device)
+            print_eval_metrics(emetrics)
             eval_metrics.add(emetrics)
-            if mode == "profile" and i > 5:
+            if mode == "profile" and time.perf_counter() - start > 5:
                 break
     except KeyboardInterrupt:
         if mode != "profile":
@@ -260,11 +267,10 @@ def eval_net(net: AzNet, config: EvalConfig, device):
     return metrics
 
 
-def print_eval_metrics(results: list[MatchResults]):
-    for r in results:
-        print(
-            f"{r.p1_name} vs {r.p2_name}. p1 WLD: {r.p1_win_rate:.2f} {r.p1_loss_rate:.2f} {r.draw_rate:.2f}"
-        )
+def print_eval_metrics(metrics: EvalMetrics):
+    for k in metrics.win_rates:
+        w,ll,d = metrics.win_rates[k][-1], metrics.loss_rates[k][-1], metrics.draw_rates[k][-1]
+        print(f"{k} WLD: {w:5.2f} {ll:5.2f} {d:5.2f}")
 
 
 def plot_training_metrics(
@@ -334,6 +340,7 @@ def plot_training_metrics(
     )
 
     plt.tight_layout(rect=(0, 0.08, 1, 1))  # Leave space for text box
+    plt.savefig(EXPERIMENTS_DIR/"train_az.png")
     plt.show()
 
 
