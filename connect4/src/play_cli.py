@@ -1,5 +1,6 @@
-from agents.simple import RandomAgent, FirstLegalActionAgent
+from agents.simple import FirstLegalActionAgent
 import env.connect4 as c4
+
 
 class CliAgent:
     def get_action(self, state: c4.GameState):
@@ -34,7 +35,14 @@ def main():
         if state.done:
             print("----")
             print(c4.to_string(state))
-            print("game over. winner = ", "draw" if state.winner is None else "X" if state.winner == c4.PLAYER1 else "O")
+            print(
+                "game over. winner = ",
+                "draw"
+                if state.winner is None
+                else "X"
+                if state.winner == c4.PLAYER1
+                else "O",
+            )
             state = c4.new_game()
             turn = state.current_player
 

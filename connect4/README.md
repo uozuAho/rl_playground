@@ -8,7 +8,10 @@ make train
 ```
 
 # todo
-- WIP compare agent perf to azfs
+- need to change perspective? test more x and o
+    - azfs changes perspective in self play
+- also check winner reward makes sense
+    - and value appended to replay history
 
 ## maybe
 - save net/train saved net

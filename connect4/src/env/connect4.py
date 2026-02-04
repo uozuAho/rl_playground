@@ -16,6 +16,7 @@ class GameState:
     current_player: Player
     done: bool
     winner: Player | None
+    moves_played: int = 0
 
     @staticmethod
     def new():
@@ -32,6 +33,7 @@ class GameState:
         s.current_player = self.current_player
         s.done = self.done
         s.winner = self.winner
+        s.moves_played = self.moves_played
         return s
 
     def equals(self, other: "GameState"):
@@ -58,6 +60,7 @@ def make_move(state: GameState, col: int) -> GameState:
         raise ValueError(f"Invalid move: column {col}")
 
     new_state = state.copy()
+    new_state.moves_played += 1
     placed_row = -1
     for row in range(ROWS - 1, -1, -1):
         if new_state.board[row, col] == EMPTY:
@@ -65,10 +68,11 @@ def make_move(state: GameState, col: int) -> GameState:
             placed_row = row
             break
 
-    new_state.winner = calc_winner_at_position(new_state, placed_row, col)
-    new_state.done = (
-        new_state.winner is not None or len(get_valid_moves(new_state)) == 0
-    )
+    if new_state.moves_played > 6:
+        new_state.winner = calc_winner_at_position(new_state, placed_row, col)
+        new_state.done = (
+            new_state.winner is not None or len(get_valid_moves(new_state)) == 0
+        )
     new_state.current_player = other_player(state.current_player)
 
     return new_state
@@ -228,6 +232,7 @@ def from_string(s: str) -> GameState:
         for j, char in enumerate(line):
             state.board[i, j] = chars[char]
     state.current_player = PLAYER1 if numx == numo else PLAYER2
+    state.moves_played = numx + numo
     state.winner = calc_winner(state)
     state.done = state.winner is not None or len(get_valid_moves(state)) == 0
     return state

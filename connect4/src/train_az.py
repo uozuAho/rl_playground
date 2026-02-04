@@ -18,7 +18,7 @@ from utils.play import play_games_parallel
 
 
 PROJ_ROOT = Path(__file__).parent.parent
-EXPERIMENTS_DIR = PROJ_ROOT/"experiments"
+EXPERIMENTS_DIR = PROJ_ROOT / "experiments"
 
 
 @dataclass
@@ -66,7 +66,9 @@ class TrainingMetrics:
         self.total_training_time += metrics.total_training_time
 
     def trim(self):
-        minlen = min(len(x) for x in (self.games_played, self.value_losses, self.policy_losses))
+        minlen = min(
+            len(x) for x in (self.games_played, self.value_losses, self.policy_losses)
+        )
         self.games_played = self.games_played[:minlen]
         self.policy_losses = self.policy_losses[:minlen]
         self.value_losses = self.value_losses[:minlen]
@@ -101,7 +103,11 @@ class EvalMetrics:
         self.total_play_time += metrics.total_play_time
 
     def trim(self, n: int | None):
-        n = n if n is not None else min(len(x) for x in (self.win_rates, self.loss_rates, self.draw_rates))
+        n = (
+            n
+            if n is not None
+            else min(len(x) for x in (self.win_rates, self.loss_rates, self.draw_rates))
+        )
         for k in self.win_rates:
             self.win_rates[k] = self.win_rates[k][:n]
         for k in self.loss_rates:
@@ -147,22 +153,22 @@ default_train_config = TrainConfig(
     epoch_batch_size=128,
     mask_invalid_actions=True,
     # device="cpu",
-    device="cuda"
+    device="cuda",
 )
 
 
 profile_train_config = TrainConfig(
-    num_res_blocks=1,
-    num_hidden=1,
+    num_res_blocks=5,
+    num_hidden=128,
     learning_rate=0.001,
     weight_decay=0.0001,
     num_iterations=1,
-    n_mcts_sims=20,
-    n_games_per_iteration=10,
+    n_mcts_sims=40,
+    n_games_per_iteration=50,
     n_epochs_per_iteration=1,
-    epoch_batch_size=10,
+    epoch_batch_size=32,
     mask_invalid_actions=True,
-    device="cpu"
+    device="cuda",
 )
 
 default_eval_config = EvalConfig(
@@ -171,7 +177,7 @@ default_eval_config = EvalConfig(
     opponents=[
         ("random", RandomAgent()),
         ("first legal", FirstLegalActionAgent()),
-        ("mctsu10", mcts_agent.make_uniform_agent(10))
+        ("mctsu10", mcts_agent.make_uniform_agent(10)),
     ],
 )
 
@@ -280,7 +286,9 @@ def eval_net(net: AzNet, config: EvalConfig, device):
             players = (aza, oagent) if azplayer == "x" else (oagent, aza)
             pnames = ("az", oname) if azplayer == "x" else (oname, "az")
             w, ll, d = play_games_parallel(players[0], players[1], config.n_games)
-            mr = MatchResults(p1_name=pnames[0], p2_name=pnames[1], p1_wins=w, p1_losses=ll, draws=d)
+            mr = MatchResults(
+                p1_name=pnames[0], p2_name=pnames[1], p1_wins=w, p1_losses=ll, draws=d
+            )
             metrics.win_rates[f"{pnames[0]} vs {pnames[1]}"].append(mr.p1_win_rate)
             metrics.loss_rates[f"{pnames[0]} vs {pnames[1]}"].append(mr.p1_loss_rate)
             metrics.draw_rates[f"{pnames[0]} vs {pnames[1]}"].append(mr.draw_rate)
@@ -295,14 +303,20 @@ def print_train_metrics(metrics: TrainingMetrics):
     ploss = metrics.policy_losses[-1]
     vloss = metrics.value_losses[-1]
     gsec = metrics.games_per_sec
-    print(f"train: {ngames} games. {gsec:.2f} games/sec. pv loss {ploss:.3f} {vloss:.3f}")
+    print(
+        f"train: {ngames} games. {gsec:.2f} games/sec. pv loss {ploss:.3f} {vloss:.3f}"
+    )
 
 
 def print_eval_metrics(metrics: EvalMetrics):
     namecol_w = 3 + max(len(k) for k in metrics.win_rates)
     print(f"eval: {metrics.games_per_sec:.2f} games/sec")
     for k in metrics.win_rates:
-        w,ll,d = metrics.win_rates[k][-1], metrics.loss_rates[k][-1], metrics.draw_rates[k][-1]
+        w, ll, d = (
+            metrics.win_rates[k][-1],
+            metrics.loss_rates[k][-1],
+            metrics.draw_rates[k][-1],
+        )
         print(f"{k.ljust(namecol_w)} WLD: {w:5.2f} {ll:5.2f} {d:5.2f}")
 
 
@@ -373,7 +387,7 @@ def plot_training_metrics(
     )
 
     plt.tight_layout(rect=(0, 0.08, 1, 1))  # Leave space for text box
-    plt.savefig(EXPERIMENTS_DIR/"train_az.png")
+    plt.savefig(EXPERIMENTS_DIR / "train_az.png")
     plt.show()
 
 
