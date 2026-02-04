@@ -8,18 +8,19 @@ make train
 ```
 
 # todo
-- need to change perspective? test more x and o
-    - azfs changes perspective in self play
 - also check winner reward makes sense
     - and value appended to replay history
 
 ## maybe
+- if not improving like azfs: check mcts logic, encoded state
+    - i added 'change perspective' to encode state, not sure how to test this
 - save net/train saved net
 - maybe: max out cpu & gpu, train net with random data
 - maybe: compare agent perf vs training, varying
     - masking
     - revert net if eval perf is worse
     - other variables
+    - encode current player into net instaed of code (maybe do with ttt)
 - try different net/conv sizes
 - training games/sec perf:
     - ask claude - show it profile info

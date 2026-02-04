@@ -73,9 +73,9 @@ class ResNet(AzNet):
         board = state.board
         layers = np.stack(
             (
-                board == -1,
+                board == state.current_player,
                 board == 0,
-                board == 1,
+                board == c4.other_player(state.current_player),
             )
         ).astype(np.float32)
         tlayers = [torch.tensor(x, dtype=torch.float32) for x in layers]
