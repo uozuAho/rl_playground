@@ -11,7 +11,8 @@ Install uv
 ```sh
 make init
 make pc
-uv run rank_bots.py
+uv run src/rank_bots.py
+uv run src/train_bots/train_az.py
 
 uv run sb3-dqn-tuna.py # use optuna to find good hyperparams for DQN
 uv run optuna-dashboard sqlite:///dqn-ttt.db  # see hyperparam report

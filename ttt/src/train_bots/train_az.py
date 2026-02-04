@@ -285,6 +285,7 @@ def plot_training_metrics(
     )
 
     plt.tight_layout(rect=(0, 0.08, 1, 1))  # Leave space for text box
+    (PROJECT_ROOT/"experiment_logs").mkdir(exist_ok=True)
     plt.savefig(PROJECT_ROOT / "experiment_logs/train_az.png", dpi=150)
     plt.show()
 
