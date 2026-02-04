@@ -8,8 +8,6 @@ make train
 ```
 
 # todo
-- also check winner reward makes sense
-    - and value appended to replay history
 
 ## maybe
 - if not improving like azfs: check mcts logic, encoded state

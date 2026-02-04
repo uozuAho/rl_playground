@@ -30,11 +30,12 @@ class GameStep:
         )
 
     def __repr__(self):
-        b = "todo board string"
         p = "X" if self.state.current_player == c4.PLAYER1 else "O"
+        b = "|".join(''.join('.' if c == 0 else 'X' if c == c4.PLAYER1 else 'O' for c in row)
+                     for row in self.state.board)
         m = ",".join(f"{x:.2f}" for x in self.mcts_probs)
         # TODO: valid action masks
-        return f"{b} {p} {self.final_value:0.2f}  [{m}]"
+        return f"{p} {b} {self.final_value:0.2f}  [{m}]"
 
 
 def train(
