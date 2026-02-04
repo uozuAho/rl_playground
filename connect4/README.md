@@ -13,13 +13,6 @@ make train
 
 ## maybe
 - save net/train saved net
-- maybe: max out cpu & gpu, train net with random data
-- maybe: compare agent perf vs training, varying
-    - valid action masking
-    - revert net if eval perf is worse
-    - other variables
-    - encode current player into net instaed of code (maybe do with ttt)
-    - maybe do this all with ttt since its faster
 - try different net/conv sizes
 - training games/sec perf:
     - ask claude - show it profile info
