@@ -8,25 +8,28 @@ make train
 ```
 
 # todo
+- improve training speed (maybe do with ttt first)
+- train for ~20k games. get to perfect eval?
 
 ## maybe
-- if not improving like azfs: check mcts logic, encoded state
-    - i added 'change perspective' to encode state, not sure how to test this
 - save net/train saved net
 - maybe: max out cpu & gpu, train net with random data
 - maybe: compare agent perf vs training, varying
-    - masking
+    - valid action masking
     - revert net if eval perf is worse
     - other variables
     - encode current player into net instaed of code (maybe do with ttt)
+    - maybe do this all with ttt since its faster
 - try different net/conv sizes
 - training games/sec perf:
     - ask claude - show it profile info
-- something's fishy - agents never draw...
+- why do agents never draw? is it very unlikely? i've never seen a draw yet
 - maybe make mcts RR agent
 
 # notes
 - past 200ish parallel games doesn't improve speed
+- my training perf:
+    - seems to be improving. after 10k games, pretty strong, not perfect. see train_az-7-perspective-10k
 - training performance of https://github.com/foersterrobert/AlphaZero
     - pre-trained model, mcts 10 sims, 100% vs random and first legal, X and O
     - from azfs video transcript: trained for 8 iterations, took a few hours
