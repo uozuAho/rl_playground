@@ -33,7 +33,7 @@ class TrainConfig:
     n_epochs_per_iteration: int
     epoch_batch_size: int
     mask_invalid_actions: bool
-    experiment_description: str | None
+    device: str
 
 
 @dataclass
@@ -136,17 +136,18 @@ class MatchResults:
 
 
 default_train_config = TrainConfig(
-    num_res_blocks=1,
-    num_hidden=1,
+    num_res_blocks=5,
+    num_hidden=128,
     learning_rate=0.001,
     weight_decay=0.0001,
     num_iterations=1,
-    n_mcts_sims=20,
+    n_mcts_sims=40,
     n_games_per_iteration=100,
-    n_epochs_per_iteration=2,
-    epoch_batch_size=64,
-    mask_invalid_actions=False,
-    experiment_description="",
+    n_epochs_per_iteration=4,
+    epoch_batch_size=128,
+    mask_invalid_actions=True,
+    # device="cpu",
+    device="cuda"
 )
 
 
@@ -160,8 +161,8 @@ profile_train_config = TrainConfig(
     n_games_per_iteration=10,
     n_epochs_per_iteration=1,
     epoch_batch_size=10,
-    mask_invalid_actions=False,
-    experiment_description="profile",
+    mask_invalid_actions=True,
+    device="cpu"
 )
 
 default_eval_config = EvalConfig(
@@ -186,17 +187,15 @@ def main(mode):
     EXPERIMENTS_DIR.mkdir(exist_ok=True)
     train_config = profile_train_config if mode == "profile" else default_train_config
     eval_config = profile_eval_config if mode == "profile" else default_eval_config
-    # device = "cpu"
-    device = "cuda"
     if mode == "profile":
         pprint(train_config)
         pprint(eval_config)
-        print("device:", device)
+        print("device:", train_config.device)
 
     net = ResNet(
         num_res_blocks=train_config.num_res_blocks,
         num_hidden=train_config.num_hidden,
-        device=device,
+        device=train_config.device,
     )
     optimiser = Adam(
         net.model.parameters(),
@@ -213,12 +212,12 @@ def main(mode):
                 net,
                 optimiser,
                 train_config,
-                device=device,
+                device=train_config.device,
             )
             train_metrics.add(tmetrics)
-            emetrics = eval_net(net, eval_config, device)
-            eval_metrics.add(emetrics)
             print_train_metrics(train_metrics)
+            emetrics = eval_net(net, eval_config, train_config.device)
+            eval_metrics.add(emetrics)
             print_eval_metrics(eval_metrics)
             if mode == "profile" and time.perf_counter() - start > 5:
                 break
@@ -277,11 +276,14 @@ def eval_net(net: AzNet, config: EvalConfig, device):
     aza = make_az_agent(net, config.n_mcts_sims, device)
     start = time.perf_counter()
     for oname, oagent in config.opponents:
-        w, ll, d = play_games_parallel(aza, oagent, config.n_games)
-        mr = MatchResults(p1_name="az", p2_name=oname, p1_wins=w, p1_losses=ll, draws=d)
-        metrics.win_rates[f"vs {oname}"].append(mr.p1_win_rate)
-        metrics.loss_rates[f"vs {oname}"].append(mr.p1_loss_rate)
-        metrics.draw_rates[f"vs {oname}"].append(mr.draw_rate)
+        for azplayer in ["x", "o"]:
+            players = (aza, oagent) if azplayer == "x" else (oagent, aza)
+            pnames = ("az", oname) if azplayer == "x" else (oname, "az")
+            w, ll, d = play_games_parallel(players[0], players[1], config.n_games)
+            mr = MatchResults(p1_name=pnames[0], p2_name=pnames[1], p1_wins=w, p1_losses=ll, draws=d)
+            metrics.win_rates[f"{pnames[0]} vs {pnames[1]}"].append(mr.p1_win_rate)
+            metrics.loss_rates[f"{pnames[0]} vs {pnames[1]}"].append(mr.p1_loss_rate)
+            metrics.draw_rates[f"{pnames[0]} vs {pnames[1]}"].append(mr.draw_rate)
     dur = time.perf_counter() - start
     metrics.games_played = config.n_games * len(config.opponents)
     metrics.total_play_time += dur
@@ -347,19 +349,18 @@ def plot_training_metrics(
     axes[1, 1].grid(True)
 
     config_text = "Configuration:\n"
+    config_text += f"device: {train_config.device}\n"
     config_text += f"Res Blocks: {train_config.num_res_blocks}\n"
     config_text += f"Hidden Units: {train_config.num_hidden}\n"
-    config_text += f"Batch Size: {train_config.epoch_batch_size}\n"
+    config_text += f"LR: {train_config.learning_rate}\n"
+    config_text += f"Weight Decay: {train_config.weight_decay}\n"
     config_text += f"Train MCTS Sims: {train_config.n_mcts_sims}\n"
     config_text += f"Eval MCTS Sims: {eval_config.n_mcts_sims}\n"
     config_text += f"Games/itr: {train_config.n_games_per_iteration}\n"
     config_text += f"Epochs/itr: {train_config.n_epochs_per_iteration}\n"
-    config_text += f"LR: {train_config.learning_rate}\n"
-    config_text += f"Weight Decay: {train_config.weight_decay}\n"
+    config_text += f"Batch Size: {train_config.epoch_batch_size}\n"
+    config_text += f"Train mask: {train_config.mask_invalid_actions}\n"
     config_text += f"Train games/s: {train_metrics.games_per_sec:.2f}"
-
-    if train_config.experiment_description:
-        config_text += f"\n\n{train_config.experiment_description}"
 
     fig.text(
         0.02,
