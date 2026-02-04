@@ -18,7 +18,7 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent
 
 
 def main():
-    num_iterations = 50
+    num_iterations = 502345
     experiment_description = ""
     num_res_blocks = 4
     num_hidden = 64
@@ -285,7 +285,7 @@ def plot_training_metrics(
     )
 
     plt.tight_layout(rect=(0, 0.08, 1, 1))  # Leave space for text box
-    (PROJECT_ROOT/"experiment_logs").mkdir(exist_ok=True)
+    (PROJECT_ROOT / "experiment_logs").mkdir(exist_ok=True)
     plt.savefig(PROJECT_ROOT / "experiment_logs/train_az.png", dpi=150)
     plt.show()
 
