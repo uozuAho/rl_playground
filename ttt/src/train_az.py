@@ -239,6 +239,7 @@ def train(
             train_batch_size=train_config.epoch_batch_size,
             mask_invalid_actions=train_config.mask_invalid_actions,
             verbose=False,
+            parallel=True
         )
         end = time.perf_counter()
         dur = end - start
