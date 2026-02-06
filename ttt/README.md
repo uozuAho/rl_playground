@@ -29,6 +29,7 @@ uv run tabular-param-search.py  # try a range of parameters for training. Not
             as X vs perfect, WLD:  0 0 100
             as O vs perfect, WLD:  0 0 100
         - same-ish strength after 5000 training games, mcts 60 train, 10 eval
+    - see my other todo notes
     - maybe: why az nn tab still lose with good tab accuracy?
         - worsening max loss while improving avg loss. chatty suggestions:
             - WARNING I think this all may be a wild goose chase. AZ train gets high
