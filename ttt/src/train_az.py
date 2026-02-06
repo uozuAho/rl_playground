@@ -4,8 +4,6 @@ from pathlib import Path
 from torch.optim import Adam
 import matplotlib.pyplot as plt
 
-import ensure_project_path  # noqa  python sucks
-
 import agents.alphazero as az
 from agents.alphazero import ResNet
 from agents.compare import play_and_report, play_games_parallel
@@ -14,7 +12,7 @@ from agents.perfect import PerfectAgent
 from agents.random import RandomAgent
 
 
-PROJECT_ROOT = Path(__file__).parent.parent.parent
+PROJECT_ROOT = Path(__file__).parent.parent
 
 
 def main():
