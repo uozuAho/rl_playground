@@ -22,5 +22,6 @@ uv run tabular-param-search.py  # try a range of parameters for training. Not
 
 
 # todo
+- perf: follow answer.md
 - see my other todo notes
 - add `ty check` to make pc. lots of errors

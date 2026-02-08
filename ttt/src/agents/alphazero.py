@@ -349,13 +349,15 @@ def _env2tensor(env):
 
 def _board2tensor(board: t3.Board, current_player: t3.Player):
     # encodes a state in a player-independent way
-    layers = (
-        [c == current_player for c in board],
-        [c == t3.EMPTY for c in board],
-        [c == t3.other_player(current_player) for c in board],
-    )
-    tlayers = [torch.tensor(x, dtype=torch.float32).reshape((3, 3)) for x in layers]
-    return torch.stack(tlayers)
+    np_array = np.array(
+        [
+            [c == current_player for c in board],
+            [c == t3.EMPTY for c in board],
+            [c == t3.other_player(current_player) for c in board],
+        ],
+        dtype=np.float32,
+    ).reshape(3, 3, 3)
+    return torch.from_numpy(np_array)
 
 
 # todo: think of a better name
