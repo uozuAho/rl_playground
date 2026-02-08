@@ -35,3 +35,9 @@ prof-trainaz:
 
 rank:
 	uv run src/rank_bots.py
+
+gpumax:
+	uv run src/exp_ttt_gpu.py
+
+gpumaxprof:
+	uv run python -m cProfile src/exp_ttt_gpu.py profile > gpumaxprof.txt
