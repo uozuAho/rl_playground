@@ -28,7 +28,7 @@ def main():
     agents = [
         # ("Random", RandomAgent()),
         # ("Perfect", PerfectAgent()),
-        ("mctsrr10", MctsAgent(n_sims=100)),
+        ("mctsrr10", MctsAgent(n_sims=10)),
         (
             "az10",
             AlphaZeroAgent.load(

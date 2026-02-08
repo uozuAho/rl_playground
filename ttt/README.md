@@ -22,14 +22,5 @@ uv run tabular-param-search.py  # try a range of parameters for training. Not
 
 
 # todo
-- alpha zero
-    - later maybe: experiments:
-        - optimise. microoptimisations plus ideas below. eg. vectorise stuff with np,
-          batch NN passes where possible
-        - encode current player in model input, rather than manual twiddling
-        - maybe: discount trajectory values. eg first move of a winning trajectory should be < 1
-        - don't update model if evaluation is worse than previous model
-        - compress net weight types etc.? eg. don't need float32 to represent TTT board cells
-        - do i need to tune learning rate to batch size, epochs etc?
-            - maybe. Prob fine for now?
+- see my other todo notes
 - add `ty check` to make pc. lots of errors

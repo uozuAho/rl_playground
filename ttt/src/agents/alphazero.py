@@ -412,7 +412,7 @@ class AlphaZeroAgent(TttAgent):
     @staticmethod
     def load(path: Path, n_mcts_sims, device):
         net = ResNet.load(path, device)
-        return AlphaZeroAgent.from_nn(net, n_mcts_sims, device)
+        return AlphaZeroAgent.from_nn(net, n_mcts_sims, c_puct=1.0, device=device)
 
     @staticmethod
     def from_nn(model: nn.Module, n_mcts_sims: int, c_puct: float, device: str):
