@@ -71,7 +71,7 @@ def train(
 
 def evaluate(rnet: ResNet, device: str, n_mcts_sims=10, n_games=50):
     agent = az.AlphaZeroAgent.from_nn(
-        model=rnet, device=device, n_mcts_sims=n_mcts_sims
+        model=rnet, device=device, n_mcts_sims=n_mcts_sims, c_puct=1.0
     )
     rng = RandomAgent()
     rnet.eval()

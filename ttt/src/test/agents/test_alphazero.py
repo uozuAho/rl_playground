@@ -34,7 +34,9 @@ def test_train_and_play_parallel():
         train_batch_size=4,
         parallel=True,
     )
-    az = alphazero.AlphaZeroAgent.from_nn(model, device="cpu", n_mcts_sims=10)
+    az = alphazero.AlphaZeroAgent.from_nn(
+        model, device="cpu", n_mcts_sims=10, c_puct=1.0
+    )
 
     rng = RandomAgent()
     env = t3.TttEnv()

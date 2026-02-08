@@ -35,12 +35,16 @@ class TrainConfig:
     epoch_batch_size: int
     mask_invalid_actions: bool
     device: str
+    c_puct: float
+    dirichlet_alpha: float
+    dirichlet_epsilon: float
 
 
 @dataclass
 class EvalConfig:
     n_games: int
     n_mcts_sims: int
+    c_puct: float
     opponents: list[tuple[str, TttAgent]]
 
 
@@ -155,12 +159,16 @@ default_train_config = TrainConfig(
     mask_invalid_actions=True,
     # device="cpu",
     device="cuda",
+    c_puct=3.0,
+    dirichlet_alpha=0.3,
+    dirichlet_epsilon=0.25,
 )
 
 
 default_eval_config = EvalConfig(
     n_games=20,
     n_mcts_sims=10,
+    c_puct=1.0,
     opponents=[
         ("random", RandomAgent()),
         ("perfect", PerfectAgent()),
@@ -210,7 +218,7 @@ def main(mode):
             if mode == "profile" and time.perf_counter() - start > 5:
                 break
     except KeyboardInterrupt:
-        net.save(TRAINED_MODELS_PATH/"aznet")
+        net.save(TRAINED_MODELS_PATH / "aznet")
         if mode != "profile":
             n = train_metrics.trim()
             eval_metrics.trim(n)
@@ -242,7 +250,10 @@ def train(
             train_batch_size=train_config.epoch_batch_size,
             mask_invalid_actions=train_config.mask_invalid_actions,
             verbose=False,
-            parallel=True
+            parallel=True,
+            c_puct=train_config.c_puct,
+            dirichlet_alpha=train_config.dirichlet_alpha,
+            dirichlet_epsilon=train_config.dirichlet_epsilon,
         )
         end = time.perf_counter()
         dur = end - start
@@ -263,14 +274,14 @@ def train(
 
 def eval_net(net: ResNet, config: EvalConfig, device):
     metrics = EvalMetrics()
-    aza = AlphaZeroAgent.from_nn(net, config.n_mcts_sims, device)
+    aza = AlphaZeroAgent.from_nn(net, config.n_mcts_sims, config.c_puct, device)
     start = time.perf_counter()
     for oname, oagent in config.opponents:
         for azplayer in ["x", "o"]:
             players = (aza, oagent) if azplayer == "x" else (oagent, aza)
             pnames = ("az", oname) if azplayer == "x" else (oname, "az")
             r = play_games_parallel(players[0], players[1], config.n_games)
-            w,ll,d = r["X"], r["O"], r["draw"]
+            w, ll, d = r["X"], r["O"], r["draw"]
             mr = MatchResults(
                 p1_name=pnames[0], p2_name=pnames[1], p1_wins=w, p1_losses=ll, draws=d
             )
@@ -355,6 +366,10 @@ def plot_training_metrics(
     config_text += f"Weight Decay: {train_config.weight_decay}\n"
     config_text += f"Train MCTS Sims: {train_config.n_mcts_sims}\n"
     config_text += f"Eval MCTS Sims: {eval_config.n_mcts_sims}\n"
+    config_text += f"train C: {train_config.c_puct}\n"
+    config_text += f"eval C: {eval_config.c_puct}\n"
+    config_text += f"train alpha: {train_config.dirichlet_alpha}\n"
+    config_text += f"train epsilon: {train_config.dirichlet_epsilon}\n"
     config_text += f"Games/itr: {train_config.n_games_per_iteration}\n"
     config_text += f"Epochs/itr: {train_config.n_epochs_per_iteration}\n"
     config_text += f"Batch Size: {train_config.epoch_batch_size}\n"

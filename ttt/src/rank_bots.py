@@ -23,12 +23,18 @@ PROJECT_ROOT = Path(__file__).parent.parent
 TRAINED_MODELS_PATH = PROJECT_ROOT / "trained_models"
 N_GAMES = 200
 
+
 def main():
     agents = [
         # ("Random", RandomAgent()),
         # ("Perfect", PerfectAgent()),
         ("mctsrr10", MctsAgent(n_sims=100)),
-        ("az10", AlphaZeroAgent.load(TRAINED_MODELS_PATH/"aznet", n_mcts_sims=10, device="cpu"))
+        (
+            "az10",
+            AlphaZeroAgent.load(
+                TRAINED_MODELS_PATH / "aznet", n_mcts_sims=10, device="cpu"
+            ),
+        ),
         # (
         #     "tmcts_sym_100k_30",
         #     TabMctsAgent.load(TRAINED_MODELS_PATH / "tmcts_sym_100k_30", n_sims=30),
