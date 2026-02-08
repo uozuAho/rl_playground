@@ -19,6 +19,7 @@ from agents.random import RandomAgent
 
 PROJ_ROOT = Path(__file__).parent.parent
 EXPERIMENTS_DIR = PROJ_ROOT / "experiment_logs"
+TRAINED_MODELS_PATH = PROJ_ROOT / "trained_models"
 
 
 @dataclass
@@ -147,8 +148,8 @@ default_train_config = TrainConfig(
     learning_rate=0.001,
     weight_decay=0.0001,
     num_iterations=1,
-    n_mcts_sims=40,
-    n_games_per_iteration=50,
+    n_mcts_sims=60,
+    n_games_per_iteration=100,
     n_epochs_per_iteration=4,
     epoch_batch_size=128,
     mask_invalid_actions=True,
@@ -171,6 +172,7 @@ default_eval_config = EvalConfig(
 def main(mode):
     print("mode:", mode)
     EXPERIMENTS_DIR.mkdir(exist_ok=True)
+    TRAINED_MODELS_PATH.mkdir(exist_ok=True)
     train_config = default_train_config
     eval_config = default_eval_config
     if mode == "profile":
@@ -208,6 +210,7 @@ def main(mode):
             if mode == "profile" and time.perf_counter() - start > 5:
                 break
     except KeyboardInterrupt:
+        net.save(TRAINED_MODELS_PATH/"aznet")
         if mode != "profile":
             n = train_metrics.trim()
             eval_metrics.trim(n)

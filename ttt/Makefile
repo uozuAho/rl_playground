@@ -32,3 +32,6 @@ trainaz:
 
 prof-trainaz:
 	uv run python -m cProfile src/train_az.py profile > profile.txt
+
+rank:
+	uv run src/rank_bots.py

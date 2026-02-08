@@ -364,6 +364,11 @@ class AlphaZeroAgent(TttAgent):
         self._batch_mcts_eval = batch_mcts_eval
 
     @staticmethod
+    def load(path: Path, n_mcts_sims, device):
+        net = ResNet.load(path, device)
+        return AlphaZeroAgent.from_nn(net, n_mcts_sims, device)
+
+    @staticmethod
     def from_nn(model: nn.Module, n_mcts_sims: int, device: str):
         return AlphaZeroAgent(
             mcts_eval=nn_2_eval(model, device),
