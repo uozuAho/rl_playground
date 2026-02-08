@@ -23,8 +23,6 @@ uv run tabular-param-search.py  # try a range of parameters for training. Not
 
 # todo
 - alpha zero
-    - add temperature. seems not imporant - in os, T=1, in azfs, T=1.25 during training
-    - make configurable, log in chart: temp, cpuct, alpha, eps
     - later maybe: experiments:
         - optimise. microoptimisations plus ideas below. eg. vectorise stuff with np,
           batch NN passes where possible

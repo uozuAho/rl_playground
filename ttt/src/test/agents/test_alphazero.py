@@ -29,6 +29,8 @@ def test_train_and_play_parallel():
         n_games=5,
         n_epochs=2,
         n_mcts_sims=5,
+        c_puct=2.0,
+        temperature=1.25,
         device="cpu",
         mask_invalid_actions=False,
         train_batch_size=4,

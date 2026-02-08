@@ -16,7 +16,7 @@ import algs.az_mcts as mcts
 from agents.agent import TttAgent
 import ttt.env as t3
 from agents.az_nets import ResNet
-from utils.maths import softmax, is_prob_dist
+from utils.maths import softmax, is_prob_dist, heat
 
 type MctsProbs = list[float]
 
@@ -62,6 +62,8 @@ def train_new(ngames, device):
         ngames,
         n_epochs=5,
         n_mcts_sims=5,
+        c_puct=2,
+        temperature=1.25,
         device=device,
         mask_invalid_actions=True,
         train_batch_size=4,
@@ -78,11 +80,12 @@ def train(
     device: str,
     mask_invalid_actions: bool,
     train_batch_size,
-    verbose=True,
-    parallel=False,
-    c_puct: float = 3.0,
+    c_puct: float,
+    temperature: float,
     dirichlet_alpha: float = 0.3,
     dirichlet_epsilon: float = 0.25,
+    verbose=True,
+    parallel=False,
 ):
     """Self play n_games, train over the resulting data for n_epochs.
     Returns: avg_policy_loss, avg_value_loss
@@ -104,6 +107,7 @@ def train(
                     n_games,
                     n_mcts_sims,
                     c_puct,
+                    temperature,
                     dirichlet_alpha,
                     dirichlet_epsilon,
                 )
@@ -111,7 +115,12 @@ def train(
         else:
             for _ in range(n_games):
                 game_steps += _self_play_one_game(
-                    mcts_eval, n_mcts_sims, c_puct, dirichlet_alpha, dirichlet_epsilon
+                    mcts_eval,
+                    n_mcts_sims,
+                    c_puct,
+                    temperature,
+                    dirichlet_alpha,
+                    dirichlet_epsilon,
                 )
 
     model.train()
@@ -254,6 +263,7 @@ def _self_play_one_game(
     eval_fn: mcts.EvaluateFunc,
     n_sims,
     c_puct,
+    temperature,
     dirichlet_alpha,
     dirichlet_epsilon,
 ) -> list[GameStep]:
@@ -275,6 +285,7 @@ def _self_play_one_game(
         )
         probs = _mcts_probs(root)
         mem.append((state, env.current_player, valid_mask, probs))
+        probs = heat(np.array(probs), temperature)
         action = np.random.choice(9, p=probs)
         _, reward, game_over, _, _ = env.step(action)
         if game_over:
@@ -291,6 +302,7 @@ def _self_play_n_games(
     n_games,
     n_mcts_sims,
     c_puct,
+    temperature,
     dirichlet_alpha,
     dirichlet_epsilon,
 ) -> typing.Iterable[GameStep]:
@@ -316,6 +328,7 @@ def _self_play_n_games(
             trajectories[i].append(
                 (env.board[:], env.current_player, valid_mask, probs)
             )
+            probs = heat(np.array(probs), temperature)
             action = np.random.choice(9, p=probs)
             _, reward, game_over, _, _ = env.step(action)
             if game_over:

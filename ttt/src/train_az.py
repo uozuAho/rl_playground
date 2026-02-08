@@ -35,8 +35,13 @@ class TrainConfig:
     epoch_batch_size: int
     mask_invalid_actions: bool
     device: str
+    # higher C, more exploration of less visited states
     c_puct: float
+    # higher temperature, more random final action selection
+    temperature: float
+    # higher alpha, more 'spikey' MCTS noise
     dirichlet_alpha: float
+    # higher eps, more random action selection during MCTS search
     dirichlet_epsilon: float
 
 
@@ -159,9 +164,10 @@ default_train_config = TrainConfig(
     mask_invalid_actions=True,
     # device="cpu",
     device="cuda",
-    c_puct=3.0,
+    c_puct=2.0,
+    temperature=1.25,
     dirichlet_alpha=0.3,
-    dirichlet_epsilon=0.25,
+    dirichlet_epsilon=0.15,
 )
 
 
@@ -252,6 +258,7 @@ def train(
             verbose=False,
             parallel=True,
             c_puct=train_config.c_puct,
+            temperature=train_config.temperature,
             dirichlet_alpha=train_config.dirichlet_alpha,
             dirichlet_epsilon=train_config.dirichlet_epsilon,
         )
@@ -366,8 +373,9 @@ def plot_training_metrics(
     config_text += f"Weight Decay: {train_config.weight_decay}\n"
     config_text += f"Train MCTS Sims: {train_config.n_mcts_sims}\n"
     config_text += f"Eval MCTS Sims: {eval_config.n_mcts_sims}\n"
-    config_text += f"train C: {train_config.c_puct}\n"
-    config_text += f"eval C: {eval_config.c_puct}\n"
+    config_text += f"train cpuct: {train_config.c_puct}\n"
+    config_text += f"eval cpuct: {eval_config.c_puct}\n"
+    config_text += f"train temp: {train_config.temperature}\n"
     config_text += f"train alpha: {train_config.dirichlet_alpha}\n"
     config_text += f"train epsilon: {train_config.dirichlet_epsilon}\n"
     config_text += f"Games/itr: {train_config.n_games_per_iteration}\n"
