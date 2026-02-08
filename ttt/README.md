@@ -23,8 +23,6 @@ uv run tabular-param-search.py  # try a range of parameters for training. Not
 
 # todo
 - WIP experiment: max out gpu in train and eval
-    - log n updates/sec, steps/sec
-    - play with batch size
     - idea: threaded step gen
     - idea: pre-compute as much as possible before moving to gpu for calc
 - perf: maybe: follow answer.md
