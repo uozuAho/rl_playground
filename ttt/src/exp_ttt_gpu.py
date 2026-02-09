@@ -84,6 +84,22 @@ def runloop(device: str, net: ResNet, nsteps: int, optimiser: Adam, profile: boo
             break
 
 
+def steps_to_batch(
+    game_steps: list[GameStep],
+):
+    """Returns tensors: states, policy targets, value targets"""
+    for s in game_steps:
+        assert is_prob_dist(s.mcts_probs)
+        for i, v in enumerate(s.valid_action_mask):
+            if not v:
+                assert s.board[i] != t3.EMPTY
+                assert s.mcts_probs[i] == 0
+    state = torch.stack([board2tensor(g.board, g.player) for g in game_steps])
+    policy_targets = torch.tensor([g.mcts_probs for g in game_steps], dtype=torch.float32)
+    value_targets = torch.tensor([g.final_value for g in game_steps], dtype=torch.float32).reshape((-1, 1))
+    return state, policy_targets, value_targets
+
+
 def update_net(
     model: nn.Module,
     optimizer,
@@ -91,25 +107,10 @@ def update_net(
     mask_invalid_actions,
     device,
 ):
-    for s in game_steps:
-        assert is_prob_dist(s.mcts_probs)
-        for i, v in enumerate(s.valid_action_mask):
-            if not v:
-                assert s.board[i] != t3.EMPTY
-                assert s.mcts_probs[i] == 0
-    step_tuples = [s.as_tuple() for s in game_steps]
-    *_, policy_targets, value_targets = zip(*step_tuples)
-    state = torch.stack(
-        [board2tensor(board, player) for board, player, *_ in step_tuples]
-    ).to(device)
-
-    policy_targets, value_targets = (
-        np.array(policy_targets),
-        np.array(value_targets).reshape(-1, 1),
-    )
-
-    policy_targets = torch.tensor(policy_targets, dtype=torch.float32, device=device)
-    value_targets = torch.tensor(value_targets, dtype=torch.float32, device=device)
+    state, policy_targets, value_targets = steps_to_batch(game_steps)
+    state = state.to(device)
+    policy_targets = policy_targets.to(device)
+    value_targets = value_targets.to(device)
 
     out_policy, out_value = model(state)
 
