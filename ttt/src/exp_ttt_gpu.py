@@ -29,11 +29,11 @@ def gen_game_step():
 
 
 def producer_process(queue: mp.Queue, nsteps: int, stop_event: mp.Event):
-    """Generate batches of game steps and put them on the queue."""
     while not stop_event.is_set():
         steps = [gen_game_step() for _ in range(nsteps)]
+        batch = steps_to_batch(steps)
         try:
-            queue.put(steps, timeout=0.1)
+            queue.put(batch, timeout=0.1)
         except:
             # Queue full or timeout, continue
             pass
@@ -52,13 +52,13 @@ def consumer_process(queue: mp.Queue, nsteps: int, stop_event: mp.Event, profile
 
     while not stop_event.is_set():
         try:
-            steps = queue.get(timeout=0.1)
+            states, ptargets, vtargets = queue.get(timeout=0.1)
         except:
             # Queue empty or timeout, continue
             continue
 
         update_start = time.perf_counter()
-        update_net(net, optimiser, steps, mask_invalid_actions=False, device=device)
+        update_net(net, optimiser, states, ptargets, vtargets, device=device)
         update_time = time.perf_counter() - update_start
         total_update_time += update_time
         update_count += 1
@@ -130,25 +130,16 @@ def steps_to_batch(
 def update_net(
     model: nn.Module,
     optimizer,
-    game_steps: list[GameStep],
-    mask_invalid_actions,
+    states: torch.Tensor,
+    policy_targets: torch.Tensor,
+    value_targets: torch.Tensor,
     device,
 ):
-    state, policy_targets, value_targets = steps_to_batch(game_steps)
-    state = state.to(device)
+    states = states.to(device)
     policy_targets = policy_targets.to(device)
     value_targets = value_targets.to(device)
 
-    out_policy, out_value = model(state)
-
-    if mask_invalid_actions:
-        valid_action_masks = torch.stack(
-            [
-                torch.tensor(s.valid_action_mask, dtype=torch.bool, device=device)
-                for s in game_steps
-            ]
-        )
-        out_policy = out_policy.masked_fill(~valid_action_masks, -1e32)
+    out_policy, out_value = model(states)
 
     policy_loss = F.cross_entropy(out_policy, policy_targets)
     value_loss = F.mse_loss(out_value, value_targets)
