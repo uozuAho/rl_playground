@@ -1,4 +1,11 @@
-"""Trying to get 100% GPU usage"""
+"""Experiment trying to get 100% GPU usage.
+
+What I found
+- torch tensors are inefficient to send over queues
+- np arrays are efficient
+- pre-pack batches on the producer side
+- max game steps per second peaks around a batch size of 1024
+"""
 
 import multiprocessing as mp
 import random
@@ -13,7 +20,6 @@ import torch.nn.functional as F
 
 from agents.alphazero import GameStep
 from agents.az_nets import ResNet
-from utils.maths import is_prob_dist
 
 import ttt.env as t3
 
@@ -31,16 +37,14 @@ def gen_game_step():
 def producer_process(queue: mp.Queue, nsteps: int, stop_event: mp.Event):
     while not stop_event.is_set():
         steps = [gen_game_step() for _ in range(nsteps)]
-        batch = steps_to_batch(steps)
+        raw_batch = steps_to_raw_batch(steps)
         try:
-            queue.put(batch, timeout=0.1)
+            queue.put(raw_batch, timeout=0.1)
         except:
-            # Queue full or timeout, continue
             pass
 
 
 def consumer_process(queue: mp.Queue, nsteps: int, stop_event: mp.Event, profile: bool):
-    """Take batches from queue, update network on GPU."""
     device = "cuda"
     net = ResNet(4, 64, device)
     optimiser = Adam(net.parameters(), lr=0.001, weight_decay=0.0001)
@@ -52,13 +56,13 @@ def consumer_process(queue: mp.Queue, nsteps: int, stop_event: mp.Event, profile
 
     while not stop_event.is_set():
         try:
-            states, ptargets, vtargets = queue.get(timeout=0.1)
+            raw_batch = queue.get(timeout=0.1)
         except:
-            # Queue empty or timeout, continue
             continue
 
         update_start = time.perf_counter()
-        update_net(net, optimiser, states, ptargets, vtargets, device=device)
+        states, ptargets, vtargets = raw_batch_to_tensors(raw_batch, device)
+        update_net(net, optimiser, states, ptargets, vtargets)
         update_time = time.perf_counter() - update_start
         total_update_time += update_time
         update_count += 1
@@ -87,7 +91,7 @@ def consumer_process(queue: mp.Queue, nsteps: int, stop_event: mp.Event, profile
 
 
 def run(profile=False):
-    nsteps = 512
+    nsteps = 2048
     queue = mp.Queue(maxsize=10)  # Limit queue size to avoid unbounded memory
     stop_event = mp.Event()
 
@@ -111,20 +115,31 @@ def run(profile=False):
             consumer.terminate()
 
 
-def steps_to_batch(
-    game_steps: list[GameStep],
-):
-    """Returns tensors: states, policy targets, value targets"""
-    for s in game_steps:
-        assert is_prob_dist(s.mcts_probs)
-        for i, v in enumerate(s.valid_action_mask):
-            if not v:
-                assert s.board[i] != t3.EMPTY
-                assert s.mcts_probs[i] == 0
-    state = torch.stack([board2tensor(g.board, g.player) for g in game_steps])
-    policy_targets = torch.tensor([g.mcts_probs for g in game_steps], dtype=torch.float32)
-    value_targets = torch.tensor([g.final_value for g in game_steps], dtype=torch.float32).reshape((-1, 1))
-    return state, policy_targets, value_targets
+def steps_to_raw_batch(game_steps: list[GameStep]):
+    """Convert game steps to raw numpy arrays for efficient queue transfer & batch unpacking"""
+    batch_size = len(game_steps)
+
+    boards_np = np.empty((batch_size, 3, 3, 3), dtype=np.float32)
+    policy_np = np.empty((batch_size, 9), dtype=np.float32)
+    value_np = np.empty((batch_size, 1), dtype=np.float32)
+
+    for i, g in enumerate(game_steps):
+        boards_np[i, 0] = np.array([c == g.player for c in g.board], dtype=np.float32).reshape(3, 3)
+        boards_np[i, 1] = np.array([c == t3.EMPTY for c in g.board], dtype=np.float32).reshape(3, 3)
+        boards_np[i, 2] = np.array([c == t3.other_player(g.player) for c in g.board], dtype=np.float32).reshape(3, 3)
+        policy_np[i] = g.mcts_probs
+        value_np[i, 0] = g.final_value
+
+    return boards_np, policy_np, value_np
+
+
+def raw_batch_to_tensors(raw_batch, device):
+    """Convert raw numpy batch directly to GPU tensors."""
+    boards_np, policy_np, value_np = raw_batch
+    states = torch.from_numpy(boards_np).to(device)
+    policy_targets = torch.from_numpy(policy_np).to(device)
+    value_targets = torch.from_numpy(value_np).to(device)
+    return states, policy_targets, value_targets
 
 
 def update_net(
@@ -133,12 +148,7 @@ def update_net(
     states: torch.Tensor,
     policy_targets: torch.Tensor,
     value_targets: torch.Tensor,
-    device,
 ):
-    states = states.to(device)
-    policy_targets = policy_targets.to(device)
-    value_targets = value_targets.to(device)
-
     out_policy, out_value = model(states)
 
     policy_loss = F.cross_entropy(out_policy, policy_targets)
@@ -150,18 +160,6 @@ def update_net(
     optimizer.step()
 
     return policy_loss.item(), value_loss.item()
-
-
-def board2tensor(board: t3.Board, current_player: t3.Player):
-    np_array = np.array(
-        [
-            [c == current_player for c in board],
-            [c == t3.EMPTY for c in board],
-            [c == t3.other_player(current_player) for c in board],
-        ],
-        dtype=np.float32,
-    ).reshape(3, 3, 3)
-    return torch.from_numpy(np_array)
 
 
 if __name__ == "__main__":

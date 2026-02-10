@@ -22,9 +22,7 @@ uv run tabular-param-search.py  # try a range of parameters for training. Not
 
 
 # todo
-- WIP experiment: max out gpu in train and eval
-    - NOTE threading made things slower, probably due to GIL
-    - idea: multiprocessing. start with 3 procs: game step gen, tensor batching, net updater
+- perf: try to max out GPU during az training. See exp_ttt_gpu
 - perf: maybe: follow answer.md
 - see my other todo notes
 - add `ty check` to make pc. lots of errors
