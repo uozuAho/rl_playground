@@ -6,12 +6,10 @@ Architecture:
 - Learning process: Reads numpy batches, updates the NN model
 """
 
-import itertools
 import multiprocessing as mp
-import random
+import queue
 import time
-import typing
-from pathlib import Path
+from dataclasses import dataclass
 
 import numpy as np
 import torch
@@ -19,73 +17,79 @@ from torch import nn
 from torch.optim import Adam
 import torch.nn.functional as F
 
-import algs.az_mcts as mcts
-from agents.agent import TttAgent
 from agents.alphazero import (
     GameStep,
     _self_play_n_games,
-    _board2tensor,
     _batch_eval_for_mcts,
-    nn_2_batch_eval,
 )
 from agents.az_nets import ResNet
 import ttt.env as t3
+
+
+@dataclass
+class Config:
+    num_res_blocks: int = 1
+    num_hidden: int = 1
+
+    learning_rate: float = 0.001
+    weight_decay: float = 0.0001
+    mask_invalid_actions: bool = True
+
+    n_mcts_sims: int = 5
+    c_puct: float = 2.0
+    temperature: float = 1.25
+    dirichlet_alpha: float = 0.3
+    dirichlet_epsilon: float = 0.25
+
+    # Multiprocessing parameters
+    n_player_processes: int = 4
+    n_games_per_iter: int = 8
+    batch_size: int = 512
+    weights_update_interval: int = 10
+
+    # Runtime parameters
+    device_player: str = "cuda"
+    device_learn: str = "cuda"
+    duration_seconds: float = None
 
 
 def player_process(
     step_queue: mp.Queue,
     weights_queue: mp.Queue,
     stop_event: mp.Event,
-    n_games_per_iter: int,
-    n_mcts_sims: int,
-    c_puct: float,
-    temperature: float,
-    dirichlet_alpha: float,
-    dirichlet_epsilon: float,
-    device: str,
-    num_res_blocks: int,
-    num_hidden: int,
+    config: Config
 ):
-    """Self-play process that generates game steps.
-
-    Maintains its own copy of the NN for MCTS evaluation.
-    Updates weights from the learning process when available.
-    """
-    # Create local model for MCTS evaluation
-    model = ResNet(num_res_blocks, num_hidden, device)
+    model = ResNet(config.num_res_blocks, config.num_hidden, config.device_player)
     model.eval()
 
     def batch_mcts_eval(envs):
-        return _batch_eval_for_mcts(model, envs, device)
+        return _batch_eval_for_mcts(model, envs, config.device_player)
 
     while not stop_event.is_set():
-        # Check for weight updates from learning process
         try:
             new_state_dict = weights_queue.get_nowait()
             model.load_state_dict(new_state_dict)
-        except:
+        except queue.Empty:
             pass
 
-        # Generate game steps via self-play
         with torch.no_grad():
             game_steps = list(
                 _self_play_n_games(
                     batch_mcts_eval,
-                    n_games_per_iter,
-                    n_mcts_sims,
-                    c_puct,
-                    temperature,
-                    dirichlet_alpha,
-                    dirichlet_epsilon,
+                    config.n_games_per_iter,
+                    config.n_mcts_sims,
+                    config.c_puct,
+                    config.temperature,
+                    config.dirichlet_alpha,
+                    config.dirichlet_epsilon,
                 )
             )
 
-        # Put game steps on queue for batching process
         for step in game_steps:
             try:
-                step_queue.put(step, timeout=0.1)
-            except:
-                # Queue full, skip this step
+                step_queue.put(step, timeout=0.2)
+            except queue.Full:
+                print("player: step queue full")
                 pass
 
 
@@ -95,29 +99,29 @@ def batching_process(
     stop_event: mp.Event,
     batch_size: int,
 ):
-    """Batching process that reads game steps and creates numpy batches."""
     buffer = []
 
     while not stop_event.is_set():
         try:
-            step = step_queue.get(timeout=0.1)
-            buffer.append(step)
+            while len(buffer) < batch_size:
+                step = step_queue.get(timeout=0.1)
+                buffer.append(step)
 
             if len(buffer) >= batch_size:
-                # Convert to numpy batch
                 raw_batch = steps_to_raw_batch(buffer)
                 batch_queue.put(raw_batch, timeout=0.1)
                 buffer = []
-        except:
-            # Timeout on get or put - continue
+        except queue.Empty:
+            pass
+        except queue.Full:
             pass
 
-    # Flush remaining steps in buffer
     if buffer:
         raw_batch = steps_to_raw_batch(buffer)
         try:
             batch_queue.put(raw_batch, timeout=1.0)
-        except:
+        except queue.Full:
+            print("batcher: batch queue full")
             pass
 
 
@@ -125,18 +129,11 @@ def learning_process(
     batch_queue: mp.Queue,
     weights_queues: list[mp.Queue],
     stop_event: mp.Event,
-    device: str,
-    num_res_blocks: int,
-    num_hidden: int,
-    learning_rate: float,
-    weight_decay: float,
-    mask_invalid_actions: bool,
-    weights_update_interval: int,
+    config: Config
 ):
-    """Learning process that trains the NN on batches."""
-    model = ResNet(num_res_blocks, num_hidden, device)
+    model = ResNet(config.num_res_blocks, config.num_hidden, config.device_learn)
     model.train()
-    optimizer = Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    optimizer = Adam(model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay)
 
     batch_count = 0
     last_print_time = time.perf_counter()
@@ -148,17 +145,16 @@ def learning_process(
     while not stop_event.is_set():
         try:
             raw_batch = batch_queue.get(timeout=0.1)
-        except:
+        except queue.Empty:
+            print("learner: batch queue empty")
             continue
 
         update_start = time.perf_counter()
 
-        # Convert numpy batch to tensors
-        states, policy_targets, value_targets, valid_action_masks = raw_batch_to_tensors(
-            raw_batch, device
+        states, policy_targets, value_targets, valid_action_masks = (
+            raw_batch_to_tensors(raw_batch, config.device_learn)
         )
 
-        # Update network
         policy_loss, value_loss = update_net(
             model,
             optimizer,
@@ -166,7 +162,7 @@ def learning_process(
             policy_targets,
             value_targets,
             valid_action_masks,
-            mask_invalid_actions,
+            config.mask_invalid_actions,
         )
 
         policy_losses.append(policy_loss)
@@ -178,20 +174,21 @@ def learning_process(
         batch_count += 1
 
         # Periodically share weights with player processes
-        if batch_count % weights_update_interval == 0:
+        if batch_count % config.weights_update_interval == 0:
             state_dict = model.state_dict()
             for wq in weights_queues:
                 try:
-                    # Non-blocking put - if queue is full, skip
-                    wq.put_nowait(state_dict)
-                except:
-                    pass
+                    wq.put(state_dict)
+                except queue.Full:
+                    raise
 
         # Print metrics once per second
         now = time.perf_counter()
         if now - last_print_time >= 1.0:
             elapsed = now - last_print_time
-            avg_update_time = total_update_time / update_count if update_count > 0 else 0
+            avg_update_time = (
+                total_update_time / update_count if update_count > 0 else 0
+            )
             updates_per_sec = update_count / elapsed
             batch_size = len(states)
             steps_per_sec = updates_per_sec * batch_size
@@ -276,109 +273,51 @@ def update_net(
     return policy_loss.item(), value_loss.item()
 
 
-def train_mp(
-    num_res_blocks: int = 1,
-    num_hidden: int = 1,
-    device: str = "cuda",
-    n_player_processes: int = 4,
-    n_games_per_iter: int = 8,
-    n_mcts_sims: int = 5,
-    c_puct: float = 2.0,
-    temperature: float = 1.25,
-    dirichlet_alpha: float = 0.3,
-    dirichlet_epsilon: float = 0.25,
-    batch_size: int = 512,
-    learning_rate: float = 0.001,
-    weight_decay: float = 0.0001,
-    mask_invalid_actions: bool = True,
-    weights_update_interval: int = 10,
-    duration_seconds: float = None,
-):
-    """Train AlphaZero using multiprocessing.
+def train_mp(config: Config):
+    mp.set_start_method("spawn", force=True)
 
-    Args:
-        num_res_blocks: Number of residual blocks in the network
-        num_hidden: Number of hidden units
-        device: Device for learning process ("cuda" or "cpu")
-        n_player_processes: Number of parallel self-play processes
-        n_games_per_iter: Games to play per iteration in each player process
-        n_mcts_sims: Number of MCTS simulations per move
-        c_puct: PUCT constant for MCTS exploration
-        temperature: Temperature for action selection from MCTS probs
-        dirichlet_alpha: Alpha parameter for Dirichlet noise
-        dirichlet_epsilon: Epsilon for mixing in Dirichlet noise
-        batch_size: Training batch size
-        learning_rate: Learning rate for optimizer
-        weight_decay: Weight decay for optimizer
-        mask_invalid_actions: Whether to mask invalid actions in policy loss
-        weights_update_interval: How often (in batches) to share weights with players
-        duration_seconds: How long to train (None = run until interrupted)
-    """
-    mp.set_start_method('spawn', force=True)
-
-    # Create queues
-    step_queue = mp.Queue(maxsize=10000)
+    step_queue = mp.Queue(maxsize=1009)
     batch_queue = mp.Queue(maxsize=100)
-    weights_queues = [mp.Queue(maxsize=1) for _ in range(n_player_processes)]
+    weights_queues = [mp.Queue(maxsize=1) for _ in range(config.n_player_processes)]
     stop_event = mp.Event()
 
-    # Create processes
     processes = []
 
-    # Player processes
-    for i in range(n_player_processes):
+    for i in range(config.n_player_processes):
         p = mp.Process(
             target=player_process,
             args=(
                 step_queue,
                 weights_queues[i],
                 stop_event,
-                n_games_per_iter,
-                n_mcts_sims,
-                c_puct,
-                temperature,
-                dirichlet_alpha,
-                dirichlet_epsilon,
-                device,
-                num_res_blocks,
-                num_hidden,
+                config,
             ),
         )
         processes.append(p)
 
-    # Batching process
     p = mp.Process(
         target=batching_process,
-        args=(step_queue, batch_queue, stop_event, batch_size),
+        args=(step_queue, batch_queue, stop_event, config.batch_size),
     )
     processes.append(p)
 
-    # Learning process
     learner = mp.Process(
         target=learning_process,
         args=(
             batch_queue,
             weights_queues,
             stop_event,
-            device,
-            num_res_blocks,
-            num_hidden,
-            learning_rate,
-            weight_decay,
-            mask_invalid_actions,
-            weights_update_interval,
+            config,
         ),
     )
     processes.append(learner)
 
-    # Start all processes
     for p in processes:
         p.start()
 
-    # Run for specified duration or until interrupted
     try:
-        if duration_seconds:
-            time.sleep(duration_seconds)
+        if config.duration_seconds:
+            time.sleep(config.duration_seconds)
             stop_event.set()
         learner.join()
     except KeyboardInterrupt:
@@ -390,16 +329,3 @@ def train_mp(
             p.join(timeout=1)
             if p.is_alive():
                 p.terminate()
-
-
-if __name__ == "__main__":
-    train_mp(
-        num_res_blocks=4,
-        num_hidden=64,
-        device="cuda",
-        n_player_processes=4,
-        n_games_per_iter=8,
-        n_mcts_sims=5,
-        batch_size=512,
-        duration_seconds=None,  # Run until Ctrl+C
-    )

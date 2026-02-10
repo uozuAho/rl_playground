@@ -23,11 +23,14 @@ uv run tabular-param-search.py  # try a range of parameters for training. Not
 
 # todo
 - WIP: perf: try to max out GPU during az training.
-    - check how openspiel does it
     - understand alphazero_mp
+      - inline todos
     - make train_az able to use mp version
+        - or make separate file for now
     - ensure close to 100% GPU utilisation
+        - put trajectories on step queue instead of steps?
+    - add evaluator
+    - write metrics to log?
     - update docs: mp is overkill for ttt, just a POC for larger games, see non mp version
-- perf: maybe: follow answer.md
 - see my other todo notes
 - add `ty check` to make pc. lots of errors

@@ -72,7 +72,9 @@ def consumer_process(queue: mp.Queue, nsteps: int, stop_event: mp.Event, profile
         now = time.perf_counter()
         if now - last_print_time >= 1.0:
             elapsed = now - last_print_time
-            avg_update_time = total_update_time / update_count if update_count > 0 else 0
+            avg_update_time = (
+                total_update_time / update_count if update_count > 0 else 0
+            )
             updates_per_sec = update_count / elapsed
 
             print(
@@ -97,7 +99,9 @@ def run(profile=False):
     stop_event = mp.Event()
 
     producer = mp.Process(target=producer_process, args=(queue, nsteps, stop_event))
-    consumer = mp.Process(target=consumer_process, args=(queue, nsteps, stop_event, profile))
+    consumer = mp.Process(
+        target=consumer_process, args=(queue, nsteps, stop_event, profile)
+    )
 
     producer.start()
     consumer.start()
@@ -125,9 +129,15 @@ def steps_to_raw_batch(game_steps: list[GameStep]):
     value_np = np.empty((batch_size, 1), dtype=np.float32)
 
     for i, g in enumerate(game_steps):
-        boards_np[i, 0] = np.array([c == g.player for c in g.board], dtype=np.float32).reshape(3, 3)
-        boards_np[i, 1] = np.array([c == t3.EMPTY for c in g.board], dtype=np.float32).reshape(3, 3)
-        boards_np[i, 2] = np.array([c == t3.other_player(g.player) for c in g.board], dtype=np.float32).reshape(3, 3)
+        boards_np[i, 0] = np.array(
+            [c == g.player for c in g.board], dtype=np.float32
+        ).reshape(3, 3)
+        boards_np[i, 1] = np.array(
+            [c == t3.EMPTY for c in g.board], dtype=np.float32
+        ).reshape(3, 3)
+        boards_np[i, 2] = np.array(
+            [c == t3.other_player(g.player) for c in g.board], dtype=np.float32
+        ).reshape(3, 3)
         policy_np[i] = g.mcts_probs
         value_np[i, 0] = g.final_value
 
@@ -164,5 +174,5 @@ def update_net(
 
 
 if __name__ == "__main__":
-    mp.set_start_method('spawn', force=True)
+    mp.set_start_method("spawn", force=True)
     run(profile="profile" in sys.argv)
