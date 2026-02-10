@@ -1,8 +1,9 @@
 """Experiment trying to get 100% GPU usage.
 
 What I found
+- multiprocessing is easy
 - torch tensors are inefficient to send over queues
-- np arrays are efficient
+- np arrays are efficient to send over queues
 - pre-pack batches on the producer side
 - max game steps per second peaks around a batch size of 1024
 """

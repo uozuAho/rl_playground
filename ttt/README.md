@@ -22,7 +22,12 @@ uv run tabular-param-search.py  # try a range of parameters for training. Not
 
 
 # todo
-- perf: try to max out GPU during az training. See exp_ttt_gpu
+- WIP: perf: try to max out GPU during az training.
+    - check how openspiel does it
+    - understand alphazero_mp
+    - make train_az able to use mp version
+    - ensure close to 100% GPU utilisation
+    - update docs: mp is overkill for ttt, just a POC for larger games, see non mp version
 - perf: maybe: follow answer.md
 - see my other todo notes
 - add `ty check` to make pc. lots of errors
