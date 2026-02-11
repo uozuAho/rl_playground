@@ -23,8 +23,8 @@ uv run tabular-param-search.py  # try a range of parameters for training. Not
 
 # todo
 - WIP: az mp
-    - ensure close to 100% GPU utilisation
-        - put trajectories on step queue instead of steps?
+    - WIP ensure close to 100% GPU utilisation
     - add evaluator
+    - plot stats ... from log?
 - see my other todo notes
 - add `ty check` to make pc. lots of errors

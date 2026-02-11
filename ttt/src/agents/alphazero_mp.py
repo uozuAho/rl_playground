@@ -136,6 +136,10 @@ def player_process(
     def batch_mcts_eval(envs):
         return _batch_eval_for_mcts(model, envs, config.device_player)
 
+    t_start = time.perf_counter()
+    steps_generated = 0
+    games_played = 0
+
     try:
         while not stop_event.is_set():
             try:
@@ -144,7 +148,6 @@ def player_process(
             except queue.Empty:
                 pass
 
-            start = time.perf_counter()
             with torch.no_grad():
                 game_steps = list(
                     _self_play_n_games(
@@ -157,20 +160,22 @@ def player_process(
                         config.dirichlet_epsilon,
                     )
                 )
-            dur = time.perf_counter() - start
+
+            games_played += config.player_n_parallel_games
+            steps_generated += len(game_steps)
+            elapsed = time.perf_counter() - t_start
             metrics_queue.put(
                 {
                     "process": name,
-                    "games/sec": config.player_n_parallel_games / dur,
-                    "steps/sec": len(game_steps) / dur,
+                    "games/sec": games_played / elapsed,
+                    "steps/sec": steps_generated / elapsed,
                 }
             )
 
-            for step in game_steps:
-                try:
-                    step_queue.put(step, timeout=1.0)
-                except queue.Full:
-                    pass
+            try:
+                step_queue.put(game_steps, timeout=1.0)
+            except queue.Full:
+                pass
     except KeyboardInterrupt:
         pass
 
@@ -184,7 +189,7 @@ def batching_process(
 ):
     # logger = setup_logging(config, "batcher")
     batch_size = config.batch_size
-    buffer = []
+    buffer = deque()
 
     last_time = time.perf_counter()
     while not stop_event.is_set():
@@ -199,14 +204,15 @@ def batching_process(
             )
 
         try:
-            while len(buffer) < batch_size:
-                step = step_queue.get(timeout=0.1)
-                buffer.append(step)
+            steps = step_queue.get(timeout=0.1)
+            buffer.extend(steps)
 
-            if len(buffer) >= batch_size:
-                raw_batch = steps_to_raw_batch(buffer)
+            while len(buffer) >= batch_size:
+                batch_steps = []
+                for _ in range(batch_size):
+                    batch_steps.append(buffer.popleft())
+                raw_batch = steps_to_raw_batch(batch_steps)
                 batch_queue.put(raw_batch, timeout=0.1)
-                buffer = []
 
         except queue.Empty:
             pass
@@ -405,7 +411,7 @@ def train_mp(config: Config):
     logger = setup_logging(config, "main")
     mp.set_start_method("spawn", force=True)
 
-    step_queue = mp.Queue(maxsize=10000)
+    step_queue = mp.Queue(maxsize=100)  # queue item = list of steps
     batch_queue = mp.Queue(maxsize=10)
     metrics_queue = mp.Queue(maxsize=1000)
     weights_queues = [mp.Queue(maxsize=1) for _ in range(config.n_player_processes)]
