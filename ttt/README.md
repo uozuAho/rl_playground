@@ -22,7 +22,6 @@ uv run tabular-param-search.py  # try a range of parameters for training. Not
 
 # todo
 - WIP: az mp
-    - stop stack trace on learner exit
     - plot stats ... from log?
     - maybe: auto-balance step gen to learner throughput
     - maybe: save model snapshots

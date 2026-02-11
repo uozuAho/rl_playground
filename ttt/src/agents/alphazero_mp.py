@@ -283,8 +283,6 @@ def learner_loop(
     step_count = 0
     batch_count = 0
     t_start = time.perf_counter()
-    policy_losses = []
-    value_losses = []
 
     def send_weights():
         state_dict = model.state_dict()
@@ -294,18 +292,10 @@ def learner_loop(
             except queue.Full:
                 raise
 
-    while not stop_event.is_set():
-        try:
-            raw_batch = batch_queue.get(timeout=0.1)
-        except queue.Empty:
-            continue
-        except KeyboardInterrupt:
-            break
-
-        if config.stop_after_n_learns and batch_count >= config.stop_after_n_learns:
-            logger.info(f"reached {config.stop_after_n_learns} updates, stopping")
-            stop_event.set()
-            break
+    def do_learn(raw_batch):
+        nonlocal step_count, batch_count
+        policy_losses = []
+        value_losses = []
 
         update_start = time.perf_counter()
 
@@ -352,8 +342,18 @@ def learner_loop(
             }
         )
 
-        policy_losses = []
-        value_losses = []
+    while not stop_event.is_set():
+        try:
+            if config.stop_after_n_learns and batch_count >= config.stop_after_n_learns:
+                logger.info(f"reached {config.stop_after_n_learns} updates, stopping")
+                stop_event.set()
+                break
+            batch = batch_queue.get(timeout=0.1)
+            do_learn(batch)
+        except queue.Empty:
+            continue
+        except KeyboardInterrupt:
+            break
 
 
 def metrics_loop(
