@@ -1,7 +1,12 @@
 """Same goal as train az, but use alphazero mp (multiprocessing), aiming for\
 max GPU usage and therefore fastest possible training"""
+from pathlib import Path
 
 import agents.alphazero_mp as az
+
+
+PROJ_ROOT = Path(__file__).parent.parent
+LOG_PATH = PROJ_ROOT/"train_az_mp.log"
 
 
 def main():
@@ -24,6 +29,9 @@ def main():
         device_learn="cuda",
         stop_after_n_seconds=None,
         stop_after_n_learns=None,
+        log_to_file=True,
+        console_log_level="DEBUG",
+        log_file_path=LOG_PATH,
     )
     az.train_mp(config)
 

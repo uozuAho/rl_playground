@@ -61,8 +61,9 @@ class Config:
     # Logging
     log_to_console: bool = True
     log_to_file: bool = False
-    log_file_path: str | None = None
-    log_format: str = "text"  # "text" or "json"
+    log_file_path: str | Path | None = None
+    log_format_console: str = "text"  # "text" or "json"
+    log_format_file: str = "json"  # text or json
     console_log_level: str = "INFO"
     file_log_level: str = "DEBUG"
 
@@ -87,18 +88,16 @@ def setup_logging(config: Config, process_name: str = "main") -> logging.Logger:
     logger.setLevel(logging.DEBUG)
     logger.handlers = []
 
-    if config.log_format == "json":
-        formatter = JSONFormatter()
-    else:
-        formatter = logging.Formatter(
-            fmt="%(asctime)s [%(levelname)s] %(processName)s: %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S"
-        )
+    json_formatter = JSONFormatter()
+    text_formatter = logging.Formatter(
+        fmt="%(asctime)s [%(levelname)s] %(processName)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
 
     if config.log_to_console:
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(getattr(logging, config.console_log_level.upper()))
-        console_handler.setFormatter(formatter)
+        console_handler.setFormatter(text_formatter if config.log_format_console == "text" else json_formatter)
         logger.addHandler(console_handler)
 
     if config.log_to_file:
@@ -110,7 +109,7 @@ def setup_logging(config: Config, process_name: str = "main") -> logging.Logger:
 
         file_handler = logging.FileHandler(log_path)
         file_handler.setLevel(getattr(logging, config.file_log_level.upper()))
-        file_handler.setFormatter(formatter)
+        file_handler.setFormatter(text_formatter if config.log_format_file == "text" else json_formatter)
         logger.addHandler(file_handler)
 
     return logger
