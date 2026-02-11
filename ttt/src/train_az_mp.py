@@ -1,7 +1,8 @@
 """Same goal as train az, but use alphazero mp (multiprocessing), aiming for
 max GPU usage and therefore fastest possible training"""
-
+import json
 from pathlib import Path
+from pprint import pprint
 
 import agents.alphazero_mp as az
 from agents.random import RandomAgent
@@ -37,7 +38,21 @@ def main():
         log_file_path=LOG_PATH,
     )
     az.train_mp(config)
+    # load_metrics(LOG_PATH, config)
 
+
+def load_metrics(log_path: Path, config: az.Config):
+    with open(log_path) as infile:
+        for line in infile:
+            logobj = json.loads(line)
+            if logobj['process'] == 'metrics':
+                metobj = json.loads(logobj['message'].replace("'", '"'))
+                pprint(metobj)
+                games_played =0
+                # if metobj['process'].startswith('player'):
+                #     games_played += metobj['games_played']
+                if metobj['process'] == 'learner':
+                    steps = metobj['steps_trained']
 
 if __name__ == "__main__":
     main()

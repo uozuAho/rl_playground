@@ -10,16 +10,17 @@ Architecture:
 - Metrics process: collects metrics from other processes, logs them etc
 """
 
-import pprint
 import json
 import logging
 import multiprocessing as mp
 import queue
 import sys
 import time
-from collections import defaultdict, deque
+from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
+from pprint import pprint
+from typing import TypedDict
 
 import numpy as np
 import torch
@@ -129,6 +130,14 @@ def setup_logging(config: Config, process_name: str = "main") -> logging.Logger:
     return logger
 
 
+class PlayerMetrics(TypedDict):
+    type: str
+    name: str
+    games_played: int
+    games_per_sec: float
+    steps_per_sec: float
+
+
 def player_loop(
     name: str,
     step_queue: mp.Queue,
@@ -172,13 +181,12 @@ def player_loop(
             games_played += config.player_n_parallel_games
             steps_generated += len(game_steps)
             elapsed = time.perf_counter() - t_start
-            metrics_queue.put(
-                {
-                    "process": name,
-                    "games/sec": games_played / elapsed,
-                    "steps/sec": steps_generated / elapsed,
-                }
-            )
+            metrics_queue.put(PlayerMetrics(
+                type="player",
+                name=name,
+                games_played=games_played,
+                games_per_sec=games_played / elapsed,
+                steps_per_sec=steps_generated / elapsed))
 
             try:
                 step_queue.put(game_steps, timeout=1.0)
@@ -188,8 +196,13 @@ def player_loop(
         pass
 
 
+class EvalMetrics(TypedDict):
+    type: str
+    win_rates: dict[str, float]
+    loss_rates: dict[str, float]
+    draw_rates: dict[str, float]
+
 def eval_loop(
-    name: str,
     weights_queue: mp.Queue,
     metrics_queue: mp.Queue,
     stop_event: mp.Event,
@@ -205,7 +218,12 @@ def eval_loop(
                 new_state_dict = weights_queue.get_nowait()
                 model.load_state_dict(new_state_dict)
 
-                eval_metrics = {"process": name, "win rates": {}, "loss rates": {}, "draw rates": {}}
+                eval_metrics = EvalMetrics(
+                    type="eval",
+                    win_rates={},
+                    loss_rates={},
+                    draw_rates={}
+                )
 
                 with torch.no_grad():
                     for oname, oagent in config.eval_opponents:
@@ -214,15 +232,21 @@ def eval_loop(
                             pnames = ("az", oname) if azplayer == "x" else (oname, "az")
                             r = play_games_parallel(players[0], players[1], config.eval_n_games)
                             w, ll, d = r["X"], r["O"], r["draw"]
-                            eval_metrics["win rates"][f"{pnames[0]} vs {pnames[1]}"] = (w / config.eval_n_games)
-                            eval_metrics["loss rates"][f"{pnames[0]} vs {pnames[1]}"] = (ll / config.eval_n_games)
-                            eval_metrics["draw rates"][f"{pnames[0]} vs {pnames[1]}"] = (d / config.eval_n_games)
+                            eval_metrics["win_rates"][f"{pnames[0]} vs {pnames[1]}"] = (w / config.eval_n_games)
+                            eval_metrics["loss_rates"][f"{pnames[0]} vs {pnames[1]}"] = (ll / config.eval_n_games)
+                            eval_metrics["draw_rates"][f"{pnames[0]} vs {pnames[1]}"] = (d / config.eval_n_games)
 
                 metrics_queue.put(eval_metrics)
             except queue.Empty:
                 pass
     except KeyboardInterrupt:
         pass
+
+
+class BatcherMetrics(TypedDict):
+    type: str
+    step_queue_size: int
+    batch_queue_size: int
 
 
 def batcher_loop(
@@ -232,7 +256,6 @@ def batcher_loop(
     stop_event: mp.Event,
     config: Config,
 ):
-    # logger = setup_logging(config, "batcher")
     batch_size = config.batch_size
     buffer = deque()
 
@@ -241,11 +264,11 @@ def batcher_loop(
         if time.perf_counter() - last_time > 1.0:
             last_time = time.perf_counter()
             metrics_queue.put(
-                {
-                    "process": "batcher",
-                    "step_queue_size": step_queue.qsize(),
-                    "batch_queue_size": batch_queue.qsize(),
-                }
+                BatcherMetrics(
+                    type="batcher",
+                    step_queue_size=step_queue.qsize(),
+                    batch_queue_size=batch_queue.qsize()
+                )
             )
 
         try:
@@ -265,6 +288,15 @@ def batcher_loop(
             pass
         except KeyboardInterrupt:
             break
+
+
+class LearnerMetrics(TypedDict):
+    type: str
+    policy_loss: float
+    value_loss: float
+    steps_trained: float
+    steps_per_sec: float
+    batches_per_sec: float
 
 
 def learner_loop(
@@ -298,8 +330,6 @@ def learner_loop(
         policy_losses = []
         value_losses = []
 
-        update_start = time.perf_counter()
-
         states, policy_targets, value_targets, valid_action_masks = (
             raw_batch_to_tensors(raw_batch, config.device_learn)
         )
@@ -317,7 +347,6 @@ def learner_loop(
         policy_losses.append(policy_loss)
         value_losses.append(value_loss)
 
-        update_time = time.perf_counter() - update_start
         step_count += len(states)
         batch_count += 1
 
@@ -333,14 +362,14 @@ def learner_loop(
         avg_vl = sum(value_losses) / len(value_losses) if value_losses else 0
 
         metrics_queue.put(
-            {
-                "process": "learner",
-                "policy_loss": avg_pl,
-                "value_loss": avg_vl,
-                "update_time": update_time,
-                "steps_per_sec": steps_per_sec,
-                "batches_per_sec": batches_per_sec,
-            }
+            LearnerMetrics(
+                type="learner",
+                policy_loss=avg_pl,
+                value_loss=avg_vl,
+                steps_trained=step_count,
+                steps_per_sec=steps_per_sec,
+                batches_per_sec=batches_per_sec
+            )
         )
 
     while not stop_event.is_set():
@@ -363,36 +392,42 @@ def metrics_loop(
     config: Config,
 ):
     logger = setup_logging(config, "metrics")
-    stores = {}
     log_time = time.perf_counter()
-    max_metrics_stored = 20
+    player_metrics = deque(maxlen=20)
+    batcher_metrics = deque(maxlen=20)
+    learner_metrics = deque(maxlen=20)
+    eval_metrics = deque(maxlen=20)
+    metric_metrics = deque(maxlen=20)
 
     while not stop_event.is_set():
         try:
             metrics = metrics_queue.get(timeout=0.1)
-            process = metrics["process"]
-            if process not in stores:
-                stores[process] = defaultdict(deque)
-
-            for k, v in metrics.items():
-                metric = stores[process][k]
-                if len(metric) >= max_metrics_stored:
-                    metric.popleft()
-                stores[process][k].append(v)
+            match metrics["type"]:
+                case "player":
+                    player_metrics.append(metrics)
+                case "batcher":
+                    batcher_metrics.append(metrics)
+                case "learner":
+                    learner_metrics.append(metrics)
+                case "eval":
+                    eval_metrics.append(metrics)
+                case "metrics":
+                    metric_metrics.append(metrics)
+                case _:
+                    raise Exception(f"unknown metrics type {metrics['type']}")
 
             if time.perf_counter() - log_time > 1.0:
                 log_time = time.perf_counter()
                 metrics_queue.put(
-                    {"process": "metrics", "metrics_queue": metrics_queue.qsize()}
+                    {"type": "metrics", "metrics_queue": metrics_queue.qsize()}
                 )
-                for proc, store in stores.items():
-                    # todo: find a nicer way to not print noisy metrics to console
-                    if proc.startswith("player") or proc.startswith("batcher"):
-                        logger.debug({k: v[-1] for k, v in store.items()})
-                    else:
-                        logger.info({k: v[-1] for k, v in store.items()})
-                        if proc == "evaluator":
-                            pprint.pp({k: v[-1] for k, v in store.items()})
+                for m in [learner_metrics, eval_metrics]:
+                    if m:
+                        logger.debug(m[-1])
+                        pprint(m[-1])
+                for m in [player_metrics, batcher_metrics, metric_metrics]:
+                    if m:
+                        logger.debug(m[-1])
         except queue.Empty:
             pass
         except KeyboardInterrupt:
@@ -507,7 +542,7 @@ def train_mp(config: Config):
         p = mp.Process(
             target=eval_loop,
             name="evaluator",
-            args=("evaluator",
+            args=(
                 weights_queues[-1],
                 metrics_queue,
                 stop_event,
