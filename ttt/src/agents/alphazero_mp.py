@@ -93,13 +93,15 @@ def setup_logging(config: Config, process_name: str = "main") -> logging.Logger:
     json_formatter = JSONFormatter()
     text_formatter = logging.Formatter(
         fmt="%(asctime)s [%(levelname)s] %(processName)s: %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
     if config.log_to_console:
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(getattr(logging, config.console_log_level.upper()))
-        console_handler.setFormatter(text_formatter if config.log_format_console == "text" else json_formatter)
+        console_handler.setFormatter(
+            text_formatter if config.log_format_console == "text" else json_formatter
+        )
         logger.addHandler(console_handler)
 
     if config.log_to_file:
@@ -111,7 +113,9 @@ def setup_logging(config: Config, process_name: str = "main") -> logging.Logger:
 
         file_handler = logging.FileHandler(log_path)
         file_handler.setLevel(getattr(logging, config.file_log_level.upper()))
-        file_handler.setFormatter(text_formatter if config.log_format_file == "text" else json_formatter)
+        file_handler.setFormatter(
+            text_formatter if config.log_format_file == "text" else json_formatter
+        )
         logger.addHandler(file_handler)
 
     return logger
@@ -154,11 +158,13 @@ def player_process(
                     )
                 )
             dur = time.perf_counter() - start
-            metrics_queue.put({
-                "process": "player",
-                "games/sec": config.player_n_parallel_games / dur,
-                "steps/sec": len(game_steps)/dur
-            })
+            metrics_queue.put(
+                {
+                    "process": "player",
+                    "games/sec": config.player_n_parallel_games / dur,
+                    "steps/sec": len(game_steps) / dur,
+                }
+            )
 
             for step in game_steps:
                 try:
@@ -195,11 +201,13 @@ def batching_process(
 
             if time.perf_counter() - last_time > 1.0:
                 last_time = time.perf_counter()
-                metrics_queue.put({
-                    "process": "batcher",
-                    "step_queue_size": step_queue.qsize(),
-                    "batch_queue_size": batch_queue.qsize()
-                })
+                metrics_queue.put(
+                    {
+                        "process": "batcher",
+                        "step_queue_size": step_queue.qsize(),
+                        "batch_queue_size": batch_queue.qsize(),
+                    }
+                )
         except queue.Empty:
             pass
         except queue.Full:
@@ -289,20 +297,22 @@ def learning_process(
         avg_pl = sum(policy_losses) / len(policy_losses) if policy_losses else 0
         avg_vl = sum(value_losses) / len(value_losses) if value_losses else 0
 
-        metrics_queue.put({
-            "process": "learner",
-            "policy_loss": avg_pl,
-            "value_loss": avg_vl,
-            "update_time": update_time,
-            "steps_per_sec": steps_per_sec,
-            "batches_per_sec": batches_per_sec
-        })
+        metrics_queue.put(
+            {
+                "process": "learner",
+                "policy_loss": avg_pl,
+                "value_loss": avg_vl,
+                "update_time": update_time,
+                "steps_per_sec": steps_per_sec,
+                "batches_per_sec": batches_per_sec,
+            }
+        )
 
         policy_losses = []
         value_losses = []
 
 
-def metrics_logger_process(
+def metrics_process(
     metrics_queue: mp.Queue,
     stop_event: mp.Event,
     config: Config,
@@ -313,9 +323,11 @@ def metrics_logger_process(
     log_time = time.perf_counter()
     while not stop_event.is_set():
         try:
-            metrics_queue.put({"process": "metrics", "metrics_queue": metrics_queue.qsize()})
+            metrics_queue.put(
+                {"process": "metrics", "metrics_queue": metrics_queue.qsize()}
+            )
             metrics = metrics_queue.get(timeout=0.1)
-            process = metrics['process']
+            process = metrics["process"]
             if process not in stores:
                 stores[process] = defaultdict(list)
 
@@ -325,7 +337,7 @@ def metrics_logger_process(
             if time.perf_counter() - log_time > 1.0:
                 log_time = time.perf_counter()
                 for proc, store in stores.items():
-                    logger.info({k: v[-1] for k,v in store.items()})
+                    logger.info({k: v[-1] for k, v in store.items()})
         except queue.Empty:
             pass
         except KeyboardInterrupt:
@@ -407,7 +419,7 @@ def train_mp(config: Config):
     processes = []
 
     metrics_logger = mp.Process(
-        target=metrics_logger_process,
+        target=metrics_process,
         name="metrics",
         args=(metrics_queue, stop_event, config),
     )
