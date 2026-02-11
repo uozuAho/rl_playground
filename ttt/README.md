@@ -20,11 +20,11 @@ uv run tabular-param-search.py  # try a range of parameters for training. Not
                                 # as smart as optuna
 ```
 
-
 # todo
 - WIP: az mp
-    - WIP ensure close to 100% GPU utilisation
     - add evaluator
     - plot stats ... from log?
+    - maybe: auto-balance step gen to learner throughput
+    - maybe: save model snapshots
 - see my other todo notes
 - add `ty check` to make pc. lots of errors

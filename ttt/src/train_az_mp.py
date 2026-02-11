@@ -1,4 +1,4 @@
-"""Same goal as train az, but use alphazero mp (multiprocessing), aiming for\
+"""Same goal as train az, but use alphazero mp (multiprocessing), aiming for
 max GPU usage and therefore fastest possible training"""
 
 from pathlib import Path
@@ -22,7 +22,7 @@ def main():
         temperature=1.25,
         dirichlet_alpha=0.3,
         dirichlet_epsilon=0.25,
-        n_player_processes=4,
+        n_player_processes=8,
         player_n_parallel_games=100,
         batch_size=512,
         weights_update_interval=10,

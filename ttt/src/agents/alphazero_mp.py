@@ -6,7 +6,7 @@ Inspired by https://github.com/google-deepmind/open_spiel/open_spiel/python/algo
 Architecture:
 - Player processes: Run self-play games, put game steps on a queue
 - Batching process: Reads game steps, writes numpy array batches to another queue
-- Learning process: Reads numpy batches, updates the NN model
+- Learning process: Reads numpy batches, updates the NN model, sends updated model weights
 - Metrics process: collects metrics from other processes, logs them etc
 """
 
