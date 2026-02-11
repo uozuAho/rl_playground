@@ -130,6 +130,7 @@ def player_process(
             try:
                 new_state_dict = weights_queue.get_nowait()
                 model.load_state_dict(new_state_dict)
+                logger.debug("updated model weights")
             except queue.Empty:
                 pass
 
