@@ -385,7 +385,11 @@ def metrics_loop(
                     {"process": "metrics", "metrics_queue": metrics_queue.qsize()}
                 )
                 for proc, store in stores.items():
-                    logger.info({k: v[-1] for k, v in store.items()})
+                    if proc.startswith("player") or proc.startswith("batcher"):
+                        # todo: find a nicer way to not print noisy metrics to console
+                        logger.debug({k: v[-1] for k, v in store.items()})
+                    else:
+                        logger.info({k: v[-1] for k, v in store.items()})
         except queue.Empty:
             pass
         except KeyboardInterrupt:

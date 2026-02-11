@@ -32,8 +32,8 @@ def main():
         stop_after_n_seconds=None,
         stop_after_n_learns=None,
         log_to_file=True,
-        log_format_file="text",
-        console_log_level="DEBUG",
+        log_format_file="json",
+        console_log_level="INFO",
         log_file_path=LOG_PATH,
     )
     az.train_mp(config)
