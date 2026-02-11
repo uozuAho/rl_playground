@@ -23,7 +23,8 @@ uv run tabular-param-search.py  # try a range of parameters for training. Not
 
 # todo
 - WIP: az mp
-    - WIP add a metrics processor
+    - ensure metrics queue empty-ish
+    - use max-sized fifo queues for metrics
     - ensure close to 100% GPU utilisation
         - put trajectories on step queue instead of steps?
     - add evaluator

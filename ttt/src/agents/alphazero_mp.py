@@ -7,6 +7,7 @@ Architecture:
 - Player processes: Run self-play games, put game steps on a queue
 - Batching process: Reads game steps, writes numpy array batches to another queue
 - Learning process: Reads numpy batches, updates the NN model
+- Metrics process: collects metrics from other processes, logs them etc
 """
 
 import json
@@ -15,6 +16,7 @@ import multiprocessing as mp
 import queue
 import sys
 import time
+from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -138,6 +140,7 @@ def player_process(
             except queue.Empty:
                 pass
 
+            start = time.perf_counter()
             with torch.no_grad():
                 game_steps = list(
                     _self_play_n_games(
@@ -150,6 +153,12 @@ def player_process(
                         config.dirichlet_epsilon,
                     )
                 )
+            dur = time.perf_counter() - start
+            metrics_queue.put({
+                "process": "player",
+                "games/sec": config.player_n_parallel_games / dur,
+                "steps/sec": len(game_steps)/dur
+            })
 
             for step in game_steps:
                 try:
@@ -168,10 +177,11 @@ def batching_process(
     stop_event: mp.Event,
     config: Config,
 ):
-    logger = setup_logging(config, "batcher")
+    # logger = setup_logging(config, "batcher")
     batch_size = config.batch_size
     buffer = []
 
+    last_time = time.perf_counter()
     while not stop_event.is_set():
         try:
             while len(buffer) < batch_size:
@@ -182,6 +192,14 @@ def batching_process(
                 raw_batch = steps_to_raw_batch(buffer)
                 batch_queue.put(raw_batch, timeout=0.1)
                 buffer = []
+
+            if time.perf_counter() - last_time > 1.0:
+                last_time = time.perf_counter()
+                metrics_queue.put({
+                    "process": "batcher",
+                    "step_queue_size": step_queue.qsize(),
+                    "batch_queue_size": batch_queue.qsize()
+                })
         except queue.Empty:
             pass
         except queue.Full:
@@ -194,8 +212,6 @@ def batching_process(
         try:
             batch_queue.put(raw_batch, timeout=1.0)
         except queue.Full:
-            logger.warning("batch queue full")
-            # metrics_queue.put({"type": "warning", "process": "batcher", "message": "batch queue full"})
             pass
         except KeyboardInterrupt:
             pass
@@ -215,10 +231,9 @@ def learning_process(
         model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay
     )
 
+    step_count = 0
     batch_count = 0
-    last_log_time = time.perf_counter()
-    total_update_time = 0.0
-    update_count = 0
+    t_start = time.perf_counter()
     policy_losses = []
     value_losses = []
 
@@ -226,13 +241,11 @@ def learning_process(
         try:
             raw_batch = batch_queue.get(timeout=0.1)
         except queue.Empty:
-            logger.warning("batch queue empty")
-            # metrics_queue.put({"type": "debug", "process": "learner", "message": "batch queue empty"})
             continue
         except KeyboardInterrupt:
             break
 
-        if config.stop_after_n_learns and update_count >= config.stop_after_n_learns:
+        if config.stop_after_n_learns and batch_count >= config.stop_after_n_learns:
             logger.info(f"reached {config.stop_after_n_learns} updates, stopping")
             stop_event.set()
             break
@@ -257,8 +270,7 @@ def learning_process(
         value_losses.append(value_loss)
 
         update_time = time.perf_counter() - update_start
-        total_update_time += update_time
-        update_count += 1
+        step_count += len(states)
         batch_count += 1
 
         # Periodically share weights with player processes
@@ -270,32 +282,24 @@ def learning_process(
                 except queue.Full:
                     raise
 
-        # Send metrics once per second
-        now = time.perf_counter()
-        if now - last_log_time >= 1.0:
-            elapsed = now - last_log_time
-            updates_per_sec = update_count / elapsed
-            batch_size = len(states)
-            steps_per_sec = updates_per_sec * batch_size
+        elapsed = time.perf_counter() - t_start
+        steps_per_sec = step_count / elapsed
+        batches_per_sec = batch_count / elapsed
 
-            avg_pl = sum(policy_losses) / len(policy_losses) if policy_losses else 0
-            avg_vl = sum(value_losses) / len(value_losses) if value_losses else 0
+        avg_pl = sum(policy_losses) / len(policy_losses) if policy_losses else 0
+        avg_vl = sum(value_losses) / len(value_losses) if value_losses else 0
 
-            metrics_queue.put({
-                "type": "metrics",
-                "process": "learner",
-                "policy_loss": avg_pl,
-                "value_loss": avg_vl,
-                "updates_per_sec": updates_per_sec,
-                "steps_per_sec": steps_per_sec,
-                "batch_queue_size": batch_queue.qsize(),
-            })
+        metrics_queue.put({
+            "process": "learner",
+            "policy_loss": avg_pl,
+            "value_loss": avg_vl,
+            "update_time": update_time,
+            "steps_per_sec": steps_per_sec,
+            "batches_per_sec": batches_per_sec
+        })
 
-            last_log_time = now
-            total_update_time = 0.0
-            update_count = 0
-            policy_losses = []
-            value_losses = []
+        policy_losses = []
+        value_losses = []
 
 
 def metrics_logger_process(
@@ -304,49 +308,27 @@ def metrics_logger_process(
     config: Config,
 ):
     logger = setup_logging(config, "metrics")
+    stores = {}
 
+    log_time = time.perf_counter()
     while not stop_event.is_set():
         try:
-            metric = metrics_queue.get(timeout=0.1)
+            metrics_queue.put({"process": "metrics", "metrics_queue": metrics_queue.qsize()})
+            metrics = metrics_queue.get(timeout=0.1)
+            process = metrics['process']
+            if process not in stores:
+                stores[process] = defaultdict(list)
 
-            if metric["type"] == "debug":
-                logger.debug(f"{metric['process']}: {metric['message']}")
-            elif metric["type"] == "info":
-                logger.info(f"{metric['process']}: {metric['message']}")
-            elif metric["type"] == "warning":
-                logger.warning(f"{metric['process']}: {metric['message']}")
-            elif metric["type"] == "metrics":
-                logger.info(
-                    f"policy_loss: {metric['policy_loss']:.4f} | "
-                    + f"value_loss: {metric['value_loss']:.4f} | "
-                    + f"updates/sec: {metric['updates_per_sec']:.2f} | "
-                    + f"steps/sec: {metric['steps_per_sec']:.0f} | "
-                    + f"batch queue: {metric['batch_queue_size']}"
-                )
+            for k, v in metrics.items():
+                stores[process][k].append(v)
+
+            if time.perf_counter() - log_time > 1.0:
+                log_time = time.perf_counter()
+                for proc, store in stores.items():
+                    logger.info({k: v[-1] for k,v in store.items()})
         except queue.Empty:
             pass
         except KeyboardInterrupt:
-            break
-
-    # Drain remaining metrics
-    while True:
-        try:
-            metric = metrics_queue.get_nowait()
-            if metric["type"] == "debug":
-                logger.debug(f"{metric['process']}: {metric['message']}")
-            elif metric["type"] == "info":
-                logger.info(f"{metric['process']}: {metric['message']}")
-            elif metric["type"] == "warning":
-                logger.warning(f"{metric['process']}: {metric['message']}")
-            elif metric["type"] == "metrics":
-                logger.info(
-                    f"policy_loss: {metric['policy_loss']:.4f} | "
-                    + f"value_loss: {metric['value_loss']:.4f} | "
-                    + f"updates/sec: {metric['updates_per_sec']:.2f} | "
-                    + f"steps/sec: {metric['steps_per_sec']:.0f} | "
-                    + f"batch queue: {metric['batch_queue_size']}"
-                )
-        except queue.Empty:
             break
 
 
