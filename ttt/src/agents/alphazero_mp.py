@@ -116,7 +116,11 @@ def setup_logging(config: Config, process_name: str = "main") -> logging.Logger:
 
 
 def player_process(
-    step_queue: mp.Queue, weights_queue: mp.Queue, stop_event: mp.Event, config: Config
+    step_queue: mp.Queue,
+    weights_queue: mp.Queue,
+    metrics_queue: mp.Queue,
+    stop_event: mp.Event,
+    config: Config,
 ):
     logger = setup_logging(config, "player")
     model = ResNet(config.num_res_blocks, config.num_hidden, config.device_player)
@@ -160,6 +164,7 @@ def player_process(
 def batching_process(
     step_queue: mp.Queue,
     batch_queue: mp.Queue,
+    metrics_queue: mp.Queue,
     stop_event: mp.Event,
     config: Config,
 ):
@@ -190,6 +195,7 @@ def batching_process(
             batch_queue.put(raw_batch, timeout=1.0)
         except queue.Full:
             logger.warning("batch queue full")
+            # metrics_queue.put({"type": "warning", "process": "batcher", "message": "batch queue full"})
             pass
         except KeyboardInterrupt:
             pass
@@ -198,6 +204,7 @@ def batching_process(
 def learning_process(
     batch_queue: mp.Queue,
     weights_queues: list[mp.Queue],
+    metrics_queue: mp.Queue,
     stop_event: mp.Event,
     config: Config,
 ):
@@ -219,7 +226,8 @@ def learning_process(
         try:
             raw_batch = batch_queue.get(timeout=0.1)
         except queue.Empty:
-            logger.debug("batch queue empty")
+            logger.warning("batch queue empty")
+            # metrics_queue.put({"type": "debug", "process": "learner", "message": "batch queue empty"})
             continue
         except KeyboardInterrupt:
             break
@@ -262,7 +270,7 @@ def learning_process(
                 except queue.Full:
                     raise
 
-        # Log metrics once per second
+        # Send metrics once per second
         now = time.perf_counter()
         if now - last_log_time >= 1.0:
             elapsed = now - last_log_time
@@ -273,19 +281,73 @@ def learning_process(
             avg_pl = sum(policy_losses) / len(policy_losses) if policy_losses else 0
             avg_vl = sum(value_losses) / len(value_losses) if value_losses else 0
 
-            logger.info(
-                f"policy_loss: {avg_pl:.4f} | "
-                + f"value_loss: {avg_vl:.4f} | "
-                + f"updates/sec: {updates_per_sec:.2f} | "
-                + f"steps/sec: {steps_per_sec:.0f} | "
-                + f"batch queue: {batch_queue.qsize()}"
-            )
+            metrics_queue.put({
+                "type": "metrics",
+                "process": "learner",
+                "policy_loss": avg_pl,
+                "value_loss": avg_vl,
+                "updates_per_sec": updates_per_sec,
+                "steps_per_sec": steps_per_sec,
+                "batch_queue_size": batch_queue.qsize(),
+            })
 
             last_log_time = now
             total_update_time = 0.0
             update_count = 0
             policy_losses = []
             value_losses = []
+
+
+def metrics_logger_process(
+    metrics_queue: mp.Queue,
+    stop_event: mp.Event,
+    config: Config,
+):
+    logger = setup_logging(config, "metrics")
+
+    while not stop_event.is_set():
+        try:
+            metric = metrics_queue.get(timeout=0.1)
+
+            if metric["type"] == "debug":
+                logger.debug(f"{metric['process']}: {metric['message']}")
+            elif metric["type"] == "info":
+                logger.info(f"{metric['process']}: {metric['message']}")
+            elif metric["type"] == "warning":
+                logger.warning(f"{metric['process']}: {metric['message']}")
+            elif metric["type"] == "metrics":
+                logger.info(
+                    f"policy_loss: {metric['policy_loss']:.4f} | "
+                    + f"value_loss: {metric['value_loss']:.4f} | "
+                    + f"updates/sec: {metric['updates_per_sec']:.2f} | "
+                    + f"steps/sec: {metric['steps_per_sec']:.0f} | "
+                    + f"batch queue: {metric['batch_queue_size']}"
+                )
+        except queue.Empty:
+            pass
+        except KeyboardInterrupt:
+            break
+
+    # Drain remaining metrics
+    while True:
+        try:
+            metric = metrics_queue.get_nowait()
+            if metric["type"] == "debug":
+                logger.debug(f"{metric['process']}: {metric['message']}")
+            elif metric["type"] == "info":
+                logger.info(f"{metric['process']}: {metric['message']}")
+            elif metric["type"] == "warning":
+                logger.warning(f"{metric['process']}: {metric['message']}")
+            elif metric["type"] == "metrics":
+                logger.info(
+                    f"policy_loss: {metric['policy_loss']:.4f} | "
+                    + f"value_loss: {metric['value_loss']:.4f} | "
+                    + f"updates/sec: {metric['updates_per_sec']:.2f} | "
+                    + f"steps/sec: {metric['steps_per_sec']:.0f} | "
+                    + f"batch queue: {metric['batch_queue_size']}"
+                )
+        except queue.Empty:
+            break
 
 
 def steps_to_raw_batch(game_steps: list[GameStep]):
@@ -356,10 +418,18 @@ def train_mp(config: Config):
 
     step_queue = mp.Queue(maxsize=1009)
     batch_queue = mp.Queue(maxsize=100)
+    metrics_queue = mp.Queue(maxsize=1000)
     weights_queues = [mp.Queue(maxsize=1) for _ in range(config.n_player_processes)]
     stop_event = mp.Event()
 
     processes = []
+
+    metrics_logger = mp.Process(
+        target=metrics_logger_process,
+        name="metrics",
+        args=(metrics_queue, stop_event, config),
+    )
+    processes.append(metrics_logger)
 
     for i in range(config.n_player_processes):
         p = mp.Process(
@@ -368,6 +438,7 @@ def train_mp(config: Config):
             args=(
                 step_queue,
                 weights_queues[i],
+                metrics_queue,
                 stop_event,
                 config,
             ),
@@ -377,7 +448,7 @@ def train_mp(config: Config):
     p = mp.Process(
         target=batching_process,
         name="batcher",
-        args=(step_queue, batch_queue, stop_event, config),
+        args=(step_queue, batch_queue, metrics_queue, stop_event, config),
     )
     processes.append(p)
 
@@ -387,6 +458,7 @@ def train_mp(config: Config):
         args=(
             batch_queue,
             weights_queues,
+            metrics_queue,
             stop_event,
             config,
         ),
