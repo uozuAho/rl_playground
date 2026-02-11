@@ -22,9 +22,8 @@ uv run tabular-param-search.py  # try a range of parameters for training. Not
 
 # todo
 - WIP: az mp
-    - pretty print eval stats to CLI
-        - use pprint?
     - plot stats from log
+    - compare to old train_az. learns faster?
     - maybe: auto-balance step gen to learner throughput
     - maybe: save model snapshots
 - see my other todo notes

@@ -10,6 +10,7 @@ Architecture:
 - Metrics process: collects metrics from other processes, logs them etc
 """
 
+import pprint
 import json
 import logging
 import multiprocessing as mp
@@ -385,11 +386,13 @@ def metrics_loop(
                     {"process": "metrics", "metrics_queue": metrics_queue.qsize()}
                 )
                 for proc, store in stores.items():
+                    # todo: find a nicer way to not print noisy metrics to console
                     if proc.startswith("player") or proc.startswith("batcher"):
-                        # todo: find a nicer way to not print noisy metrics to console
                         logger.debug({k: v[-1] for k, v in store.items()})
                     else:
                         logger.info({k: v[-1] for k, v in store.items()})
+                        if proc == "evaluator":
+                            pprint.pp({k: v[-1] for k, v in store.items()})
         except queue.Empty:
             pass
         except KeyboardInterrupt:
