@@ -1,15 +1,22 @@
 """AlphaZero training with multiprocessing for max GPU utilisation.
 
+This is overkill for tic tac toe, but serves as a POC for bigger games.
+Inspired by https://github.com/google-deepmind/open_spiel/open_spiel/python/algorithms/alpha_zero
+
 Architecture:
 - Player processes: Run self-play games, put game steps on a queue
 - Batching process: Reads game steps, writes numpy array batches to another queue
 - Learning process: Reads numpy batches, updates the NN model
 """
 
+import json
+import logging
 import multiprocessing as mp
 import queue
+import sys
 import time
 from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -41,22 +48,78 @@ class Config:
     dirichlet_alpha: float = 0.3
     dirichlet_epsilon: float = 0.25
 
-    # Multiprocessing parameters
     n_player_processes: int = 4
     player_n_parallel_games: int = 8
     batch_size: int = 512
     weights_update_interval: int = 10
 
-    # Runtime parameters
     device_player: str = "cuda"
     device_learn: str = "cuda"
     stop_after_n_seconds: float | None = None
     stop_after_n_learns: int | None = None  # convenient for testing, benchmarks
 
+    # Logging
+    log_to_console: bool = True
+    log_to_file: bool = False
+    log_file_path: str | None = None
+    log_format: str = "text"  # "text" or "json"
+    console_log_level: str = "INFO"
+    file_log_level: str = "DEBUG"
+
+
+class JSONFormatter(logging.Formatter):
+    """Custom formatter that outputs log records as JSON."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        log_data = {
+            "timestamp": self.formatTime(record, self.datefmt),
+            "level": record.levelname,
+            "process": record.processName,
+            "message": record.getMessage(),
+        }
+        if record.exc_info:
+            log_data["exception"] = self.formatException(record.exc_info)
+        return json.dumps(log_data)
+
+
+def setup_logging(config: Config, process_name: str = "main") -> logging.Logger:
+    logger = logging.getLogger(f"alphazero_mp.{process_name}")
+    logger.setLevel(logging.DEBUG)
+    logger.handlers = []
+
+    if config.log_format == "json":
+        formatter = JSONFormatter()
+    else:
+        formatter = logging.Formatter(
+            fmt="%(asctime)s [%(levelname)s] %(processName)s: %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S"
+        )
+
+    if config.log_to_console:
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(getattr(logging, config.console_log_level.upper()))
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
+
+    if config.log_to_file:
+        if config.log_file_path is None:
+            raise ValueError("log_file_path must be set when log_to_file is True")
+
+        log_path = Path(config.log_file_path)
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+
+        file_handler = logging.FileHandler(log_path)
+        file_handler.setLevel(getattr(logging, config.file_log_level.upper()))
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+
+    return logger
+
 
 def player_process(
     step_queue: mp.Queue, weights_queue: mp.Queue, stop_event: mp.Event, config: Config
 ):
+    logger = setup_logging(config, "player")
     model = ResNet(config.num_res_blocks, config.num_hidden, config.device_player)
     model.eval()
 
@@ -87,7 +150,7 @@ def player_process(
             try:
                 step_queue.put(step, timeout=0.2)
             except queue.Full:
-                print("player: step queue full")
+                logger.warning("step queue full")
                 pass
 
 
@@ -95,8 +158,10 @@ def batching_process(
     step_queue: mp.Queue,
     batch_queue: mp.Queue,
     stop_event: mp.Event,
-    batch_size: int,
+    config: Config,
 ):
+    logger = setup_logging(config, "batcher")
+    batch_size = config.batch_size
     buffer = []
 
     while not stop_event.is_set():
@@ -119,7 +184,7 @@ def batching_process(
         try:
             batch_queue.put(raw_batch, timeout=1.0)
         except queue.Full:
-            print("batcher: batch queue full")
+            logger.warning("batch queue full")
             pass
 
 
@@ -129,6 +194,7 @@ def learning_process(
     stop_event: mp.Event,
     config: Config,
 ):
+    logger = setup_logging(config, "learner")
     model = ResNet(config.num_res_blocks, config.num_hidden, config.device_learn)
     model.train()
     optimizer = Adam(
@@ -136,7 +202,7 @@ def learning_process(
     )
 
     batch_count = 0
-    last_print_time = time.perf_counter()
+    last_log_time = time.perf_counter()
     total_update_time = 0.0
     update_count = 0
     policy_losses = []
@@ -146,11 +212,11 @@ def learning_process(
         try:
             raw_batch = batch_queue.get(timeout=0.1)
         except queue.Empty:
-            print("learner: batch queue empty")
+            logger.debug("batch queue empty")
             continue
 
         if config.stop_after_n_learns and update_count >= config.stop_after_n_learns:
-            print(f"learner: reached {config.stop_after_n_learns} updates, stopping...")
+            logger.info(f"reached {config.stop_after_n_learns} updates, stopping")
             stop_event.set()
             break
 
@@ -187,10 +253,10 @@ def learning_process(
                 except queue.Full:
                     raise
 
-        # Print metrics once per second
+        # Log metrics once per second
         now = time.perf_counter()
-        if now - last_print_time >= 1.0:
-            elapsed = now - last_print_time
+        if now - last_log_time >= 1.0:
+            elapsed = now - last_log_time
             updates_per_sec = update_count / elapsed
             batch_size = len(states)
             steps_per_sec = updates_per_sec * batch_size
@@ -198,7 +264,7 @@ def learning_process(
             avg_pl = sum(policy_losses) / len(policy_losses) if policy_losses else 0
             avg_vl = sum(value_losses) / len(value_losses) if value_losses else 0
 
-            print(
+            logger.info(
                 f"policy_loss: {avg_pl:.4f} | "
                 + f"value_loss: {avg_vl:.4f} | "
                 + f"updates/sec: {updates_per_sec:.2f} | "
@@ -206,7 +272,7 @@ def learning_process(
                 + f"batch queue: {batch_queue.qsize()}"
             )
 
-            last_print_time = now
+            last_log_time = now
             total_update_time = 0.0
             update_count = 0
             policy_losses = []
@@ -276,6 +342,7 @@ def update_net(
 
 
 def train_mp(config: Config):
+    logger = setup_logging(config, "main")
     mp.set_start_method("spawn", force=True)
 
     step_queue = mp.Queue(maxsize=1009)
@@ -299,7 +366,7 @@ def train_mp(config: Config):
 
     p = mp.Process(
         target=batching_process,
-        args=(step_queue, batch_queue, stop_event, config.batch_size),
+        args=(step_queue, batch_queue, stop_event, config),
     )
     processes.append(p)
 
@@ -323,7 +390,7 @@ def train_mp(config: Config):
             stop_event.set()
         learner.join()
     except KeyboardInterrupt:
-        print("\nStopping...")
+        logger.info("Stopping...")
         stop_event.set()
     finally:
         # Clean up
