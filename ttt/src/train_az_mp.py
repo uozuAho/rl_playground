@@ -4,7 +4,7 @@ max GPU usage and therefore fastest possible training"""
 from pathlib import Path
 
 import agents.alphazero_mp as az
-
+from agents.random import RandomAgent
 
 PROJ_ROOT = Path(__file__).parent.parent
 LOG_PATH = PROJ_ROOT / "train_az_mp.log"
@@ -22,10 +22,11 @@ def main():
         temperature=1.25,
         dirichlet_alpha=0.3,
         dirichlet_epsilon=0.25,
-        n_player_processes=8,
+        n_player_processes=6,
         player_n_parallel_games=100,
         batch_size=512,
         weights_update_interval=10,
+        eval_opponents=[("random", RandomAgent())],
         device_player="cuda",
         device_learn="cuda",
         stop_after_n_seconds=None,

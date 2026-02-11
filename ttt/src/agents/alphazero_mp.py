@@ -26,13 +26,15 @@ from torch import nn
 from torch.optim import Adam
 import torch.nn.functional as F
 
+import agents.agent
 from agents.alphazero import (
     GameStep,
     _self_play_n_games,
-    _batch_eval_for_mcts,
+    _batch_eval_for_mcts, AlphaZeroAgent,
 )
 from agents.az_nets import ResNet
 import ttt.env as t3
+from agents.compare import play_games_parallel
 
 
 @dataclass
@@ -54,6 +56,11 @@ class Config:
     player_n_parallel_games: int = 8
     batch_size: int = 512
     weights_update_interval: int = 10
+
+    eval_c_puct: float = 1.0
+    eval_n_mcts_sims: int = 10
+    eval_opponents: list[tuple[str, agents.agent.TttAgent]] = None
+    eval_n_games: int = 20
 
     device_player: str = "cuda"
     device_learn: str = "cuda"
@@ -121,7 +128,7 @@ def setup_logging(config: Config, process_name: str = "main") -> logging.Logger:
     return logger
 
 
-def player_process(
+def player_loop(
     name: str,
     step_queue: mp.Queue,
     weights_queue: mp.Queue,
@@ -180,7 +187,44 @@ def player_process(
         pass
 
 
-def batching_process(
+def eval_loop(
+    name: str,
+    weights_queue: mp.Queue,
+    metrics_queue: mp.Queue,
+    stop_event: mp.Event,
+    config: Config,
+):
+    model = ResNet(config.num_res_blocks, config.num_hidden, config.device_player)
+    model.eval()
+    aza = AlphaZeroAgent.from_nn(model, config.eval_n_mcts_sims, config.eval_c_puct, config.device_player)
+
+    try:
+        while not stop_event.is_set():
+            try:
+                new_state_dict = weights_queue.get_nowait()
+                model.load_state_dict(new_state_dict)
+
+                eval_metrics = {"process": name, "win rates": {}, "loss rates": {}, "draw rates": {}}
+
+                with torch.no_grad():
+                    for oname, oagent in config.eval_opponents:
+                        for azplayer in ["x", "o"]:
+                            players = (aza, oagent) if azplayer == "x" else (oagent, aza)
+                            pnames = ("az", oname) if azplayer == "x" else (oname, "az")
+                            r = play_games_parallel(players[0], players[1], config.eval_n_games)
+                            w, ll, d = r["X"], r["O"], r["draw"]
+                            eval_metrics["win rates"][f"{pnames[0]} vs {pnames[1]}"] = (w / config.eval_n_games)
+                            eval_metrics["loss rates"][f"{pnames[0]} vs {pnames[1]}"] = (ll / config.eval_n_games)
+                            eval_metrics["draw rates"][f"{pnames[0]} vs {pnames[1]}"] = (d / config.eval_n_games)
+
+                metrics_queue.put(eval_metrics)
+            except queue.Empty:
+                pass
+    except KeyboardInterrupt:
+        pass
+
+
+def batcher_loop(
     step_queue: mp.Queue,
     batch_queue: mp.Queue,
     metrics_queue: mp.Queue,
@@ -222,7 +266,7 @@ def batching_process(
             break
 
 
-def learning_process(
+def learner_loop(
     batch_queue: mp.Queue,
     weights_queues: list[mp.Queue],
     metrics_queue: mp.Queue,
@@ -241,6 +285,14 @@ def learning_process(
     t_start = time.perf_counter()
     policy_losses = []
     value_losses = []
+
+    def send_weights():
+        state_dict = model.state_dict()
+        for wq in weights_queues:
+            try:
+                wq.put(state_dict)
+            except queue.Full:
+                raise
 
     while not stop_event.is_set():
         try:
@@ -280,12 +332,7 @@ def learning_process(
 
         # Periodically share weights with player processes
         if batch_count % config.weights_update_interval == 0:
-            state_dict = model.state_dict()
-            for wq in weights_queues:
-                try:
-                    wq.put(state_dict)
-                except queue.Full:
-                    raise
+            send_weights()
 
         elapsed = time.perf_counter() - t_start
         steps_per_sec = step_count / elapsed
@@ -309,7 +356,7 @@ def learning_process(
         value_losses = []
 
 
-def metrics_process(
+def metrics_loop(
     metrics_queue: mp.Queue,
     stop_event: mp.Event,
     config: Config,
@@ -414,13 +461,13 @@ def train_mp(config: Config):
     step_queue = mp.Queue(maxsize=100)  # queue item = list of steps
     batch_queue = mp.Queue(maxsize=10)
     metrics_queue = mp.Queue(maxsize=1000)
-    weights_queues = [mp.Queue(maxsize=1) for _ in range(config.n_player_processes)]
+    weights_queues = [mp.Queue(maxsize=1) for _ in range(config.n_player_processes + 1)]  # +1 evaluator
     stop_event = mp.Event()
 
     processes = []
 
     metrics_logger = mp.Process(
-        target=metrics_process,
+        target=metrics_loop,
         name="metrics",
         args=(metrics_queue, stop_event, config),
     )
@@ -429,7 +476,7 @@ def train_mp(config: Config):
     for i in range(config.n_player_processes):
         name = f"player-{i}"
         p = mp.Process(
-            target=player_process,
+            target=player_loop,
             name=name,
             args=(
                 name,
@@ -443,14 +490,26 @@ def train_mp(config: Config):
         processes.append(p)
 
     p = mp.Process(
-        target=batching_process,
+        target=batcher_loop,
         name="batcher",
         args=(step_queue, batch_queue, metrics_queue, stop_event, config),
     )
     processes.append(p)
 
+    if config.eval_opponents:
+        p = mp.Process(
+            target=eval_loop,
+            name="evaluator",
+            args=("evaluator",
+                weights_queues[-1],
+                metrics_queue,
+                stop_event,
+                config)
+        )
+        processes.append(p)
+
     learner = mp.Process(
-        target=learning_process,
+        target=learner_loop,
         name="learner",
         args=(
             batch_queue,
