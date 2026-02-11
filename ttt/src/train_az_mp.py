@@ -1,11 +1,17 @@
 """Same goal as train az, but use alphazero mp (multiprocessing), aiming for
 max GPU usage and therefore fastest possible training"""
 import json
+from collections import defaultdict
+from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
-from pprint import pprint
+from typing import Any
+
+from matplotlib import pyplot as plt
 
 import agents.alphazero_mp as az
-from agents.random import RandomAgent
+from agents.alphazero_mp import LearnerMetrics, EvalMetrics
+from agents.mcts import MctsAgent
 
 PROJ_ROOT = Path(__file__).parent.parent
 LOG_PATH = PROJ_ROOT / "train_az_mp.log"
@@ -27,7 +33,11 @@ def main():
         player_n_parallel_games=100,
         batch_size=512,
         weights_update_interval=10,
-        eval_opponents=[("random", RandomAgent())],
+        eval_opponents=[
+            ("mcts10", MctsAgent(n_sims=10)),
+            ("mcts20", MctsAgent(n_sims=20)),
+            ("mcts30", MctsAgent(n_sims=30)),
+        ],
         device_player="cuda",
         device_learn="cuda",
         stop_after_n_seconds=None,
@@ -37,22 +47,85 @@ def main():
         console_log_level="INFO",
         log_file_path=LOG_PATH,
     )
-    az.train_mp(config)
-    # load_metrics(LOG_PATH, config)
+    # az.train_mp(config)
+    metrics = log2metrics(LOG_PATH)
+    plot_metrics(metrics)
 
 
-def load_metrics(log_path: Path, config: az.Config):
+@dataclass
+class AzMetrics:
+    policy_loss: dict[datetime, float] = field(default_factory=dict)
+    value_loss: dict[datetime, float] = field(default_factory=dict)
+    win_rates: dict[str, dict[datetime, float]] = field(default_factory=lambda: defaultdict(dict))
+    loss_rates: dict[str, dict[datetime, float]] = field(default_factory=lambda: defaultdict(dict))
+    draw_rates: dict[str, dict[datetime, float]] = field(default_factory=lambda: defaultdict(dict))
+
+
+def log2metrics(log_path: Path):
+    azmetrics = AzMetrics()
     with open(log_path) as infile:
         for line in infile:
             logobj = json.loads(line)
+            timestamp = datetime.fromisoformat(logobj['timestamp'])
             if logobj['process'] == 'metrics':
                 metobj = json.loads(logobj['message'].replace("'", '"'))
-                pprint(metobj)
-                games_played =0
-                # if metobj['process'].startswith('player'):
-                #     games_played += metobj['games_played']
-                if metobj['process'] == 'learner':
-                    steps = metobj['steps_trained']
+                match metobj["type"]:
+                    case "learner":
+                        lm = LearnerMetrics(**metobj)
+                        azmetrics.policy_loss[timestamp] = lm["policy_loss"]
+                        azmetrics.value_loss[timestamp] = lm["value_loss"]
+                    case "eval":
+                        em = EvalMetrics(**metobj)
+                        for name, rate in em["win_rates"].items():
+                            azmetrics.win_rates[name][timestamp] = rate
+                        for name, rate in em["loss_rates"].items():
+                            azmetrics.loss_rates[name][timestamp] = rate
+    return azmetrics
+
+
+def as_xy(d: dict[datetime, Any]) -> tuple[list[datetime], list[Any]]:
+    return tuple(zip(*sorted(d.items())))
+
+
+def plot_metrics(metrics: AzMetrics):
+    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+
+    x, y = as_xy(metrics.policy_loss)
+    axes[0, 0].plot(x, y, marker="o")
+    axes[0, 0].set_xlabel("Time")
+    axes[0, 0].set_ylabel("Policy Loss")
+    axes[0, 0].set_title("Policy Loss")
+    axes[0, 0].grid(True)
+
+    x, y = as_xy(metrics.value_loss)
+    axes[0, 1].plot(x, y, marker="o")
+    axes[0, 1].set_xlabel("Games")
+    axes[0, 1].set_ylabel("Value Loss")
+    axes[0, 1].set_title("Value Loss")
+    axes[0, 1].grid(True)
+
+    for k in metrics.win_rates:
+        x, y = as_xy(metrics.win_rates[k])
+        axes[1, 0].plot(x, y, marker="o", label=k)
+    axes[1, 0].set_xlabel("Time")
+    axes[1, 0].set_ylabel("Win Rate")
+    axes[1, 0].set_title("Win Rates")
+    axes[1, 0].set_ylim([0, 1])
+    axes[1, 0].legend()
+    axes[1, 0].grid(True)
+
+    for k in metrics.loss_rates:
+        x, y = as_xy(metrics.loss_rates[k])
+        axes[1, 1].plot(x, y, marker="o", label=k)
+    axes[1, 1].set_xlabel("Time")
+    axes[1, 1].set_ylabel("Loss Rate")
+    axes[1, 1].set_title("Loss Rates")
+    axes[1, 1].set_ylim([0, 1])
+    axes[1, 1].legend()
+    axes[1, 1].grid(True)
+
+    plt.show()
+
 
 if __name__ == "__main__":
     main()
