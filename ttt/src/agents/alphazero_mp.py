@@ -16,7 +16,7 @@ import multiprocessing as mp
 import queue
 import sys
 import time
-from collections import defaultdict
+from collections import defaultdict, deque
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -168,9 +168,8 @@ def player_process(
 
             for step in game_steps:
                 try:
-                    step_queue.put(step, timeout=0.2)
+                    step_queue.put(step, timeout=1.0)
                 except queue.Full:
-                    logger.warning("step queue full")
                     pass
     except KeyboardInterrupt:
         pass
@@ -189,6 +188,16 @@ def batching_process(
 
     last_time = time.perf_counter()
     while not stop_event.is_set():
+        if time.perf_counter() - last_time > 1.0:
+            last_time = time.perf_counter()
+            metrics_queue.put(
+                {
+                    "process": "batcher",
+                    "step_queue_size": step_queue.qsize(),
+                    "batch_queue_size": batch_queue.qsize(),
+                }
+            )
+
         try:
             while len(buffer) < batch_size:
                 step = step_queue.get(timeout=0.1)
@@ -199,30 +208,12 @@ def batching_process(
                 batch_queue.put(raw_batch, timeout=0.1)
                 buffer = []
 
-            if time.perf_counter() - last_time > 1.0:
-                last_time = time.perf_counter()
-                metrics_queue.put(
-                    {
-                        "process": "batcher",
-                        "step_queue_size": step_queue.qsize(),
-                        "batch_queue_size": batch_queue.qsize(),
-                    }
-                )
         except queue.Empty:
             pass
         except queue.Full:
             pass
         except KeyboardInterrupt:
             break
-
-    if buffer:
-        raw_batch = steps_to_raw_batch(buffer)
-        try:
-            batch_queue.put(raw_batch, timeout=1.0)
-        except queue.Full:
-            pass
-        except KeyboardInterrupt:
-            pass
 
 
 def learning_process(
@@ -319,23 +310,27 @@ def metrics_process(
 ):
     logger = setup_logging(config, "metrics")
     stores = {}
-
     log_time = time.perf_counter()
+    max_metrics_stored = 20
+
     while not stop_event.is_set():
         try:
-            metrics_queue.put(
-                {"process": "metrics", "metrics_queue": metrics_queue.qsize()}
-            )
             metrics = metrics_queue.get(timeout=0.1)
             process = metrics["process"]
             if process not in stores:
-                stores[process] = defaultdict(list)
+                stores[process] = defaultdict(deque)
 
             for k, v in metrics.items():
+                metric = stores[process][k]
+                if len(metric) >= max_metrics_stored:
+                    metric.popleft()
                 stores[process][k].append(v)
 
             if time.perf_counter() - log_time > 1.0:
                 log_time = time.perf_counter()
+                metrics_queue.put(
+                    {"process": "metrics", "metrics_queue": metrics_queue.qsize()}
+                )
                 for proc, store in stores.items():
                     logger.info({k: v[-1] for k, v in store.items()})
         except queue.Empty:
