@@ -122,13 +122,14 @@ def setup_logging(config: Config, process_name: str = "main") -> logging.Logger:
 
 
 def player_process(
+    name: str,
     step_queue: mp.Queue,
     weights_queue: mp.Queue,
     metrics_queue: mp.Queue,
     stop_event: mp.Event,
     config: Config,
 ):
-    logger = setup_logging(config, "player")
+    # logger = setup_logging(config, name)
     model = ResNet(config.num_res_blocks, config.num_hidden, config.device_player)
     model.eval()
 
@@ -140,7 +141,6 @@ def player_process(
             try:
                 new_state_dict = weights_queue.get_nowait()
                 model.load_state_dict(new_state_dict)
-                logger.debug("updated model weights")
             except queue.Empty:
                 pass
 
@@ -160,7 +160,7 @@ def player_process(
             dur = time.perf_counter() - start
             metrics_queue.put(
                 {
-                    "process": "player",
+                    "process": name,
                     "games/sec": config.player_n_parallel_games / dur,
                     "steps/sec": len(game_steps) / dur,
                 }
@@ -405,8 +405,8 @@ def train_mp(config: Config):
     logger = setup_logging(config, "main")
     mp.set_start_method("spawn", force=True)
 
-    step_queue = mp.Queue(maxsize=1009)
-    batch_queue = mp.Queue(maxsize=100)
+    step_queue = mp.Queue(maxsize=10000)
+    batch_queue = mp.Queue(maxsize=10)
     metrics_queue = mp.Queue(maxsize=1000)
     weights_queues = [mp.Queue(maxsize=1) for _ in range(config.n_player_processes)]
     stop_event = mp.Event()
@@ -421,10 +421,12 @@ def train_mp(config: Config):
     processes.append(metrics_logger)
 
     for i in range(config.n_player_processes):
+        name = f"player-{i}"
         p = mp.Process(
             target=player_process,
-            name=f"player-{i}",
+            name=name,
             args=(
+                name,
                 step_queue,
                 weights_queues[i],
                 metrics_queue,
