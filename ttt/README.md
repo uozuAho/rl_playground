@@ -23,8 +23,6 @@ uv run tabular-param-search.py  # try a range of parameters for training. Not
 
 # todo
 - WIP: perf: try to max out GPU during az mp.
-    - WIP log to file and cli
-        - name processes
     - ensure close to 100% GPU utilisation
         - put trajectories on step queue instead of steps?
     - add evaluator

@@ -363,6 +363,7 @@ def train_mp(config: Config):
     for i in range(config.n_player_processes):
         p = mp.Process(
             target=player_process,
+            name=f"player-{i}",
             args=(
                 step_queue,
                 weights_queues[i],
@@ -374,12 +375,14 @@ def train_mp(config: Config):
 
     p = mp.Process(
         target=batching_process,
+        name="batcher",
         args=(step_queue, batch_queue, stop_event, config),
     )
     processes.append(p)
 
     learner = mp.Process(
         target=learning_process,
+        name="learner",
         args=(
             batch_queue,
             weights_queues,
