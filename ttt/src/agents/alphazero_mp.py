@@ -125,32 +125,35 @@ def player_process(
     def batch_mcts_eval(envs):
         return _batch_eval_for_mcts(model, envs, config.device_player)
 
-    while not stop_event.is_set():
-        try:
-            new_state_dict = weights_queue.get_nowait()
-            model.load_state_dict(new_state_dict)
-        except queue.Empty:
-            pass
-
-        with torch.no_grad():
-            game_steps = list(
-                _self_play_n_games(
-                    batch_mcts_eval,
-                    config.player_n_parallel_games,
-                    config.train_n_mcts_sims,
-                    config.c_puct,
-                    config.temperature,
-                    config.dirichlet_alpha,
-                    config.dirichlet_epsilon,
-                )
-            )
-
-        for step in game_steps:
+    try:
+        while not stop_event.is_set():
             try:
-                step_queue.put(step, timeout=0.2)
-            except queue.Full:
-                logger.warning("step queue full")
+                new_state_dict = weights_queue.get_nowait()
+                model.load_state_dict(new_state_dict)
+            except queue.Empty:
                 pass
+
+            with torch.no_grad():
+                game_steps = list(
+                    _self_play_n_games(
+                        batch_mcts_eval,
+                        config.player_n_parallel_games,
+                        config.train_n_mcts_sims,
+                        config.c_puct,
+                        config.temperature,
+                        config.dirichlet_alpha,
+                        config.dirichlet_epsilon,
+                    )
+                )
+
+            for step in game_steps:
+                try:
+                    step_queue.put(step, timeout=0.2)
+                except queue.Full:
+                    logger.warning("step queue full")
+                    pass
+    except KeyboardInterrupt:
+        pass
 
 
 def batching_process(
@@ -177,6 +180,8 @@ def batching_process(
             pass
         except queue.Full:
             pass
+        except KeyboardInterrupt:
+            break
 
     if buffer:
         raw_batch = steps_to_raw_batch(buffer)
@@ -184,6 +189,8 @@ def batching_process(
             batch_queue.put(raw_batch, timeout=1.0)
         except queue.Full:
             logger.warning("batch queue full")
+            pass
+        except KeyboardInterrupt:
             pass
 
 
@@ -213,6 +220,8 @@ def learning_process(
         except queue.Empty:
             logger.debug("batch queue empty")
             continue
+        except KeyboardInterrupt:
+            break
 
         if config.stop_after_n_learns and update_count >= config.stop_after_n_learns:
             logger.info(f"reached {config.stop_after_n_learns} updates, stopping")

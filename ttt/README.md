@@ -23,7 +23,6 @@ uv run tabular-param-search.py  # try a range of parameters for training. Not
 
 # todo
 - WIP: perf: try to max out GPU during az mp.
-    - don't print stacks on keyboard interrupt
     - WIP log to file and cli
         - name processes
     - ensure close to 100% GPU utilisation
