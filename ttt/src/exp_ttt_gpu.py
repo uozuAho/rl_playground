@@ -18,6 +18,7 @@ import torch
 from torch import nn
 from torch.optim import Adam
 import torch.nn.functional as F
+import queue as Q
 
 from agents.alphazero import GameStep
 from agents.az_nets import ResNet
@@ -41,7 +42,7 @@ def producer_process(queue: mp.Queue, nsteps: int, stop_event: mp.Event):
         raw_batch = steps_to_raw_batch(steps)
         try:
             queue.put(raw_batch, timeout=0.1)
-        except:
+        except Q.Full:
             pass
 
 
@@ -58,7 +59,7 @@ def consumer_process(queue: mp.Queue, nsteps: int, stop_event: mp.Event, profile
     while not stop_event.is_set():
         try:
             raw_batch = queue.get(timeout=0.1)
-        except:
+        except Q.Empty:
             continue
 
         update_start = time.perf_counter()

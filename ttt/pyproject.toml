@@ -34,8 +34,3 @@ ignore = ["E701"]  # multiple statements per line
 
 [tool.ruff]
 exclude = ["bot-showdown.py"]
-
-[tool.pytest.ini_options]
-markers = [
-    "slow",
-]

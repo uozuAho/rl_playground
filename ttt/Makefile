@@ -21,14 +21,11 @@ pc:
 	uv run ruff check --fix
 	uv run pytest
 
-# precommit fast
-pcf:
-	uv run ruff format
-	uv run ruff check --fix
-	uv run pytest -m "not slow"
-
 trainaz:
 	uv run src/train_az.py
+
+trainazmp:
+	uv run src/train_az_mp.py
 
 prof-trainaz:
 	uv run python -m cProfile src/train_az.py profile > profile.txt

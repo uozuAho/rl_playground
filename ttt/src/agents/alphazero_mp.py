@@ -1,4 +1,4 @@
-"""AlphaZero training with multiprocessing for GPU optimization.
+"""AlphaZero training with multiprocessing for max GPU utilisation.
 
 Architecture:
 - Player processes: Run self-play games, put game steps on a queue
@@ -35,7 +35,7 @@ class Config:
     weight_decay: float = 0.0001
     mask_invalid_actions: bool = True
 
-    n_mcts_sims: int = 5
+    train_n_mcts_sims: int = 5
     c_puct: float = 2.0
     temperature: float = 1.25
     dirichlet_alpha: float = 0.3
@@ -43,21 +43,19 @@ class Config:
 
     # Multiprocessing parameters
     n_player_processes: int = 4
-    n_games_per_iter: int = 8
+    player_n_parallel_games: int = 8
     batch_size: int = 512
     weights_update_interval: int = 10
 
     # Runtime parameters
     device_player: str = "cuda"
     device_learn: str = "cuda"
-    duration_seconds: float = None
+    stop_after_n_seconds: float | None = None
+    stop_after_n_learns: int | None = None  # convenient for testing, benchmarks
 
 
 def player_process(
-    step_queue: mp.Queue,
-    weights_queue: mp.Queue,
-    stop_event: mp.Event,
-    config: Config
+    step_queue: mp.Queue, weights_queue: mp.Queue, stop_event: mp.Event, config: Config
 ):
     model = ResNet(config.num_res_blocks, config.num_hidden, config.device_player)
     model.eval()
@@ -76,8 +74,8 @@ def player_process(
             game_steps = list(
                 _self_play_n_games(
                     batch_mcts_eval,
-                    config.n_games_per_iter,
-                    config.n_mcts_sims,
+                    config.player_n_parallel_games,
+                    config.train_n_mcts_sims,
                     config.c_puct,
                     config.temperature,
                     config.dirichlet_alpha,
@@ -129,11 +127,13 @@ def learning_process(
     batch_queue: mp.Queue,
     weights_queues: list[mp.Queue],
     stop_event: mp.Event,
-    config: Config
+    config: Config,
 ):
     model = ResNet(config.num_res_blocks, config.num_hidden, config.device_learn)
     model.train()
-    optimizer = Adam(model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay)
+    optimizer = Adam(
+        model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay
+    )
 
     batch_count = 0
     last_print_time = time.perf_counter()
@@ -148,6 +148,11 @@ def learning_process(
         except queue.Empty:
             print("learner: batch queue empty")
             continue
+
+        if config.stop_after_n_learns and update_count >= config.stop_after_n_learns:
+            print(f"learner: reached {config.stop_after_n_learns} updates, stopping...")
+            stop_event.set()
+            break
 
         update_start = time.perf_counter()
 
@@ -186,9 +191,6 @@ def learning_process(
         now = time.perf_counter()
         if now - last_print_time >= 1.0:
             elapsed = now - last_print_time
-            avg_update_time = (
-                total_update_time / update_count if update_count > 0 else 0
-            )
             updates_per_sec = update_count / elapsed
             batch_size = len(states)
             steps_per_sec = updates_per_sec * batch_size
@@ -316,8 +318,8 @@ def train_mp(config: Config):
         p.start()
 
     try:
-        if config.duration_seconds:
-            time.sleep(config.duration_seconds)
+        if config.stop_after_n_seconds:
+            time.sleep(config.stop_after_n_seconds)
             stop_event.set()
         learner.join()
     except KeyboardInterrupt:

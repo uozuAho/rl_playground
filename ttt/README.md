@@ -22,11 +22,8 @@ uv run tabular-param-search.py  # try a range of parameters for training. Not
 
 
 # todo
-- WIP: perf: try to max out GPU during az training.
-    - understand alphazero_mp
-      - inline todos
-    - make train_az able to use mp version
-        - or make separate file for now
+- WIP: perf: try to max out GPU during az mp.
+    - log to file and cli
     - ensure close to 100% GPU utilisation
         - put trajectories on step queue instead of steps?
     - add evaluator
