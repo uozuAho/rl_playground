@@ -88,7 +88,7 @@ def train(
     parallel=False,
 ):
     """Self play n_games, train over the resulting data for n_epochs.
-    Returns: avg_policy_loss, avg_value_loss
+    Returns: avg_policy_loss, avg_value_loss, number of game steps trained on
     """
 
     def mcts_eval(env):
@@ -136,7 +136,7 @@ def train(
                 f"epoch {epoch}: avg policy, value loss: {sum(pls) / len(pls):.4f}  {sum(vls) / len(vls):.4f}"
             )
 
-    return sum(pls) / len(pls), sum(vls) / len(vls)
+    return sum(pls) / len(pls), sum(vls) / len(vls), len(game_steps)
 
 
 def _update_net(

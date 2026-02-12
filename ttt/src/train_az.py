@@ -56,6 +56,7 @@ class EvalConfig:
 @dataclass
 class TrainingMetrics:
     games_played: list[int] = field(default_factory=list)
+    steps_trained: list[int] = field(default_factory=list)
     policy_losses: list[float] = field(default_factory=list)
     value_losses: list[float] = field(default_factory=list)
     total_training_time: float = 0
@@ -71,6 +72,8 @@ class TrainingMetrics:
     def add(self, metrics: "TrainingMetrics"):
         n_games = 0 if len(self.games_played) == 0 else self.games_played[-1]
         self.games_played.extend(x + n_games for x in metrics.games_played)
+        n_steps = 0 if len(self.steps_trained) == 0 else self.steps_trained[-1]
+        self.steps_trained.extend(x + n_steps for x in metrics.steps_trained)
         self.policy_losses.extend(metrics.policy_losses)
         self.value_losses.extend(metrics.value_losses)
         self.total_training_time += metrics.total_training_time
@@ -246,7 +249,7 @@ def train(
         iter_value_losses = []
 
         start = time.perf_counter()
-        pl, vl = az.train(
+        pl, vl, n_steps = az.train(
             net,
             optimiser,
             n_games=train_config.n_games_per_iteration,
@@ -271,6 +274,7 @@ def train(
         train_metrics.games_played.append(
             (iteration + 1) * train_config.n_games_per_iteration
         )
+        train_metrics.steps_trained.append(n_steps)
         avg_pl = sum(iter_policy_losses) / len(iter_policy_losses)
         avg_vl = sum(iter_value_losses) / len(iter_value_losses)
         train_metrics.policy_losses.append(avg_pl)
@@ -331,14 +335,14 @@ def plot_training_metrics(
 ):
     fig, axes = plt.subplots(2, 2, figsize=(12, 8))
 
-    axes[0, 0].plot(train_metrics.games_played, train_metrics.policy_losses, marker="o")
-    axes[0, 0].set_xlabel("Games")
+    axes[0, 0].plot(train_metrics.steps_trained, train_metrics.policy_losses, marker="o")
+    axes[0, 0].set_xlabel("Steps trained")
     axes[0, 0].set_ylabel("Policy Loss")
     axes[0, 0].set_title("Policy Loss")
     axes[0, 0].grid(True)
 
-    axes[0, 1].plot(train_metrics.games_played, train_metrics.value_losses, marker="o")
-    axes[0, 1].set_xlabel("Games")
+    axes[0, 1].plot(train_metrics.steps_trained, train_metrics.value_losses, marker="o")
+    axes[0, 1].set_xlabel("Steps trained")
     axes[0, 1].set_ylabel("Value Loss")
     axes[0, 1].set_title("Value Loss")
     axes[0, 1].grid(True)

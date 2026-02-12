@@ -32,7 +32,8 @@ import agents.agent
 from agents.alphazero import (
     GameStep,
     _self_play_n_games,
-    _batch_eval_for_mcts, AlphaZeroAgent,
+    _batch_eval_for_mcts,
+    AlphaZeroAgent,
 )
 from agents.az_nets import ResNet
 import ttt.env as t3
@@ -181,12 +182,15 @@ def player_loop(
             games_played += config.player_n_parallel_games
             steps_generated += len(game_steps)
             elapsed = time.perf_counter() - t_start
-            metrics_queue.put(PlayerMetrics(
-                type="player",
-                name=name,
-                games_played=games_played,
-                games_per_sec=games_played / elapsed,
-                steps_per_sec=steps_generated / elapsed))
+            metrics_queue.put(
+                PlayerMetrics(
+                    type="player",
+                    name=name,
+                    games_played=games_played,
+                    games_per_sec=games_played / elapsed,
+                    steps_per_sec=steps_generated / elapsed,
+                )
+            )
 
             try:
                 step_queue.put(game_steps, timeout=1.0)
@@ -202,6 +206,7 @@ class EvalMetrics(TypedDict):
     loss_rates: dict[str, float]
     draw_rates: dict[str, float]
 
+
 def eval_loop(
     weights_queue: mp.Queue,
     metrics_queue: mp.Queue,
@@ -210,7 +215,9 @@ def eval_loop(
 ):
     model = ResNet(config.num_res_blocks, config.num_hidden, config.device_player)
     model.eval()
-    aza = AlphaZeroAgent.from_nn(model, config.eval_n_mcts_sims, config.eval_c_puct, config.device_player)
+    aza = AlphaZeroAgent.from_nn(
+        model, config.eval_n_mcts_sims, config.eval_c_puct, config.device_player
+    )
 
     try:
         while not stop_event.is_set():
@@ -219,22 +226,29 @@ def eval_loop(
                 model.load_state_dict(new_state_dict)
 
                 eval_metrics = EvalMetrics(
-                    type="eval",
-                    win_rates={},
-                    loss_rates={},
-                    draw_rates={}
+                    type="eval", win_rates={}, loss_rates={}, draw_rates={}
                 )
 
                 with torch.no_grad():
                     for oname, oagent in config.eval_opponents:
                         for azplayer in ["x", "o"]:
-                            players = (aza, oagent) if azplayer == "x" else (oagent, aza)
+                            players = (
+                                (aza, oagent) if azplayer == "x" else (oagent, aza)
+                            )
                             pnames = ("az", oname) if azplayer == "x" else (oname, "az")
-                            r = play_games_parallel(players[0], players[1], config.eval_n_games)
+                            r = play_games_parallel(
+                                players[0], players[1], config.eval_n_games
+                            )
                             w, ll, d = r["X"], r["O"], r["draw"]
-                            eval_metrics["win_rates"][f"{pnames[0]} vs {pnames[1]}"] = (w / config.eval_n_games)
-                            eval_metrics["loss_rates"][f"{pnames[0]} vs {pnames[1]}"] = (ll / config.eval_n_games)
-                            eval_metrics["draw_rates"][f"{pnames[0]} vs {pnames[1]}"] = (d / config.eval_n_games)
+                            eval_metrics["win_rates"][f"{pnames[0]} vs {pnames[1]}"] = (
+                                w / config.eval_n_games
+                            )
+                            eval_metrics["loss_rates"][
+                                f"{pnames[0]} vs {pnames[1]}"
+                            ] = ll / config.eval_n_games
+                            eval_metrics["draw_rates"][
+                                f"{pnames[0]} vs {pnames[1]}"
+                            ] = d / config.eval_n_games
 
                 metrics_queue.put(eval_metrics)
             except queue.Empty:
@@ -267,7 +281,7 @@ def batcher_loop(
                 BatcherMetrics(
                     type="batcher",
                     step_queue_size=step_queue.qsize(),
-                    batch_queue_size=batch_queue.qsize()
+                    batch_queue_size=batch_queue.qsize(),
                 )
             )
 
@@ -368,7 +382,7 @@ def learner_loop(
                 value_loss=avg_vl,
                 steps_trained=step_count,
                 steps_per_sec=steps_per_sec,
-                batches_per_sec=batches_per_sec
+                batches_per_sec=batches_per_sec,
             )
         )
 
@@ -503,7 +517,9 @@ def train_mp(config: Config):
     step_queue = mp.Queue(maxsize=100)  # queue item = list of steps
     batch_queue = mp.Queue(maxsize=10)
     metrics_queue = mp.Queue(maxsize=1000)
-    weights_queues = [mp.Queue(maxsize=1) for _ in range(config.n_player_processes + 1)]  # +1 evaluator
+    weights_queues = [
+        mp.Queue(maxsize=1) for _ in range(config.n_player_processes + 1)
+    ]  # +1 evaluator
     stop_event = mp.Event()
 
     processes = []
@@ -542,11 +558,7 @@ def train_mp(config: Config):
         p = mp.Process(
             target=eval_loop,
             name="evaluator",
-            args=(
-                weights_queues[-1],
-                metrics_queue,
-                stop_event,
-                config)
+            args=(weights_queues[-1], metrics_queue, stop_event, config),
         )
         processes.append(p)
 

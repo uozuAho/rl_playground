@@ -1,5 +1,6 @@
 """Same goal as train az, but use alphazero mp (multiprocessing), aiming for
 max GPU usage and therefore fastest possible training"""
+
 import json
 import os.path
 from collections import defaultdict
@@ -61,9 +62,15 @@ class AzMetrics:
     value_loss: dict[int, float] = field(default_factory=dict)
 
     # WLD rates vs time, per agent matchup
-    win_rates: dict[str, dict[datetime, float]] = field(default_factory=lambda: defaultdict(dict))
-    loss_rates: dict[str, dict[datetime, float]] = field(default_factory=lambda: defaultdict(dict))
-    draw_rates: dict[str, dict[datetime, float]] = field(default_factory=lambda: defaultdict(dict))
+    win_rates: dict[str, dict[datetime, float]] = field(
+        default_factory=lambda: defaultdict(dict)
+    )
+    loss_rates: dict[str, dict[datetime, float]] = field(
+        default_factory=lambda: defaultdict(dict)
+    )
+    draw_rates: dict[str, dict[datetime, float]] = field(
+        default_factory=lambda: defaultdict(dict)
+    )
 
 
 def log2metrics(log_path: Path):
@@ -71,9 +78,9 @@ def log2metrics(log_path: Path):
     with open(log_path) as infile:
         for line in infile:
             logobj = json.loads(line)
-            timestamp = datetime.fromisoformat(logobj['timestamp'])
-            if logobj['process'] == 'metrics':
-                metobj = json.loads(logobj['message'].replace("'", '"'))
+            timestamp = datetime.fromisoformat(logobj["timestamp"])
+            if logobj["process"] == "metrics":
+                metobj = json.loads(logobj["message"].replace("'", '"'))
                 match metobj["type"]:
                     case "learner":
                         lm = LearnerMetrics(**metobj)

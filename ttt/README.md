@@ -23,6 +23,8 @@ uv run tabular-param-search.py  # try a range of parameters for training. Not
 # todo
 - WIP: az mp
     - compare to old train_az. learns faster?
+        - plot vs steps instead of games
+        - vs mcts rr 10 20 30
     - maybe: time axes = seconds instead of abs time
     - maybe: support multiple epochs on replay buffer
     - maybe: auto-balance step gen to learner throughput
