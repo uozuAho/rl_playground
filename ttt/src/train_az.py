@@ -14,8 +14,6 @@ from agents.alphazero import AlphaZeroAgent
 from agents.az_nets import ResNet
 from agents.compare import play_games_parallel
 from agents.mcts import MctsAgent
-from agents.perfect import PerfectAgent
-from agents.random import RandomAgent
 
 PROJ_ROOT = Path(__file__).parent.parent
 EXPERIMENTS_DIR = PROJ_ROOT / "experiment_logs"
@@ -179,9 +177,9 @@ default_eval_config = EvalConfig(
     n_mcts_sims=10,
     c_puct=1.0,
     opponents=[
-        ("random", RandomAgent()),
-        ("perfect", PerfectAgent()),
-        ("mcts_rr10", MctsAgent(n_sims=10)),
+        ("mcts10", MctsAgent(n_sims=10)),
+        ("mcts20", MctsAgent(n_sims=20)),
+        ("mcts30", MctsAgent(n_sims=30)),
     ],
 )
 
@@ -335,7 +333,9 @@ def plot_training_metrics(
 ):
     fig, axes = plt.subplots(2, 2, figsize=(12, 8))
 
-    axes[0, 0].plot(train_metrics.steps_trained, train_metrics.policy_losses, marker="o")
+    axes[0, 0].plot(
+        train_metrics.steps_trained, train_metrics.policy_losses, marker="o"
+    )
     axes[0, 0].set_xlabel("Steps trained")
     axes[0, 0].set_ylabel("Policy Loss")
     axes[0, 0].set_title("Policy Loss")
