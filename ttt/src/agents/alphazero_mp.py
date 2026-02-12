@@ -140,6 +140,14 @@ class PlayerMetrics(TypedDict):
     steps_per_sec: float
 
 
+def clear_queue(q: mp.Queue):
+    try:
+        while True:
+            q.get_nowait()
+    except queue.Empty:
+        pass
+
+
 def player_loop(
     name: str,
     step_queue: mp.Queue,
@@ -164,6 +172,7 @@ def player_loop(
             try:
                 new_state_dict = weights_queue.get_nowait()
                 model.load_state_dict(new_state_dict)
+                clear_queue(step_queue)
             except queue.Empty:
                 pass
 
@@ -368,6 +377,7 @@ def learner_loop(
         # Periodically share weights with player processes
         if batch_count % config.weights_update_interval == 0:
             send_weights()
+            clear_queue(batch_queue)
 
         elapsed = time.perf_counter() - t_start
         steps_per_sec = step_count / elapsed
