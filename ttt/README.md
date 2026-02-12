@@ -23,6 +23,10 @@ uv run tabular-param-search.py  # try a range of parameters for training. Not
 # todo
 - WIP: az mp
     - WIP compare to old train_az. learns faster?
+        - try eval on cpu
+        - add configurable epochs
+        - try purging queues when weights are updated
+    - maybe: mp: only log/plot eval metrics when they change
     - maybe: time axes = seconds instead of abs time
     - maybe: support multiple epochs on replay buffer
     - maybe: auto-balance step gen to learner throughput

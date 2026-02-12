@@ -67,6 +67,7 @@ class Config:
 
     device_player: str = "cuda"
     device_learn: str = "cuda"
+    device_eval: str = "cuda"
     stop_after_n_seconds: float | None = None
     stop_after_n_learns: int | None = None  # convenient for testing, benchmarks
 
@@ -213,10 +214,10 @@ def eval_loop(
     stop_event: mp.Event,
     config: Config,
 ):
-    model = ResNet(config.num_res_blocks, config.num_hidden, config.device_player)
+    model = ResNet(config.num_res_blocks, config.num_hidden, config.device_eval)
     model.eval()
     aza = AlphaZeroAgent.from_nn(
-        model, config.eval_n_mcts_sims, config.eval_c_puct, config.device_player
+        model, config.eval_n_mcts_sims, config.eval_c_puct, config.device_eval
     )
 
     try:
@@ -406,16 +407,19 @@ def metrics_loop(
     config: Config,
 ):
     logger = setup_logging(config, "metrics")
+    metric_storage_size=10
+    player_metrics = deque(maxlen=metric_storage_size)
+    batcher_metrics = deque(maxlen=metric_storage_size)
+    learner_metrics = deque(maxlen=metric_storage_size)
+    eval_metrics = deque(maxlen=metric_storage_size)
+    metric_metrics = deque(maxlen=metric_storage_size)
+
     log_time = time.perf_counter()
-    player_metrics = deque(maxlen=20)
-    batcher_metrics = deque(maxlen=20)
-    learner_metrics = deque(maxlen=20)
-    eval_metrics = deque(maxlen=20)
-    metric_metrics = deque(maxlen=20)
 
     while not stop_event.is_set():
         try:
             metrics = metrics_queue.get(timeout=0.1)
+            logger.debug(metrics)
             match metrics["type"]:
                 case "player":
                     player_metrics.append(metrics)
@@ -437,11 +441,7 @@ def metrics_loop(
                 )
                 for m in [learner_metrics, eval_metrics]:
                     if m:
-                        logger.debug(m[-1])
                         pprint(m[-1])
-                for m in [player_metrics, batcher_metrics, metric_metrics]:
-                    if m:
-                        logger.debug(m[-1])
         except queue.Empty:
             pass
         except KeyboardInterrupt:
