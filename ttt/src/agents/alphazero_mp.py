@@ -294,7 +294,7 @@ class LearnerMetrics(TypedDict):
     type: str
     policy_loss: float
     value_loss: float
-    steps_trained: float
+    steps_trained: int
     steps_per_sec: float
     batches_per_sec: float
 

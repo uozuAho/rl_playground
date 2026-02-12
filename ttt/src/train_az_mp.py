@@ -1,11 +1,11 @@
 """Same goal as train az, but use alphazero mp (multiprocessing), aiming for
 max GPU usage and therefore fastest possible training"""
 import json
+import os.path
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 from matplotlib import pyplot as plt
 
@@ -47,15 +47,20 @@ def main():
         console_log_level="INFO",
         log_file_path=LOG_PATH,
     )
-    # az.train_mp(config)
+    if os.path.exists(LOG_PATH):
+        os.remove(LOG_PATH)
+    az.train_mp(config)
     metrics = log2metrics(LOG_PATH)
     plot_metrics(metrics)
 
 
 @dataclass
 class AzMetrics:
-    policy_loss: dict[datetime, float] = field(default_factory=dict)
-    value_loss: dict[datetime, float] = field(default_factory=dict)
+    # policy & value loss vs steps
+    policy_loss: dict[int, float] = field(default_factory=dict)
+    value_loss: dict[int, float] = field(default_factory=dict)
+
+    # WLD rates vs time, per agent matchup
     win_rates: dict[str, dict[datetime, float]] = field(default_factory=lambda: defaultdict(dict))
     loss_rates: dict[str, dict[datetime, float]] = field(default_factory=lambda: defaultdict(dict))
     draw_rates: dict[str, dict[datetime, float]] = field(default_factory=lambda: defaultdict(dict))
@@ -72,8 +77,9 @@ def log2metrics(log_path: Path):
                 match metobj["type"]:
                     case "learner":
                         lm = LearnerMetrics(**metobj)
-                        azmetrics.policy_loss[timestamp] = lm["policy_loss"]
-                        azmetrics.value_loss[timestamp] = lm["value_loss"]
+                        steps = lm["steps_trained"]
+                        azmetrics.policy_loss[steps] = lm["policy_loss"]
+                        azmetrics.value_loss[steps] = lm["value_loss"]
                     case "eval":
                         em = EvalMetrics(**metobj)
                         for name, rate in em["win_rates"].items():
@@ -83,7 +89,7 @@ def log2metrics(log_path: Path):
     return azmetrics
 
 
-def as_xy(d: dict[datetime, Any]) -> tuple[list[datetime], list[Any]]:
+def as_xy(d: dict) -> tuple[list, list]:
     return tuple(zip(*sorted(d.items())))
 
 
@@ -92,14 +98,14 @@ def plot_metrics(metrics: AzMetrics):
 
     x, y = as_xy(metrics.policy_loss)
     axes[0, 0].plot(x, y, marker="o")
-    axes[0, 0].set_xlabel("Time")
+    axes[0, 0].set_xlabel("Steps trained")
     axes[0, 0].set_ylabel("Policy Loss")
     axes[0, 0].set_title("Policy Loss")
     axes[0, 0].grid(True)
 
     x, y = as_xy(metrics.value_loss)
     axes[0, 1].plot(x, y, marker="o")
-    axes[0, 1].set_xlabel("Games")
+    axes[0, 1].set_xlabel("Steps trained")
     axes[0, 1].set_ylabel("Value Loss")
     axes[0, 1].set_title("Value Loss")
     axes[0, 1].grid(True)
