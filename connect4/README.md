@@ -8,9 +8,12 @@ make train
 ```
 
 # todo
-- improve training speed (maybe do with ttt first)
+- WIP: azmp
+    - try training. does it improve?
+    - inline todos
 - train for ~20k games. get to perfect eval?
     - add mcts rr opponents
+    - maybe: check with/without valid action masking
 
 ## maybe
 - save net/train saved net

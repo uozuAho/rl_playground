@@ -1,22 +1,4 @@
-"""AlphaZero training with multiprocessing for max GPU utilisation.
-
-This is overkill for tic tac toe, but serves as a POC for bigger games.
-Inspired by https://github.com/google-deepmind/open_spiel/open_spiel/python/algorithms/alpha_zero
-
-Architecture:
-- Player processes: Run self-play games, put game steps on a queue
-- Batching process: Reads game steps, writes numpy array batches to another queue
-- Learning process: Reads numpy batches, updates the NN model, sends updated model weights
-- Metrics process: collects metrics from other processes, logs them etc
-
-Getting maximum throughput requires manual tweaking of config, eg.
-- n_player_processes
-- player_n_parallel_games
-
-Aim for max steps/sec through the learner process: This is how many game steps (turns)
-are being pumped through the NN to update its weights. Check the log for which queues
-are backing up.
-"""
+"""AlphaZero training with multiprocessing for max GPU utilisation."""
 
 import json
 import logging
@@ -42,11 +24,10 @@ from agents.alphazero import (
     GameStep,
     _self_play_n_games,
     _batch_eval_for_mcts,
-    AlphaZeroAgent,
+    make_az_agent,
 )
 from agents.az_nets import ResNet
-import ttt.env as t3
-from agents.compare import play_games_parallel
+from utils.play import play_games_parallel
 
 
 @dataclass
@@ -73,7 +54,7 @@ class Config:
 
     eval_c_puct: float = 1.0
     eval_n_mcts_sims: int = 10
-    eval_opponents: list[tuple[str, agents.agent.TttAgent]] = None
+    eval_opponents: list[tuple[str, agents.agent.Agent]] = None
     eval_n_games: int = 20
 
     device_player: str = "cuda"
@@ -236,9 +217,8 @@ def eval_loop(
 ):
     model = ResNet(config.num_res_blocks, config.num_hidden, config.device_eval)
     model.eval()
-    aza = AlphaZeroAgent.from_nn(
-        model, config.eval_n_mcts_sims, config.eval_c_puct, config.device_eval
-    )
+    # todo: cpuct
+    aza = make_az_agent(model, config.eval_n_mcts_sims, config.device_eval)
 
     def play_eval_games():
         eval_metrics = EvalMetrics(
@@ -250,8 +230,9 @@ def eval_loop(
                 for azplayer in ["x", "o"]:
                     players = (aza, oagent) if azplayer == "x" else (oagent, aza)
                     pnames = ("az", oname) if azplayer == "x" else (oname, "az")
-                    r = play_games_parallel(players[0], players[1], config.eval_n_games)
-                    w, ll, d = r["X"], r["O"], r["draw"]
+                    w, ll, d = play_games_parallel(
+                        players[0], players[1], config.eval_n_games
+                    )
                     matchup = f"{pnames[0]} vs {pnames[1]}"
                     eval_metrics["win_rates"][matchup] = w / config.eval_n_games
                     eval_metrics["loss_rates"][matchup] = ll / config.eval_n_games
@@ -463,28 +444,12 @@ def metrics_loop(
 
 def steps_to_raw_epoch(game_steps: list[GameStep]):
     """Convert game steps to raw numpy arrays for efficient queue transfer."""
-    batch_size = len(game_steps)
+    boards = np.stack([ResNet.state2np(x.state) for x in game_steps])
+    policy = np.stack([x.mcts_probs for x in game_steps])
+    value = np.stack([x.final_value for x in game_steps])
+    masks = np.stack([x.valid_action_mask for x in game_steps])
 
-    boards_np = np.empty((batch_size, 3, 3, 3), dtype=np.float32)
-    policy_np = np.empty((batch_size, 9), dtype=np.float32)
-    value_np = np.empty((batch_size, 1), dtype=np.float32)
-    masks_np = np.empty((batch_size, 9), dtype=np.bool_)
-
-    for i, g in enumerate(game_steps):
-        boards_np[i, 0] = np.array(
-            [c == g.player for c in g.board], dtype=np.float32
-        ).reshape(3, 3)
-        boards_np[i, 1] = np.array(
-            [c == t3.EMPTY for c in g.board], dtype=np.float32
-        ).reshape(3, 3)
-        boards_np[i, 2] = np.array(
-            [c == t3.other_player(g.player) for c in g.board], dtype=np.float32
-        ).reshape(3, 3)
-        policy_np[i] = g.mcts_probs
-        value_np[i, 0] = g.final_value
-        masks_np[i] = g.valid_action_mask
-
-    return boards_np, policy_np, value_np, masks_np
+    return boards, policy, value, masks
 
 
 def raw_epoch_to_tensors(raw_epoch, device):

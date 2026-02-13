@@ -69,6 +69,18 @@ class ResNet(AzNet):
         n.load_state_dict(d["state_dict"])
         return n
 
+    @staticmethod
+    def state2np(state: c4.GameState):
+        board = state.board
+        return np.stack(
+            (
+                board == state.current_player,
+                board == 0,
+                board == c4.other_player(state.current_player),
+            )
+        ).astype(np.float32)
+
+    # todo: replace this with state2np?
     def _state2tensor(self, state: c4.GameState):
         board = state.board
         layers = np.stack(

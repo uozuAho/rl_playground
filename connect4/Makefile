@@ -12,6 +12,9 @@ pc:
 train:
 	uv run src/train_az.py
 
+trainmp:
+	uv run src/train_az_mp.py
+
 profile:
 	uv run python -m cProfile src/train_az.py profile > profile.txt
 
