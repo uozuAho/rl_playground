@@ -216,8 +216,7 @@ def eval_loop(
 ):
     net = ResNet(config.num_res_blocks, config.num_hidden, config.device_eval)
     net.eval()
-    # todo: cpuct
-    aza = make_az_agent(net, config.eval_n_mcts_sims, config.device_eval)
+    aza = make_az_agent(net, config.eval_n_mcts_sims, config.c_puct, config.device_eval)
 
     def play_eval_games():
         eval_metrics = EvalMetrics(

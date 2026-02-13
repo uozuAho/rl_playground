@@ -20,5 +20,5 @@ def test_train_and_play():
         train_batch_size=1,
         mask_invalid_actions=False,
     )
-    aza = az.make_az_agent(net, n_sims=1, device="cpu")
+    aza = az.make_az_agent(net, n_sims=1, c_puct=1.0, device="cpu")
     play_games_parallel(aza, RandomAgent(), 1)

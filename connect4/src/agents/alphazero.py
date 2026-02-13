@@ -212,9 +212,10 @@ def nn_2_batch_eval(net: AzNet, device):
     return eval_fn
 
 
-def make_az_agent(net: AzNet, n_sims: int, device):
+def make_az_agent(net: AzNet, n_sims: int, c_puct: float, device):
     return mcts_agent.MctsAgent(
         batch_eval_fn=nn_2_batch_eval(net, device),
         select_action_fn=mcts_agent.best_by_visit_value,
         n_sims=n_sims,
+        c_puct=c_puct,
     )
