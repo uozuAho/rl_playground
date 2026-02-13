@@ -12,8 +12,6 @@ make train
     - try training
         - tweak for max throughput
             - ideas:
-                - WIP perf loggign:
-                    - log num steps/batches used and discarded
                 - don't play games if step queue full
                 - bigger learner batches?
                 - playing games seems much slower than ttt. profile just playing games

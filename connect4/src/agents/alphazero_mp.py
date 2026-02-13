@@ -131,15 +131,21 @@ class PlayerMetrics(TypedDict):
     games_played: int
     games_per_sec: float
     steps_per_sec: float
+    steps_generated: int
+    steps_discarded: int
     utilisation: float
 
 
 def clear_queue(q: mp.Queue):
+    """ returns number of queue elements cleared"""
+    n = 0
     try:
         while True:
             q.get_nowait()
+            n += 1
     except queue.Empty:
         pass
+    return n
 
 
 def player_loop(
@@ -160,6 +166,7 @@ def player_loop(
     t_start = time.perf_counter()
     t_work_time = 0.0
     steps_generated = 0
+    steps_discarded = 0
     games_played = 0
 
     try:
@@ -168,7 +175,7 @@ def player_loop(
             try:
                 new_state_dict = weights_queue.get_nowait()
                 net.model.load_state_dict(new_state_dict)
-                clear_queue(step_queue)
+                steps_discarded += clear_queue(step_queue)
             except queue.Empty:
                 pass
 
@@ -196,6 +203,8 @@ def player_loop(
                     games_played=games_played,
                     games_per_sec=games_played / uptime,
                     steps_per_sec=steps_generated / uptime,
+                    steps_generated=steps_generated,
+                    steps_discarded=steps_discarded,
                     utilisation=t_work_time / uptime
                 )
             )
@@ -330,6 +339,8 @@ class LearnerMetrics(TypedDict):
     value_loss: float
     steps_trained: int
     steps_per_sec: float
+    epoch_count: int
+    epochs_discarded: int
     utilisation: float
 
 
@@ -351,6 +362,7 @@ def learner_loop(
 
     step_count = 0
     epoch_count = 0
+    epochs_discarded = 0
     t_start = time.perf_counter()
     t_learn_time = 0.0
 
@@ -363,7 +375,7 @@ def learner_loop(
                 raise
 
     def do_learn(raw_batch):
-        nonlocal step_count, epoch_count, t_learn_time
+        nonlocal step_count, epoch_count, epochs_discarded, t_learn_time
         t_start_learn = time.perf_counter()
         policy_losses = []
         value_losses = []
@@ -392,7 +404,7 @@ def learner_loop(
         # Periodically share weights with player processes
         if epoch_count % config.weights_update_interval == 0:
             send_weights()
-            clear_queue(epoch_queue)
+            # epochs_discarded += clear_queue(epoch_queue)
 
         avg_pl = sum(policy_losses) / len(policy_losses) if policy_losses else 0
         avg_vl = sum(value_losses) / len(value_losses) if value_losses else 0
@@ -407,6 +419,8 @@ def learner_loop(
                 value_loss=avg_vl,
                 steps_trained=step_count,
                 steps_per_sec=steps_per_sec,
+                epoch_count=epoch_count,
+                epochs_discarded=epochs_discarded,
                 utilisation=t_learn_time / uptime
             )
 
@@ -536,7 +550,7 @@ def train_mp(config: Config):
 
     # queue item = list of steps
     step_queue = mp.Queue(maxsize=config.n_player_processes)
-    epoch_queue = mp.Queue(maxsize=2)
+    epoch_queue = mp.Queue(maxsize=1)
     metrics_queue = mp.Queue(maxsize=1000)
     weights_queues = [
         mp.Queue(maxsize=1) for _ in range(config.n_player_processes + 1)
