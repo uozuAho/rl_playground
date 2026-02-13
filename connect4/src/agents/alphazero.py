@@ -61,7 +61,17 @@ def train(
     game_steps = []
     net.eval()
     with torch.no_grad():
-        game_steps = list(_self_play_n_games(batch_mcts_eval, n_games, n_mcts_sims))
+        game_steps = list(
+            _self_play_n_games(
+                batch_mcts_eval,
+                n_games,
+                n_mcts_sims,
+                c_puct=2,
+                temperature=1.25,
+                dirichlet_alpha=0.3,
+                dirichlet_epsilon=0.125,
+            )
+        )
 
     net.train()
     pls, vls = [], []
@@ -155,7 +165,7 @@ def _self_play_n_games(
     c_puct: float,
     temperature: float,
     dirichlet_alpha: float,
-    dirichlet_epsilon: float
+    dirichlet_epsilon: float,
 ) -> typing.Iterable[GameStep]:
     # todo: use temperature
     states = [c4.new_game() for _ in range(n_games)]
@@ -172,7 +182,7 @@ def _self_play_n_games(
             c_puct=c_puct,
             add_dirichlet_noise=True,
             dirichlet_alpha=dirichlet_alpha,
-            dirichlet_epsilon=dirichlet_epsilon
+            dirichlet_epsilon=dirichlet_epsilon,
         ).run()
         for i, root in zip(active_idxs, roots):
             state = root.state

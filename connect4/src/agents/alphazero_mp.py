@@ -15,7 +15,6 @@ from typing import TypedDict
 
 import numpy as np
 import torch
-from torch import nn
 from torch.optim import Adam
 import torch.nn.functional as F
 
@@ -319,7 +318,9 @@ def learner_loop(
     net = ResNet(config.num_res_blocks, config.num_hidden, config.device_learn)
     net.train()
     optimizer = Adam(
-        net.model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay
+        net.model.parameters(),
+        lr=config.learning_rate,
+        weight_decay=config.weight_decay,
     )
 
     step_count = 0
@@ -446,7 +447,9 @@ def steps_to_raw_epoch(game_steps: list[GameStep]):
     """Convert game steps to raw numpy arrays for efficient queue transfer."""
     boards = np.stack([ResNet.state2np(x.state) for x in game_steps], dtype=np.float32)
     policy = np.stack([x.mcts_probs for x in game_steps], dtype=np.float32)
-    value = np.stack([x.final_value for x in game_steps], dtype=np.float32).reshape((len(game_steps), 1))
+    value = np.stack([x.final_value for x in game_steps], dtype=np.float32).reshape(
+        (len(game_steps), 1)
+    )
     masks = np.stack([x.valid_action_mask for x in game_steps], dtype=np.bool_)
 
     return boards, policy, value, masks
