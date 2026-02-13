@@ -63,7 +63,9 @@ class Config:
     stop_after_n_learns: int | None = None  # convenient for testing, benchmarks
 
     # Logging
-    log_to_console: bool = True
+    # cli_log_mode: perf or eval. perf is for tuning for max training throughput.
+    #               eval is for assessing agent strength
+    cli_log_mode: str = "perf"
     log_to_file: bool = False
     log_file_path: str | Path | None = None
     log_format_console: str = "text"  # "text" or "json"
@@ -98,7 +100,7 @@ def setup_logging(config: Config, process_name: str = "main") -> logging.Logger:
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    if config.log_to_console:
+    if config.cli_log_mode is not None:
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(getattr(logging, config.console_log_level.upper()))
         console_handler.setFormatter(
@@ -435,9 +437,15 @@ def metrics_loop(
                 metrics_queue.put(
                     {"type": "metrics", "metrics_queue": metrics_queue.qsize()}
                 )
-                for m in [learner_metrics, eval_metrics]:
-                    if m:
-                        pprint(m[-1])
+                match config.cli_log_mode:
+                    case "eval":
+                        for m in [learner_metrics, eval_metrics]:
+                            if m:
+                                pprint(m[-1])
+                    case "perf":
+                        print("todo: perf logs")
+                    case _:
+                        print(f"unknown cli_log_mode {config.cli_log_mode}")
         except queue.Empty:
             pass
         except KeyboardInterrupt:

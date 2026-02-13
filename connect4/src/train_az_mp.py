@@ -44,6 +44,7 @@ def main():
         device_eval="cpu",
         stop_after_n_seconds=None,
         stop_after_n_learns=None,
+        cli_log_mode="perf",
         log_to_file=True,
         log_format_file="json",
         console_log_level="INFO",

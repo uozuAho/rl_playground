@@ -12,14 +12,15 @@ make train
     - try training
         - tweak for max throughput
             - ideas:
-                - don't play games if step queue full
-                - log modes: throughput/eval
+                - WIP perf loggign:
                     - throughput mode logs to cli
                         - queue sizes
                         - time spent waiting/processing
-                - log steps/batches discarded
+                    - log num steps/batches used and discarded
+                    - log utilisation%
+                - don't play games if step queue full
                 - bigger learner batches?
-                - seems much slower than ttt. profile just playing games
+                - playing games seems much slower than ttt. profile just playing games
         - does it improve?
             - add mctsrr opponents. compare to mctsu
 - train for ~20k games. get to perfect eval?
