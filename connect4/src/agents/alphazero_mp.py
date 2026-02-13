@@ -257,6 +257,7 @@ def eval_loop(
 
 class BatcherMetrics(TypedDict):
     type: str
+    utilisation: float
     step_queue_size: int
     batch_queue_size: int
 
@@ -269,21 +270,27 @@ def batcher_loop(
     config: Config,
 ):
     buffer = deque()
+    t_start = time.perf_counter()
+    t_do_stuff = 0.0
 
     last_time = time.perf_counter()
     while not stop_event.is_set():
         if time.perf_counter() - last_time > 1.0:
+            uptime = time.perf_counter() - t_start
+            utilisation = t_do_stuff / uptime
             last_time = time.perf_counter()
             metrics_queue.put(
                 BatcherMetrics(
                     type="batcher",
                     step_queue_size=step_queue.qsize(),
                     batch_queue_size=epoch_queue.qsize(),
+                    utilisation=utilisation
                 )
             )
 
         try:
             steps = step_queue.get(timeout=0.1)
+            t_start_stuff = time.perf_counter()
             buffer.extend(steps)
 
             while len(buffer) >= config.epoch_size:
@@ -292,6 +299,7 @@ def batcher_loop(
                     epoch_steps.append(buffer.popleft())
                 random.shuffle(epoch_steps)
                 raw_epoch = steps_to_raw_epoch(epoch_steps)
+                t_do_stuff += time.perf_counter() - t_start_stuff
                 epoch_queue.put(raw_epoch, timeout=0.1)
 
         except queue.Empty:
@@ -443,7 +451,11 @@ def metrics_loop(
                             if m:
                                 pprint(m[-1])
                     case "perf":
-                        print("todo: perf logs")
+                        if len(learner_metrics) > 0:
+                            print("-----")
+                            pprint(batcher_metrics[-1])
+                            pprint(player_metrics[-1])
+                            pprint(learner_metrics[-1])
                     case _:
                         print(f"unknown cli_log_mode {config.cli_log_mode}")
         except queue.Empty:

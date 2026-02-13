@@ -13,9 +13,7 @@ make train
         - tweak for max throughput
             - ideas:
                 - WIP perf loggign:
-                    - throughput mode logs to cli
-                        - queue sizes
-                        - time spent waiting/processing
+                    - WIP time spent waiting/processing
                     - log num steps/batches used and discarded
                     - log utilisation%
                 - don't play games if step queue full
