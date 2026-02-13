@@ -14,6 +14,7 @@ import json
 import logging
 import multiprocessing as mp
 import queue
+import random
 import sys
 import time
 from collections import deque
@@ -55,9 +56,11 @@ class Config:
     dirichlet_alpha: float = 0.3
     dirichlet_epsilon: float = 0.25
 
-    n_player_processes: int = 4
+    n_player_processes: int = 1
     player_n_parallel_games: int = 8
-    batch_size: int = 512
+    epoch_size: int = 1024  # num game steps sent for training
+    n_epoch_repeats: int = 4  # num times each epoch is trained on
+    batch_size: int = 128  # num game steps trained
     weights_update_interval: int = 10
 
     eval_c_puct: float = 1.0
@@ -275,12 +278,11 @@ class BatcherMetrics(TypedDict):
 
 def batcher_loop(
     step_queue: mp.Queue,
-    batch_queue: mp.Queue,
+    epoch_queue: mp.Queue,
     metrics_queue: mp.Queue,
     stop_event: mp.Event,
     config: Config,
 ):
-    batch_size = config.batch_size
     buffer = deque()
 
     last_time = time.perf_counter()
@@ -291,7 +293,7 @@ def batcher_loop(
                 BatcherMetrics(
                     type="batcher",
                     step_queue_size=step_queue.qsize(),
-                    batch_queue_size=batch_queue.qsize(),
+                    batch_queue_size=epoch_queue.qsize(),
                 )
             )
 
@@ -299,12 +301,13 @@ def batcher_loop(
             steps = step_queue.get(timeout=0.1)
             buffer.extend(steps)
 
-            while len(buffer) >= batch_size:
-                batch_steps = []
-                for _ in range(batch_size):
-                    batch_steps.append(buffer.popleft())
-                raw_batch = steps_to_raw_batch(batch_steps)
-                batch_queue.put(raw_batch, timeout=0.1)
+            while len(buffer) >= config.epoch_size:
+                epoch_steps = []
+                for _ in range(config.epoch_size):
+                    epoch_steps.append(buffer.popleft())
+                random.shuffle(epoch_steps)
+                raw_epoch = steps_to_raw_epoch(epoch_steps)
+                epoch_queue.put(raw_epoch, timeout=0.1)
 
         except queue.Empty:
             pass
@@ -320,11 +323,10 @@ class LearnerMetrics(TypedDict):
     value_loss: float
     steps_trained: int
     steps_per_sec: float
-    batches_per_sec: float
 
 
 def learner_loop(
-    batch_queue: mp.Queue,
+    epoch_queue: mp.Queue,
     weights_queues: list[mp.Queue],
     metrics_queue: mp.Queue,
     stop_event: mp.Event,
@@ -338,7 +340,7 @@ def learner_loop(
     )
 
     step_count = 0
-    batch_count = 0
+    epoch_count = 0
     t_start = time.perf_counter()
 
     def send_weights():
@@ -350,38 +352,38 @@ def learner_loop(
                 raise
 
     def do_learn(raw_batch):
-        nonlocal step_count, batch_count
+        nonlocal step_count, epoch_count
         policy_losses = []
         value_losses = []
 
         states, policy_targets, value_targets, valid_action_masks = (
-            raw_batch_to_tensors(raw_batch, config.device_learn)
+            raw_epoch_to_tensors(raw_batch, config.device_learn)
         )
 
-        policy_loss, value_loss = update_net(
-            model,
-            optimizer,
-            states,
-            policy_targets,
-            value_targets,
-            valid_action_masks,
-            config.mask_invalid_actions,
-        )
-
-        policy_losses.append(policy_loss)
-        value_losses.append(value_loss)
+        for _ in range(config.n_epoch_repeats):
+            for i in range(0, config.epoch_size, config.batch_size):
+                policy_loss, value_loss = update_net(
+                    model,
+                    optimizer,
+                    states[i:i+config.batch_size],
+                    policy_targets[i:i+config.batch_size],
+                    value_targets[i:i+config.batch_size],
+                    valid_action_masks[i:i+config.batch_size],
+                    config.mask_invalid_actions,
+                )
+                policy_losses.append(policy_loss)
+                value_losses.append(value_loss)
 
         step_count += len(states)
-        batch_count += 1
+        epoch_count += 1
 
         # Periodically share weights with player processes
-        if batch_count % config.weights_update_interval == 0:
+        if epoch_count % config.weights_update_interval == 0:
             send_weights()
-            clear_queue(batch_queue)
+            clear_queue(epoch_queue)
 
         elapsed = time.perf_counter() - t_start
         steps_per_sec = step_count / elapsed
-        batches_per_sec = batch_count / elapsed
 
         avg_pl = sum(policy_losses) / len(policy_losses) if policy_losses else 0
         avg_vl = sum(value_losses) / len(value_losses) if value_losses else 0
@@ -393,17 +395,16 @@ def learner_loop(
                 value_loss=avg_vl,
                 steps_trained=step_count,
                 steps_per_sec=steps_per_sec,
-                batches_per_sec=batches_per_sec,
             )
         )
 
     while not stop_event.is_set():
         try:
-            if config.stop_after_n_learns and batch_count >= config.stop_after_n_learns:
+            if config.stop_after_n_learns and epoch_count >= config.stop_after_n_learns:
                 logger.info(f"reached {config.stop_after_n_learns} updates, stopping")
                 stop_event.set()
                 break
-            batch = batch_queue.get(timeout=0.1)
+            batch = epoch_queue.get(timeout=0.1)
             do_learn(batch)
         except queue.Empty:
             continue
@@ -458,7 +459,7 @@ def metrics_loop(
             break
 
 
-def steps_to_raw_batch(game_steps: list[GameStep]):
+def steps_to_raw_epoch(game_steps: list[GameStep]):
     """Convert game steps to raw numpy arrays for efficient queue transfer."""
     batch_size = len(game_steps)
 
@@ -484,9 +485,9 @@ def steps_to_raw_batch(game_steps: list[GameStep]):
     return boards_np, policy_np, value_np, masks_np
 
 
-def raw_batch_to_tensors(raw_batch, device):
+def raw_epoch_to_tensors(raw_epoch, device):
     """Convert raw numpy batch directly to GPU tensors."""
-    boards_np, policy_np, value_np, masks_np = raw_batch
+    boards_np, policy_np, value_np, masks_np = raw_epoch
     states = torch.from_numpy(boards_np).to(device)
     policy_targets = torch.from_numpy(policy_np).to(device)
     value_targets = torch.from_numpy(value_np).to(device)
@@ -525,7 +526,7 @@ def train_mp(config: Config):
     mp.set_start_method("spawn", force=True)
 
     step_queue = mp.Queue(maxsize=100)  # queue item = list of steps
-    batch_queue = mp.Queue(maxsize=10)
+    epoch_queue = mp.Queue(maxsize=10)
     metrics_queue = mp.Queue(maxsize=1000)
     weights_queues = [
         mp.Queue(maxsize=1) for _ in range(config.n_player_processes + 1)
@@ -560,7 +561,7 @@ def train_mp(config: Config):
     p = mp.Process(
         target=batcher_loop,
         name="batcher",
-        args=(step_queue, batch_queue, metrics_queue, stop_event, config),
+        args=(step_queue, epoch_queue, metrics_queue, stop_event, config),
     )
     processes.append(p)
 
@@ -576,7 +577,7 @@ def train_mp(config: Config):
         target=learner_loop,
         name="learner",
         args=(
-            batch_queue,
+            epoch_queue,
             weights_queues,
             metrics_queue,
             stop_event,

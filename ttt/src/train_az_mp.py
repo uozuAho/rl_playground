@@ -32,7 +32,9 @@ def main():
         dirichlet_epsilon=0.25,
         n_player_processes=1,
         player_n_parallel_games=100,
-        batch_size=512,
+        epoch_size=512,
+        n_epoch_repeats=4,
+        batch_size=128,
         weights_update_interval=1,
         eval_opponents=[
             ("mcts10", MctsAgent(n_sims=10)),
