@@ -8,6 +8,13 @@ Architecture:
 - Batching process: Reads game steps, writes numpy array batches to another queue
 - Learning process: Reads numpy batches, updates the NN model, sends updated model weights
 - Metrics process: collects metrics from other processes, logs them etc
+
+Getting maximum throughput requires manual tweaking of config, eg.
+- n_player_processes
+- player_n_parallel_games1
+
+Aim for max steps/sec through the learner process: This is how many game steps (turns)
+are being pumped through the NN to update its weights.
 """
 
 import json
@@ -232,38 +239,32 @@ def eval_loop(
         model, config.eval_n_mcts_sims, config.eval_c_puct, config.device_eval
     )
 
+    def play_eval_games():
+        eval_metrics = EvalMetrics(
+            type="eval", win_rates={}, loss_rates={}, draw_rates={}
+        )
+
+        with torch.no_grad():
+            for oname, oagent in config.eval_opponents:
+                for azplayer in ["x", "o"]:
+                    players = (aza, oagent) if azplayer == "x" else (oagent, aza)
+                    pnames = ("az", oname) if azplayer == "x" else (oname, "az")
+                    r = play_games_parallel(players[0], players[1], config.eval_n_games)
+                    w, ll, d = r["X"], r["O"], r["draw"]
+                    matchup = f"{pnames[0]} vs {pnames[1]}"
+                    eval_metrics["win_rates"][matchup] = w / config.eval_n_games
+                    eval_metrics["loss_rates"][matchup] = ll / config.eval_n_games
+                    eval_metrics["draw_rates"][matchup] = d / config.eval_n_games
+
+        return eval_metrics
+
     try:
         while not stop_event.is_set():
             try:
-                new_state_dict = weights_queue.get_nowait()
+                new_state_dict = weights_queue.get(timeout=0.1)
                 model.load_state_dict(new_state_dict)
-
-                eval_metrics = EvalMetrics(
-                    type="eval", win_rates={}, loss_rates={}, draw_rates={}
-                )
-
-                with torch.no_grad():
-                    for oname, oagent in config.eval_opponents:
-                        for azplayer in ["x", "o"]:
-                            players = (
-                                (aza, oagent) if azplayer == "x" else (oagent, aza)
-                            )
-                            pnames = ("az", oname) if azplayer == "x" else (oname, "az")
-                            r = play_games_parallel(
-                                players[0], players[1], config.eval_n_games
-                            )
-                            w, ll, d = r["X"], r["O"], r["draw"]
-                            eval_metrics["win_rates"][f"{pnames[0]} vs {pnames[1]}"] = (
-                                w / config.eval_n_games
-                            )
-                            eval_metrics["loss_rates"][
-                                f"{pnames[0]} vs {pnames[1]}"
-                            ] = ll / config.eval_n_games
-                            eval_metrics["draw_rates"][
-                                f"{pnames[0]} vs {pnames[1]}"
-                            ] = d / config.eval_n_games
-
-                metrics_queue.put(eval_metrics)
+                metrics = play_eval_games()
+                metrics_queue.put(metrics)
             except queue.Empty:
                 pass
     except KeyboardInterrupt:
@@ -365,10 +366,10 @@ def learner_loop(
                 policy_loss, value_loss = update_net(
                     model,
                     optimizer,
-                    states[i:i+config.batch_size],
-                    policy_targets[i:i+config.batch_size],
-                    value_targets[i:i+config.batch_size],
-                    valid_action_masks[i:i+config.batch_size],
+                    states[i : i + config.batch_size],
+                    policy_targets[i : i + config.batch_size],
+                    value_targets[i : i + config.batch_size],
+                    valid_action_masks[i : i + config.batch_size],
                     config.mask_invalid_actions,
                 )
                 policy_losses.append(policy_loss)
@@ -418,7 +419,7 @@ def metrics_loop(
     config: Config,
 ):
     logger = setup_logging(config, "metrics")
-    metric_storage_size=10
+    metric_storage_size = 10
     player_metrics = deque(maxlen=metric_storage_size)
     batcher_metrics = deque(maxlen=metric_storage_size)
     learner_metrics = deque(maxlen=metric_storage_size)
@@ -525,12 +526,13 @@ def train_mp(config: Config):
     logger = setup_logging(config, "main")
     mp.set_start_method("spawn", force=True)
 
-    step_queue = mp.Queue(maxsize=100)  # queue item = list of steps
-    epoch_queue = mp.Queue(maxsize=10)
+    # queue item = list of steps
+    step_queue = mp.Queue(maxsize=config.n_player_processes)
+    epoch_queue = mp.Queue(maxsize=2)
     metrics_queue = mp.Queue(maxsize=1000)
     weights_queues = [
         mp.Queue(maxsize=1) for _ in range(config.n_player_processes + 1)
-    ]  # +1 evaluator
+    ]  # +1 for evaluator
     stop_event = mp.Event()
 
     processes = []

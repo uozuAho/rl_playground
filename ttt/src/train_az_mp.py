@@ -30,8 +30,8 @@ def main():
         temperature=1.25,
         dirichlet_alpha=0.3,
         dirichlet_epsilon=0.25,
-        n_player_processes=1,
-        player_n_parallel_games=100,
+        n_player_processes=2,
+        player_n_parallel_games=50,
         epoch_size=512,
         n_epoch_repeats=4,
         batch_size=128,
@@ -51,9 +51,9 @@ def main():
         console_log_level="INFO",
         log_file_path=LOG_PATH,
     )
-    # if os.path.exists(LOG_PATH):
-    #     os.remove(LOG_PATH)
-    # az.train_mp(config)
+    if os.path.exists(LOG_PATH):
+        os.remove(LOG_PATH)
+    az.train_mp(config)
     metrics = log2metrics(LOG_PATH)
     plot_metrics(metrics)
 
