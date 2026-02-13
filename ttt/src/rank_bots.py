@@ -21,13 +21,20 @@ import algs.az_evaluators as az_eval
 
 PROJECT_ROOT = Path(__file__).parent.parent
 TRAINED_MODELS_PATH = PROJECT_ROOT / "trained_models"
+N_GAMES = 200
 
 
 def main():
     agents = [
         # ("Random", RandomAgent()),
         # ("Perfect", PerfectAgent()),
-        # ("mctsrr10", MctsAgent(n_sims=30)),
+        ("mctsrr10", MctsAgent(n_sims=10)),
+        (
+            "az10",
+            AlphaZeroAgent.load(
+                TRAINED_MODELS_PATH / "aznet", n_mcts_sims=10, device="cpu"
+            ),
+        ),
         # (
         #     "tmcts_sym_100k_30",
         #     TabMctsAgent.load(TRAINED_MODELS_PATH / "tmcts_sym_100k_30", n_sims=30),
@@ -52,15 +59,14 @@ def main():
         #         az_eval.make_greedy_tab_pv_eval(), n_mcts_sims=16, c_puct=1.0
         #     ),
         # ),
-        (
-            "AzTab noisy gpv",
-            AlphaZeroAgent.from_eval(
-                az_eval.make_noisy_pv(az_eval.make_greedy_tab_pv_eval(), 0.8, 0.5),
-                n_mcts_sims=10,
-                c_puct=1.0,
-            ),
-        ),
-        ("Random", RandomAgent()),
+        # (
+        #     "AzTab noisy gpv",
+        #     AlphaZeroAgent.from_eval(
+        #         az_eval.make_noisy_pv(az_eval.make_greedy_tab_pv_eval(), 0.8, 0.5),
+        #         n_mcts_sims=10,
+        #         c_puct=1.0,
+        #     ),
+        # ),
         # as expected, these play poorly - don't waste time running them
         # ("AzTabV10", make_az_greedy_tab_v_agent(10, c_puct=1.0)),
         # (
@@ -76,7 +82,7 @@ def main():
     ]
 
     ranker = AgentRanker(agents)
-    stats = ranker.full_round_robin(games_per_matchup=1000)
+    stats = ranker.full_round_robin(games_per_matchup=N_GAMES)
     ranker.print_rankings(stats)
 
 

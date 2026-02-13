@@ -30,3 +30,12 @@ def kl_divergence(p, q):
     p = np.asarray(p) + 1e-32  # ensure nonzero
     q = np.asarray(q) + 1e-32
     return np.sum(p * np.log(p / q))
+
+
+def heat(p: np.ndarray, temp: float):
+    assert is_prob_dist(p)
+    assert temp >= 0.0
+    pp = p ** (1 / temp)
+    pp /= np.sum(pp)
+    assert is_prob_dist(pp)
+    return pp

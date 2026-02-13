@@ -16,7 +16,7 @@ import algs.az_mcts as mcts
 from agents.agent import TttAgent
 import ttt.env as t3
 from agents.az_nets import ResNet
-from utils.maths import softmax, is_prob_dist
+from utils.maths import softmax, is_prob_dist, heat
 
 type MctsProbs = list[float]
 
@@ -62,11 +62,13 @@ def train_new(ngames, device):
         ngames,
         n_epochs=5,
         n_mcts_sims=5,
+        c_puct=2,
+        temperature=1.25,
         device=device,
         mask_invalid_actions=True,
         train_batch_size=4,
     )
-    return AlphaZeroAgent.from_nn(model, device=device, n_mcts_sims=10)
+    return AlphaZeroAgent.from_nn(model, device=device, n_mcts_sims=10, c_puct=1.0)
 
 
 def train(
@@ -78,11 +80,15 @@ def train(
     device: str,
     mask_invalid_actions: bool,
     train_batch_size,
+    c_puct: float,
+    temperature: float,
+    dirichlet_alpha: float = 0.3,
+    dirichlet_epsilon: float = 0.25,
     verbose=True,
     parallel=False,
 ):
     """Self play n_games, train over the resulting data for n_epochs.
-    Returns: avg_policy_loss, avg_value_loss
+    Returns: avg_policy_loss, avg_value_loss, number of game steps trained on
     """
 
     def mcts_eval(env):
@@ -95,10 +101,27 @@ def train(
     model.eval()
     with torch.no_grad():
         if parallel:
-            game_steps = list(_self_play_n_games(batch_mcts_eval, n_games, n_mcts_sims))
+            game_steps = list(
+                _self_play_n_games(
+                    batch_mcts_eval,
+                    n_games,
+                    n_mcts_sims,
+                    c_puct,
+                    temperature,
+                    dirichlet_alpha,
+                    dirichlet_epsilon,
+                )
+            )
         else:
             for _ in range(n_games):
-                game_steps += _self_play_one_game(mcts_eval, n_mcts_sims)
+                game_steps += _self_play_one_game(
+                    mcts_eval,
+                    n_mcts_sims,
+                    c_puct,
+                    temperature,
+                    dirichlet_alpha,
+                    dirichlet_epsilon,
+                )
 
     model.train()
     pls, vls = [], []
@@ -113,7 +136,7 @@ def train(
                 f"epoch {epoch}: avg policy, value loss: {sum(pls) / len(pls):.4f}  {sum(vls) / len(vls):.4f}"
             )
 
-    return sum(pls) / len(pls), sum(vls) / len(vls)
+    return sum(pls) / len(pls), sum(vls) / len(vls), len(game_steps)
 
 
 def _update_net(
@@ -236,7 +259,14 @@ def _valid_actions_mask(env: t3.TttEnv):
     return [x in valid_actions for x in range(9)]
 
 
-def _self_play_one_game(eval_fn: mcts.EvaluateFunc, n_sims=10) -> list[GameStep]:
+def _self_play_one_game(
+    eval_fn: mcts.EvaluateFunc,
+    n_sims,
+    c_puct,
+    temperature,
+    dirichlet_alpha,
+    dirichlet_epsilon,
+) -> list[GameStep]:
     """Plays one game
     Returns list[(board state, mcts probs, final reward for current player)]"""
     env = t3.TttEnv()
@@ -245,10 +275,17 @@ def _self_play_one_game(eval_fn: mcts.EvaluateFunc, n_sims=10) -> list[GameStep]
         state = env.board[:]
         valid_mask = _valid_actions_mask(env)
         root = mcts.mcts_search(
-            env, eval_fn, n_sims, c_puct=3.0, add_dirichlet_noise=True
+            env,
+            eval_fn,
+            n_sims,
+            c_puct=c_puct,
+            add_dirichlet_noise=True,
+            dirichlet_alpha=dirichlet_alpha,
+            dirichlet_epsilon=dirichlet_epsilon,
         )
         probs = _mcts_probs(root)
         mem.append((state, env.current_player, valid_mask, probs))
+        probs = heat(np.array(probs), temperature)
         action = np.random.choice(9, p=probs)
         _, reward, game_over, _, _ = env.step(action)
         if game_over:
@@ -261,7 +298,13 @@ def _self_play_one_game(eval_fn: mcts.EvaluateFunc, n_sims=10) -> list[GameStep]
 
 
 def _self_play_n_games(
-    eval_fn: mcts.BatchEvaluateFunc, n_games, n_mcts_sims
+    eval_fn: mcts.BatchEvaluateFunc,
+    n_games,
+    n_mcts_sims,
+    c_puct,
+    temperature,
+    dirichlet_alpha,
+    dirichlet_epsilon,
 ) -> typing.Iterable[GameStep]:
     envs = [t3.TttEnv() for _ in range(n_games)]
     game_overs = [False for _ in range(n_games)]
@@ -273,8 +316,10 @@ def _self_play_n_games(
             active_envs,
             eval_fn,
             num_simulations=n_mcts_sims,
-            c_puct=3.0,
+            c_puct=c_puct,
             add_dirichlet_noise=True,
+            dirichlet_alpha=dirichlet_alpha,
+            dirichlet_epsilon=dirichlet_epsilon,
         )
         for i, root in zip(active_idxs, roots):
             env = root.state
@@ -283,6 +328,7 @@ def _self_play_n_games(
             trajectories[i].append(
                 (env.board[:], env.current_player, valid_mask, probs)
             )
+            probs = heat(np.array(probs), temperature)
             action = np.random.choice(9, p=probs)
             _, reward, game_over, _, _ = env.step(action)
             if game_over:
@@ -303,13 +349,15 @@ def _env2tensor(env):
 
 def _board2tensor(board: t3.Board, current_player: t3.Player):
     # encodes a state in a player-independent way
-    layers = (
-        [c == current_player for c in board],
-        [c == t3.EMPTY for c in board],
-        [c == t3.other_player(current_player) for c in board],
-    )
-    tlayers = [torch.tensor(x, dtype=torch.float32).reshape((3, 3)) for x in layers]
-    return torch.stack(tlayers)
+    np_array = np.array(
+        [
+            [c == current_player for c in board],
+            [c == t3.EMPTY for c in board],
+            [c == t3.other_player(current_player) for c in board],
+        ],
+        dtype=np.float32,
+    ).reshape(3, 3, 3)
+    return torch.from_numpy(np_array)
 
 
 # todo: think of a better name
@@ -364,10 +412,16 @@ class AlphaZeroAgent(TttAgent):
         self._batch_mcts_eval = batch_mcts_eval
 
     @staticmethod
-    def from_nn(model: nn.Module, n_mcts_sims: int, device: str):
+    def load(path: Path, n_mcts_sims, device):
+        net = ResNet.load(path, device)
+        return AlphaZeroAgent.from_nn(net, n_mcts_sims, c_puct=1.0, device=device)
+
+    @staticmethod
+    def from_nn(model: nn.Module, n_mcts_sims: int, c_puct: float, device: str):
         return AlphaZeroAgent(
             mcts_eval=nn_2_eval(model, device),
             n_mcts_sims=n_mcts_sims,
+            c_puct=c_puct,
             batch_mcts_eval=nn_2_batch_eval(model, device),
         )
 

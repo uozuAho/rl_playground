@@ -8,3 +8,7 @@ bot-showdown.txt
 trained_models/*
 .idea
 experiment_logs
+claude_instructions.txt
+profile*.txt
+answer.md
+*.log

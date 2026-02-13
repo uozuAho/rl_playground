@@ -11,7 +11,8 @@ Install uv
 ```sh
 make init
 make pc
-uv run rank_bots.py
+make rank
+# see makefile for more
 
 uv run sb3-dqn-tuna.py # use optuna to find good hyperparams for DQN
 uv run optuna-dashboard sqlite:///dqn-ttt.db  # see hyperparam report
@@ -20,87 +21,8 @@ uv run tabular-param-search.py  # try a range of parameters for training. Not
 ```
 
 # todo
-- alpha zero
-    - try to reproduce azfs results. nearly perfect play vs random after 1200 training games
-    - maybe: why az nn tab still lose with good tab accuracy?
-        - worsening max loss while improving avg loss. chatty suggestions:
-            - WARNING I think this all may be a wild goose chase. AZ train gets high
-              win rates before too long, don't worry about fitting an NN to a value
-              table unless you really care
-            - TLDR
-                - WIP adjust loss
-                    - DONE try cross entropy instead of kldiv on policy
-                    - WIP maybe add small tail penalty: mean_loss + 0.1 * mean(top 5% errors)
-                        - todo: seems to work.
-                            - does it make sense?
-                            - play with coefficient + weight  decay
-                            - compare training metrics with earlier. add necessary detail to plot
-                - increase weight decay (penalty for large weights)
-            - ask claude for help
-            - add a term that focuses on tail
-                - loss = mean(error) + C*max(error) OR C*mean(top k errors)
-            - curriculum learning
-            - regularization
-                - stronger weight decay
-                - gradient penalties
-                - lipschitz constraints
-        - WIP try bigger/different net arches, learning rates, more?
-        - maybe: training metrics: check early vs later game pv loss
-        - DONE debug trained net vs random. something's gotta be wrong
-            - DONE puct seems correct but weird. can get 18 visits to one node while others
-                   have zero visits. AZ tab does same, this also seems to be how ospiel does it
-    - why az_tab30 much better than perfect?
-    - maybe: add temperature. seems not imporant - in os, T=1, in azfs, T=1.25 during training
-    - later maybe: experiments:
-        - optimise. microoptimisations plus ideas below. eg. vectorise stuff with np,
-          batch NN passes where possible
-        - encode current player in model input, rather than manual twiddling
-        - maybe: discount trajectory values. eg first move of a winning trajectory should be < 1
-        - don't update model if evaluation is worse than previous model
-        - compress net weight types etc.? eg. don't need float32 to represent TTT board cells
-        - do i need to tune learning rate to batch size, epochs etc?
-            - maybe. Prob fine for now?
+- WIP: az mp
+    - maybe: auto-balance step gen to learner throughput
+    - maybe: save model snapshots
+- see my other todo notes
 - add `ty check` to make pc. lots of errors
-
-# parameter tuning study results
-## DQN
-- most important params, 50k training steps, random opponent
-    - learning rate: best ~0.0001, worst ~0, >0.1
-    - final epsilon: best 0.05-0.1, worst ~0, >0.15
-    - target update interval: best 300-2200, worst > 4k
-    - learning starts: best 1500-4000, worst > 4k
-    - (sort of) batch size: higher = slightly better. best 150-250
-- top 3 param sets, all got 1.0 eval score:
-    - 1 - gets to >90% win rate vs random after about 6k-10k episodes
-        - gamma 0.9848576847592656
-        - net_arch 32_32
-        - act_fn relu
-        - batch_size 216
-        - buffer_size 4384
-        - learning_rate 0.0028750566941175937
-        - learning_starts 2826
-        - tgt_update_int 392
-        - eps_init 0.8135260307997546
-        - eps_final 0.08186586832492276
-    - 2
-        - gamma 0.9930957050483905
-        - net_arch 32_32
-        - act_fn relu
-        - batch_size 164
-        - buffer_size 1514
-        - learning_rate 0.0011934954427902825
-        - learning_starts 2798
-        - tgt_update_int 2215
-        - eps_init 0.612134701698312
-        - eps_final 0.05294021338493515
-    - 3
-        - gamma 0.9982097827842092
-        - net_arch 32_32
-        - act_fn relu
-        - batch_size 158
-        - buffer_size 1978
-        - learning_rate 0.0006142379744249534
-        - learning_starts 1851
-        - tgt_update_int 1627
-        - eps_init 0.6919016329828642
-        - eps_final 0.07907417425388644
