@@ -10,6 +10,7 @@ make train
 # todo
 - improve training speed (maybe do with ttt first)
 - train for ~20k games. get to perfect eval?
+    - add mcts rr opponents
 
 ## maybe
 - save net/train saved net
