@@ -51,9 +51,9 @@ def main():
         console_log_level="INFO",
         log_file_path=LOG_PATH,
     )
-    if os.path.exists(LOG_PATH):
-        os.remove(LOG_PATH)
-    az.train_mp(config)
+    # if os.path.exists(LOG_PATH):
+    #     os.remove(LOG_PATH)
+    # az.train_mp(config)
     metrics = log2metrics(LOG_PATH)
     plot_metrics(metrics)
 
@@ -103,6 +103,11 @@ def as_xy(d: dict) -> tuple[list, list]:
     return tuple(zip(*sorted(d.items())))
 
 
+def to_relative_time(t: list[datetime]):
+    start = t[0]
+    return [(x - start).total_seconds() for x in t]
+
+
 def plot_metrics(metrics: AzMetrics):
     fig, axes = plt.subplots(2, 2, figsize=(12, 8))
 
@@ -122,8 +127,9 @@ def plot_metrics(metrics: AzMetrics):
 
     for k in metrics.win_rates:
         x, y = as_xy(metrics.win_rates[k])
+        x = to_relative_time(x)
         axes[1, 0].plot(x, y, marker="o", label=k)
-    axes[1, 0].set_xlabel("Time")
+    axes[1, 0].set_xlabel("Time (s)")
     axes[1, 0].set_ylabel("Win Rate")
     axes[1, 0].set_title("Win Rates")
     axes[1, 0].set_ylim([0, 1])
@@ -132,8 +138,9 @@ def plot_metrics(metrics: AzMetrics):
 
     for k in metrics.loss_rates:
         x, y = as_xy(metrics.loss_rates[k])
+        x = to_relative_time(x)
         axes[1, 1].plot(x, y, marker="o", label=k)
-    axes[1, 1].set_xlabel("Time")
+    axes[1, 1].set_xlabel("Time (s)")
     axes[1, 1].set_ylabel("Loss Rate")
     axes[1, 1].set_title("Loss Rates")
     axes[1, 1].set_ylim([0, 1])
