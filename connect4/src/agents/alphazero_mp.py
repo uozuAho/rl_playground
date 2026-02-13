@@ -39,7 +39,7 @@ class Config:
     mask_invalid_actions: bool = True
 
     train_n_mcts_sims: int = 5
-    c_puct: float = 2.0
+    train_c_puct: float = 2.0
     temperature: float = 1.25
     dirichlet_alpha: float = 0.3
     dirichlet_epsilon: float = 0.25
@@ -173,7 +173,7 @@ def player_loop(
                         batch_mcts_eval,
                         config.player_n_parallel_games,
                         config.train_n_mcts_sims,
-                        config.c_puct,
+                        config.train_c_puct,
                         config.temperature,
                         config.dirichlet_alpha,
                         config.dirichlet_epsilon,
@@ -216,7 +216,7 @@ def eval_loop(
 ):
     net = ResNet(config.num_res_blocks, config.num_hidden, config.device_eval)
     net.eval()
-    aza = make_az_agent(net, config.eval_n_mcts_sims, config.c_puct, config.device_eval)
+    aza = make_az_agent(net, config.eval_n_mcts_sims, config.train_c_puct, config.device_eval)
 
     def play_eval_games():
         eval_metrics = EvalMetrics(

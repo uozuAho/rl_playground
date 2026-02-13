@@ -26,7 +26,7 @@ def main():
         weight_decay=0.0001,
         mask_invalid_actions=True,
         train_n_mcts_sims=60,
-        c_puct=2.0,
+        train_c_puct=2.0,
         temperature=1.25,
         dirichlet_alpha=0.3,
         dirichlet_epsilon=0.25,
