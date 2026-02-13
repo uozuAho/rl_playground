@@ -9,8 +9,11 @@ make train
 
 # todo
 - WIP: azmp
-    - try training. does it improve?
-    - inline todos
+    - inline todos: cpuct, temperature
+    - try training
+        - tweak for max throughput
+        - does it improve?
+            - add mctsrr opponents
 - train for ~20k games. get to perfect eval?
     - add mcts rr opponents
     - maybe: check with/without valid action masking

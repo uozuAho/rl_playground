@@ -149,11 +149,11 @@ def player_loop(
     config: Config,
 ):
     # logger = setup_logging(config, name)
-    model = ResNet(config.num_res_blocks, config.num_hidden, config.device_player)
-    model.eval()
+    net = ResNet(config.num_res_blocks, config.num_hidden, config.device_player)
+    net.eval()
 
     def batch_mcts_eval(envs):
-        return _batch_eval_for_mcts(model, envs, config.device_player)
+        return _batch_eval_for_mcts(net, envs, config.device_player)
 
     t_start = time.perf_counter()
     steps_generated = 0
@@ -163,7 +163,7 @@ def player_loop(
         while not stop_event.is_set():
             try:
                 new_state_dict = weights_queue.get_nowait()
-                model.load_state_dict(new_state_dict)
+                net.model.load_state_dict(new_state_dict)
                 clear_queue(step_queue)
             except queue.Empty:
                 pass
@@ -215,10 +215,10 @@ def eval_loop(
     stop_event: mp.Event,
     config: Config,
 ):
-    model = ResNet(config.num_res_blocks, config.num_hidden, config.device_eval)
-    model.eval()
+    net = ResNet(config.num_res_blocks, config.num_hidden, config.device_eval)
+    net.eval()
     # todo: cpuct
-    aza = make_az_agent(model, config.eval_n_mcts_sims, config.device_eval)
+    aza = make_az_agent(net, config.eval_n_mcts_sims, config.device_eval)
 
     def play_eval_games():
         eval_metrics = EvalMetrics(
@@ -244,7 +244,7 @@ def eval_loop(
         while not stop_event.is_set():
             try:
                 new_state_dict = weights_queue.get(timeout=0.1)
-                model.load_state_dict(new_state_dict)
+                net.model.load_state_dict(new_state_dict)
                 metrics = play_eval_games()
                 metrics_queue.put(metrics)
             except queue.Empty:
@@ -316,10 +316,10 @@ def learner_loop(
     config: Config,
 ):
     logger = setup_logging(config, "learner")
-    model = ResNet(config.num_res_blocks, config.num_hidden, config.device_learn)
-    model.train()
+    net = ResNet(config.num_res_blocks, config.num_hidden, config.device_learn)
+    net.train()
     optimizer = Adam(
-        model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay
+        net.model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay
     )
 
     step_count = 0
@@ -327,7 +327,7 @@ def learner_loop(
     t_start = time.perf_counter()
 
     def send_weights():
-        state_dict = model.state_dict()
+        state_dict = net.model.state_dict()
         for wq in weights_queues:
             try:
                 wq.put(state_dict)
@@ -346,7 +346,7 @@ def learner_loop(
         for _ in range(config.n_epoch_repeats):
             for i in range(0, config.epoch_size, config.batch_size):
                 policy_loss, value_loss = update_net(
-                    model,
+                    net,
                     optimizer,
                     states[i : i + config.batch_size],
                     policy_targets[i : i + config.batch_size],
@@ -444,10 +444,10 @@ def metrics_loop(
 
 def steps_to_raw_epoch(game_steps: list[GameStep]):
     """Convert game steps to raw numpy arrays for efficient queue transfer."""
-    boards = np.stack([ResNet.state2np(x.state) for x in game_steps])
-    policy = np.stack([x.mcts_probs for x in game_steps])
-    value = np.stack([x.final_value for x in game_steps])
-    masks = np.stack([x.valid_action_mask for x in game_steps])
+    boards = np.stack([ResNet.state2np(x.state) for x in game_steps], dtype=np.float32)
+    policy = np.stack([x.mcts_probs for x in game_steps], dtype=np.float32)
+    value = np.stack([x.final_value for x in game_steps], dtype=np.float32).reshape((len(game_steps), 1))
+    masks = np.stack([x.valid_action_mask for x in game_steps], dtype=np.bool_)
 
     return boards, policy, value, masks
 
@@ -463,7 +463,7 @@ def raw_epoch_to_tensors(raw_epoch, device):
 
 
 def update_net(
-    model: nn.Module,
+    net: ResNet,
     optimizer,
     states: torch.Tensor,
     policy_targets: torch.Tensor,
@@ -472,7 +472,7 @@ def update_net(
     mask_invalid_actions: bool,
 ):
     """Update the network on a batch. Returns policy_loss, value_loss."""
-    out_policy, out_value = model(states)
+    out_policy, out_value = net.forward_states_tensor(states)
 
     if mask_invalid_actions:
         out_policy = out_policy.masked_fill(~valid_action_masks, -1e32)

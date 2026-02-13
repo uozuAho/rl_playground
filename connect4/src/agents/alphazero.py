@@ -152,7 +152,12 @@ def _self_play_n_games(
     eval_fn: types.BatchEvaluateFunc,
     n_games: int,
     n_mcts_sims: int,
+    c_puct: float,
+    temperature: float,
+    dirichlet_alpha: float,
+    dirichlet_epsilon: float
 ) -> typing.Iterable[GameStep]:
+    # todo: use temperature
     states = [c4.new_game() for _ in range(n_games)]
     game_overs = [False for _ in range(n_games)]
     trajectories = [[] for _ in range(n_games)]
@@ -164,8 +169,10 @@ def _self_play_n_games(
             active_envs,
             eval_fn,
             num_simulations=n_mcts_sims,
-            c_puct=3.0,
+            c_puct=c_puct,
             add_dirichlet_noise=True,
+            dirichlet_alpha=dirichlet_alpha,
+            dirichlet_epsilon=dirichlet_epsilon
         ).run()
         for i, root in zip(active_idxs, roots):
             state = root.state

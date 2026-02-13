@@ -56,6 +56,9 @@ class ResNet(AzNet):
         minput = torch.stack([self._state2tensor(s) for s in states]).to(self.device)
         return self.model(minput)
 
+    def forward_states_tensor(self, t: torch.Tensor):
+        return self.model(t)
+
     def eval(self):
         self.model.eval()
 

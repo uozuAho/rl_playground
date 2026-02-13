@@ -3,3 +3,4 @@ do.txt
 profile*.txt
 claude_instructions.txt
 experiments
+*.log
