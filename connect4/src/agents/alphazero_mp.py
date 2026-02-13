@@ -131,6 +131,7 @@ class PlayerMetrics(TypedDict):
     games_played: int
     games_per_sec: float
     steps_per_sec: float
+    utilisation: float
 
 
 def clear_queue(q: mp.Queue):
@@ -157,11 +158,13 @@ def player_loop(
         return _batch_eval_for_mcts(net, envs, config.device_player)
 
     t_start = time.perf_counter()
+    t_work_time = 0.0
     steps_generated = 0
     games_played = 0
 
     try:
         while not stop_event.is_set():
+            t_work_start = time.perf_counter()
             try:
                 new_state_dict = weights_queue.get_nowait()
                 net.model.load_state_dict(new_state_dict)
@@ -184,16 +187,20 @@ def player_loop(
 
             games_played += config.player_n_parallel_games
             steps_generated += len(game_steps)
-            elapsed = time.perf_counter() - t_start
+            uptime = time.perf_counter() - t_start
+
             metrics_queue.put(
                 PlayerMetrics(
                     type="player",
                     name=name,
                     games_played=games_played,
-                    games_per_sec=games_played / elapsed,
-                    steps_per_sec=steps_generated / elapsed,
+                    games_per_sec=games_played / uptime,
+                    steps_per_sec=steps_generated / uptime,
+                    utilisation=t_work_time / uptime
                 )
             )
+
+            t_work_time += time.perf_counter() - t_work_start
 
             try:
                 step_queue.put(game_steps, timeout=1.0)
@@ -208,6 +215,7 @@ class EvalMetrics(TypedDict):
     win_rates: dict[str, float]
     loss_rates: dict[str, float]
     draw_rates: dict[str, float]
+    utilisation: float
 
 
 def eval_loop(
@@ -221,10 +229,12 @@ def eval_loop(
     aza = make_az_agent(
         net, config.eval_n_mcts_sims, config.train_c_puct, config.device_eval
     )
+    t_start = time.perf_counter()
+    t_work_time = 0.0
 
     def play_eval_games():
         eval_metrics = EvalMetrics(
-            type="eval", win_rates={}, loss_rates={}, draw_rates={}
+            type="eval", win_rates={}, loss_rates={}, draw_rates={}, utilisation=0.0
         )
 
         with torch.no_grad():
@@ -246,8 +256,12 @@ def eval_loop(
         while not stop_event.is_set():
             try:
                 new_state_dict = weights_queue.get(timeout=0.1)
+                t_work_start = time.perf_counter()
                 net.model.load_state_dict(new_state_dict)
                 metrics = play_eval_games()
+                t_work_time += time.perf_counter() - t_work_start
+                uptime = time.perf_counter() - t_start
+                metrics["utilisation"] = t_work_time / uptime
                 metrics_queue.put(metrics)
             except queue.Empty:
                 pass
@@ -316,6 +330,7 @@ class LearnerMetrics(TypedDict):
     value_loss: float
     steps_trained: int
     steps_per_sec: float
+    utilisation: float
 
 
 def learner_loop(
@@ -337,6 +352,7 @@ def learner_loop(
     step_count = 0
     epoch_count = 0
     t_start = time.perf_counter()
+    t_learn_time = 0.0
 
     def send_weights():
         state_dict = net.model.state_dict()
@@ -347,7 +363,8 @@ def learner_loop(
                 raise
 
     def do_learn(raw_batch):
-        nonlocal step_count, epoch_count
+        nonlocal step_count, epoch_count, t_learn_time
+        t_start_learn = time.perf_counter()
         policy_losses = []
         value_losses = []
 
@@ -377,21 +394,21 @@ def learner_loop(
             send_weights()
             clear_queue(epoch_queue)
 
-        elapsed = time.perf_counter() - t_start
-        steps_per_sec = step_count / elapsed
-
         avg_pl = sum(policy_losses) / len(policy_losses) if policy_losses else 0
         avg_vl = sum(value_losses) / len(value_losses) if value_losses else 0
 
-        metrics_queue.put(
-            LearnerMetrics(
+        uptime = time.perf_counter() - t_start
+        steps_per_sec = step_count / uptime
+        t_learn_time += time.perf_counter() - t_start_learn
+
+        return LearnerMetrics(
                 type="learner",
                 policy_loss=avg_pl,
                 value_loss=avg_vl,
                 steps_trained=step_count,
                 steps_per_sec=steps_per_sec,
+                utilisation=t_learn_time / uptime
             )
-        )
 
     while not stop_event.is_set():
         try:
@@ -400,7 +417,8 @@ def learner_loop(
                 stop_event.set()
                 break
             batch = epoch_queue.get(timeout=0.1)
-            do_learn(batch)
+            metrics = do_learn(batch)
+            metrics_queue.put(metrics)
         except queue.Empty:
             continue
         except KeyboardInterrupt:
