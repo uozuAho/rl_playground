@@ -12,6 +12,7 @@ from agents import mcts_agent
 from agents.az_nets import AzNet
 from algs import mcts
 from utils import maths, types
+from utils.maths import heat
 
 
 @dataclass
@@ -167,7 +168,6 @@ def _self_play_n_games(
     dirichlet_alpha: float,
     dirichlet_epsilon: float,
 ) -> typing.Iterable[GameStep]:
-    # todo: use temperature
     states = [c4.new_game() for _ in range(n_games)]
     game_overs = [False for _ in range(n_games)]
     trajectories = [[] for _ in range(n_games)]
@@ -189,6 +189,7 @@ def _self_play_n_games(
             valid_mask = _valid_actions_mask(root.state)
             probs = _mcts_probs(root)
             trajectories[i].append((state, valid_mask, probs))
+            probs = heat(np.array(probs), temperature)
             action = np.random.choice(c4.ACTION_SIZE, p=probs)
             new_state = c4.make_move(state, action)
             states[i] = new_state

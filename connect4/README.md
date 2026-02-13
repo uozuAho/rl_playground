@@ -9,11 +9,19 @@ make train
 
 # todo
 - WIP: azmp
-    - inline todos: cpuct, temperature
     - try training
         - tweak for max throughput
+            - ideas:
+                - don't play games if step queue full
+                - log modes: throughput/eval
+                    - throughput mode logs to cli
+                        - queue sizes
+                        - time spent waiting/processing
+                - log steps/batches discarded
+                - bigger learner batches?
+                - seems much slower than ttt. profile just playing games
         - does it improve?
-            - add mctsrr opponents
+            - add mctsrr opponents. compare to mctsu
 - train for ~20k games. get to perfect eval?
     - add mcts rr opponents
     - maybe: check with/without valid action masking
