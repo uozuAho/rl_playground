@@ -10,11 +10,12 @@ make train
 # todo
 - WIP: azmp
     - try training
-        - tweak for max throughput
-            - ideas:
-                - don't play games if step queue full
-                - bigger learner batches?
-                - playing games seems much slower than ttt. profile just playing games
+        - WIP tweak for max throughput
+            - WTF is going on. slow learner, player max util, discarding lots
+                - batcher should clog is learner is slow
+                - player should slow if batcher is clogged
+                - is utilisation metric correct?
+            - playing games seems much slower than ttt. profile just playing games
         - does it improve?
             - add mctsrr opponents. compare to mctsu
 - train for ~20k games. get to perfect eval?

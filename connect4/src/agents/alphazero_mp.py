@@ -168,19 +168,32 @@ def player_loop(
     steps_generated = 0
     steps_discarded = 0
     games_played = 0
+    game_steps = []
 
     try:
         while not stop_event.is_set():
-            t_work_start = time.perf_counter()
             try:
                 new_state_dict = weights_queue.get_nowait()
                 net.model.load_state_dict(new_state_dict)
-                steps_discarded += clear_queue(step_queue)
+                steps_discarded += clear_queue(step_queue) + len(game_steps)
+                game_steps.clear()
             except queue.Empty:
                 pass
 
+            if game_steps:
+                try:
+                    step_queue.put(game_steps, timeout=1.0)
+                    game_steps = []
+                except queue.Full:
+                    pass
+
+            # don't play more games if the queue's full
+            if game_steps:
+                continue
+
+            t_work_start = time.perf_counter()
             with torch.no_grad():
-                game_steps = list(
+                temp_game_steps = list(
                     _self_play_n_games(
                         batch_mcts_eval,
                         config.player_n_parallel_games,
@@ -191,9 +204,11 @@ def player_loop(
                         config.dirichlet_epsilon,
                     )
                 )
+                game_steps.extend(temp_game_steps)
 
             games_played += config.player_n_parallel_games
-            steps_generated += len(game_steps)
+            steps_generated += len(temp_game_steps)
+            t_work_time += time.perf_counter() - t_work_start
             uptime = time.perf_counter() - t_start
 
             metrics_queue.put(
@@ -208,13 +223,6 @@ def player_loop(
                     utilisation=t_work_time / uptime
                 )
             )
-
-            t_work_time += time.perf_counter() - t_work_start
-
-            try:
-                step_queue.put(game_steps, timeout=1.0)
-            except queue.Full:
-                pass
     except KeyboardInterrupt:
         pass
 
@@ -294,13 +302,13 @@ def batcher_loop(
 ):
     buffer = deque()
     t_start = time.perf_counter()
-    t_do_stuff = 0.0
+    t_work = 0.0
 
     last_time = time.perf_counter()
     while not stop_event.is_set():
         if time.perf_counter() - last_time > 1.0:
             uptime = time.perf_counter() - t_start
-            utilisation = t_do_stuff / uptime
+            utilisation = t_work / uptime
             last_time = time.perf_counter()
             metrics_queue.put(
                 BatcherMetrics(
@@ -312,18 +320,21 @@ def batcher_loop(
             )
 
         try:
-            steps = step_queue.get(timeout=0.1)
-            t_start_stuff = time.perf_counter()
-            buffer.extend(steps)
+            t_start_work = time.perf_counter()
 
             while len(buffer) >= config.epoch_size:
                 epoch_steps = []
-                for _ in range(config.epoch_size):
-                    epoch_steps.append(buffer.popleft())
+                for i in range(config.epoch_size):
+                    epoch_steps.append(buffer[i])
                 random.shuffle(epoch_steps)
                 raw_epoch = steps_to_raw_epoch(epoch_steps)
-                t_do_stuff += time.perf_counter() - t_start_stuff
+                t_work += time.perf_counter() - t_start_work
                 epoch_queue.put(raw_epoch, timeout=0.1)
+                for _ in range(config.epoch_size):
+                    buffer.popleft()
+
+            steps = step_queue.get(timeout=0.1)
+            buffer.extend(steps)
 
         except queue.Empty:
             pass
