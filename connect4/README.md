@@ -11,12 +11,12 @@ make train
 - WIP: azmp
     - try training
         - WIP tweak for max throughput
-            - players discard ~50% steps. improve
             - profile player. seems inefficient
+            - maybe: minimised steps discarded when discard = True
         - does it improve?
             - add mctsrr opponents. compare to mctsu
+            - try with/without discard on weight update
 - train for ~20k games. get to perfect eval?
-    - add mcts rr opponents
     - maybe: check with/without valid action masking
 
 ## maybe

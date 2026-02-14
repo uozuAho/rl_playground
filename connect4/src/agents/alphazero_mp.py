@@ -50,6 +50,7 @@ class Config:
     n_epoch_repeats: int = 4  # num times each epoch is trained on
     batch_size: int = 128  # num game steps trained
     weights_update_interval: int = 10
+    discard_on_weight_update: bool = True
 
     eval_c_puct: float = 1.0
     eval_n_mcts_sims: int = 10
@@ -175,8 +176,9 @@ def player_loop(
         try:
             new_state_dict = weights_queue.get_nowait()
             net.model.load_state_dict(new_state_dict)
-            steps_discarded += clear_queue(step_queue, lambda x: len(x)) + len(game_steps)
-            game_steps.clear()
+            if config.discard_on_weight_update:
+                steps_discarded += clear_queue(step_queue, lambda x: len(x)) + len(game_steps)
+                game_steps.clear()
         except queue.Empty:
             pass
 
@@ -422,7 +424,8 @@ def learner_loop(
         # Periodically share weights with player processes
         if epoch_count % config.weights_update_interval == 0:
             send_weights()
-            # epochs_discarded += clear_queue(epoch_queue)
+            if config.discard_on_weight_update:
+                epochs_discarded += clear_queue(epoch_queue)
 
         avg_pl = sum(policy_losses) / len(policy_losses) if policy_losses else 0
         avg_vl = sum(value_losses) / len(value_losses) if value_losses else 0
