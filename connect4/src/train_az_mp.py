@@ -34,7 +34,7 @@ def main(args: list[str]):
         dirichlet_alpha=0.3,
         dirichlet_epsilon=0.25,
         n_player_processes=1,
-        player_n_parallel_games=20,
+        player_n_parallel_games=10,
         epoch_size=512,
         n_epoch_repeats=4,
         batch_size=128,

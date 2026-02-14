@@ -198,20 +198,17 @@ def player_loop(
     def send_metrics():
         uptime = time.perf_counter() - t_start
         metrics = PlayerMetrics(
-                type="player",
-                name=name,
-                games_played=games_played,
-                games_per_sec=games_played / uptime,
-                steps_per_sec=steps_generated / uptime,
-                steps_generated=steps_generated,
-                steps_discarded=steps_discarded,
-                avg_steps_per_game=steps_generated
-                / (games_played if games_played else 1),
-                utilisation=t_work_time / uptime,
-            )
-        metrics_queue.put(
-            metrics
+            type="player",
+            name=name,
+            games_played=games_played,
+            games_per_sec=games_played / uptime,
+            steps_per_sec=steps_generated / uptime,
+            steps_generated=steps_generated,
+            steps_discarded=steps_discarded,
+            avg_steps_per_game=steps_generated / (games_played if games_played else 1),
+            utilisation=t_work_time / uptime,
         )
+        metrics_queue.put(metrics)
         pprint(metrics)
 
     try:

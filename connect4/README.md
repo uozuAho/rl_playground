@@ -12,15 +12,25 @@ make train
     - try training
         - WIP tweak for max throughput
             - WIP profile player. seems inefficient
-              - delay nn pass as late as possible
-              - delay new state creation as late as possible
-              - rm asserts
+                - more mcts tests
+                - maybe: create separate player loop benchmark for easier benchmarking/profiling
+                - delay new state creation as late as possible
+                    - need more mcts tests
+                - rm asserts
+                    - need more mcts tests
             - maybe: minimised steps discarded when discard = True
         - does it improve?
             - add mctsrr opponents. compare to mctsu
             - try with/without discard on weight update
 - train for ~20k games. get to perfect eval?
     - maybe: check with/without valid action masking
+
+perf:
+at mcts 60, parallel:
+10: 3.5 games per sec
+20: 6
+40: 8
+80: 9 . takes many secs to get 80 games done tho
 
 ## maybe
 - save net/train saved net
