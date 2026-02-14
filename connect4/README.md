@@ -12,12 +12,9 @@ make train
     - try training
         - WIP tweak for max throughput
             - WIP profile player. seems inefficient
-                - more mcts tests
-                - maybe: create separate player loop benchmark for easier benchmarking/profiling
                 - delay new state creation as late as possible
                     - need more mcts tests
-                - rm asserts
-                    - need more mcts tests
+                - maybe: create separate player loop benchmark for easier benchmarking/profiling
             - maybe: minimised steps discarded when discard = True
         - does it improve?
             - add mctsrr opponents. compare to mctsu

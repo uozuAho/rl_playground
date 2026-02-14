@@ -116,23 +116,16 @@ class ParallelMcts:
 
     def _finish_sim(self):
         for sim in self._sims:
-            assert sim.p_eval is not None
-            assert sim.v_eval is not None
-
             if sim.terminal_value is None:
                 # evaluate gives the value for the current player, we want
                 # for the previous player - just need to invert the value
                 sim.v_eval = -sim.v_eval
                 sim.node.v_est = sim.v_eval
 
-                assert maths.is_prob_dist(sim.p_eval)
-
                 if sim.node == sim.root and self.add_dirichlet_noise:
                     sim.p_eval = maths.add_dirichlet_noise(
                         sim.p_eval, self.dirichlet_alpha, self.dirichlet_epsilon
                     )
-
-                assert maths.is_prob_dist(sim.p_eval)
 
                 # Expand: create child nodes for all valid actions
                 for action in c4.get_valid_moves(sim.node.state):
@@ -145,8 +138,6 @@ class ParallelMcts:
                     )
 
             value = sim.terminal_value if sim.terminal_value else sim.v_eval
-            assert value is not None
-            assert value is not True
 
             # Backpropagation: update values up the search path
             while sim.node:
