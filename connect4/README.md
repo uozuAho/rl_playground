@@ -11,11 +11,8 @@ make train
 - WIP: azmp
     - try training
         - WIP tweak for max throughput
-            - WTF is going on. slow learner, player max util, discarding lots
-                - batcher should clog is learner is slow
-                - player should slow if batcher is clogged
-                - is utilisation metric correct?
-            - playing games seems much slower than ttt. profile just playing games
+            - players discard ~50% steps. improve
+            - profile player. seems inefficient
         - does it improve?
             - add mctsrr opponents. compare to mctsu
 - train for ~20k games. get to perfect eval?

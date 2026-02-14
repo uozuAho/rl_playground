@@ -137,7 +137,7 @@ class PlayerMetrics(TypedDict):
 
 
 def clear_queue(q: mp.Queue):
-    """ returns number of queue elements cleared"""
+    """returns number of queue elements cleared"""
     n = 0
     try:
         while True:
@@ -156,12 +156,8 @@ def player_loop(
     stop_event: mp.Event,
     config: Config,
 ):
-    # logger = setup_logging(config, name)
     net = ResNet(config.num_res_blocks, config.num_hidden, config.device_player)
     net.eval()
-
-    def batch_mcts_eval(envs):
-        return _batch_eval_for_mcts(net, envs, config.device_player)
 
     t_start = time.perf_counter()
     t_work_time = 0.0
@@ -170,59 +166,66 @@ def player_loop(
     games_played = 0
     game_steps = []
 
+    def batch_mcts_eval(envs):
+        return _batch_eval_for_mcts(net, envs, config.device_player)
+
+    def try_update_weights():
+        nonlocal steps_discarded
+        try:
+            new_state_dict = weights_queue.get_nowait()
+            net.model.load_state_dict(new_state_dict)
+            steps_discarded += clear_queue(step_queue) + len(game_steps)
+            game_steps.clear()
+        except queue.Empty:
+            pass
+
+    def play_games():
+        return _self_play_n_games(
+            batch_mcts_eval,
+            config.player_n_parallel_games,
+            config.train_n_mcts_sims,
+            config.train_c_puct,
+            config.temperature,
+            config.dirichlet_alpha,
+            config.dirichlet_epsilon,
+        )
+
+    def send_metrics():
+        uptime = time.perf_counter() - t_start
+        metrics_queue.put(
+            PlayerMetrics(
+                type="player",
+                name=name,
+                games_played=games_played,
+                games_per_sec=games_played / uptime,
+                steps_per_sec=steps_generated / uptime,
+                steps_generated=steps_generated,
+                steps_discarded=steps_discarded,
+                utilisation=t_work_time / uptime,
+            )
+        )
+
     try:
         while not stop_event.is_set():
-            try:
-                new_state_dict = weights_queue.get_nowait()
-                net.model.load_state_dict(new_state_dict)
-                steps_discarded += clear_queue(step_queue) + len(game_steps)
-                game_steps.clear()
-            except queue.Empty:
-                pass
+            try_update_weights()
+            send_metrics()
 
-            if game_steps:
+            if len(game_steps) > 0:
                 try:
-                    step_queue.put(game_steps, timeout=1.0)
+                    step_queue.put(game_steps, timeout=0.1)
                     game_steps = []
                 except queue.Full:
                     pass
-
-            # don't play more games if the queue's full
-            if game_steps:
-                continue
-
-            t_work_start = time.perf_counter()
-            with torch.no_grad():
-                temp_game_steps = list(
-                    _self_play_n_games(
-                        batch_mcts_eval,
-                        config.player_n_parallel_games,
-                        config.train_n_mcts_sims,
-                        config.train_c_puct,
-                        config.temperature,
-                        config.dirichlet_alpha,
-                        config.dirichlet_epsilon,
-                    )
-                )
+            else:
+                t_work_start = time.perf_counter()
+                with torch.no_grad():
+                    temp_game_steps = list(play_games())
                 game_steps.extend(temp_game_steps)
 
-            games_played += config.player_n_parallel_games
-            steps_generated += len(temp_game_steps)
-            t_work_time += time.perf_counter() - t_work_start
-            uptime = time.perf_counter() - t_start
+                games_played += config.player_n_parallel_games
+                steps_generated += len(temp_game_steps)
+                t_work_time += time.perf_counter() - t_work_start
 
-            metrics_queue.put(
-                PlayerMetrics(
-                    type="player",
-                    name=name,
-                    games_played=games_played,
-                    games_per_sec=games_played / uptime,
-                    steps_per_sec=steps_generated / uptime,
-                    steps_generated=steps_generated,
-                    steps_discarded=steps_discarded,
-                    utilisation=t_work_time / uptime
-                )
-            )
     except KeyboardInterrupt:
         pass
 
@@ -303,39 +306,41 @@ def batcher_loop(
     buffer = deque()
     t_start = time.perf_counter()
     t_work = 0.0
+    emit_metrics_time = time.perf_counter()
+    next_epoch = None
 
-    last_time = time.perf_counter()
-    while not stop_event.is_set():
-        if time.perf_counter() - last_time > 1.0:
-            uptime = time.perf_counter() - t_start
-            utilisation = t_work / uptime
-            last_time = time.perf_counter()
-            metrics_queue.put(
-                BatcherMetrics(
-                    type="batcher",
-                    step_queue_size=step_queue.qsize(),
-                    batch_queue_size=epoch_queue.qsize(),
-                    utilisation=utilisation
-                )
+    def emit_metrics():
+        uptime = time.perf_counter() - t_start
+        utilisation = t_work / uptime
+        metrics_queue.put(
+            BatcherMetrics(
+                type="batcher",
+                step_queue_size=step_queue.qsize(),
+                batch_queue_size=epoch_queue.qsize(),
+                utilisation=utilisation,
             )
+        )
+
+    while not stop_event.is_set():
+        if time.perf_counter() - emit_metrics_time > 1.0:
+            emit_metrics_time = time.perf_counter()
+            emit_metrics()
 
         try:
-            t_start_work = time.perf_counter()
-
-            while len(buffer) >= config.epoch_size:
+            while len(buffer) < config.epoch_size:
+                steps = step_queue.get(timeout=0.1)
+                buffer.extend(steps)
+            if next_epoch is not None:
+                epoch_queue.put(next_epoch, timeout=0.1)
+                next_epoch = None
+            else:
+                t_start_work = time.perf_counter()
                 epoch_steps = []
                 for i in range(config.epoch_size):
-                    epoch_steps.append(buffer[i])
+                    epoch_steps.append(buffer.popleft())
                 random.shuffle(epoch_steps)
-                raw_epoch = steps_to_raw_epoch(epoch_steps)
+                next_epoch = steps_to_raw_epoch(epoch_steps)
                 t_work += time.perf_counter() - t_start_work
-                epoch_queue.put(raw_epoch, timeout=0.1)
-                for _ in range(config.epoch_size):
-                    buffer.popleft()
-
-            steps = step_queue.get(timeout=0.1)
-            buffer.extend(steps)
-
         except queue.Empty:
             pass
         except queue.Full:
@@ -425,15 +430,15 @@ def learner_loop(
         t_learn_time += time.perf_counter() - t_start_learn
 
         return LearnerMetrics(
-                type="learner",
-                policy_loss=avg_pl,
-                value_loss=avg_vl,
-                steps_trained=step_count,
-                steps_per_sec=steps_per_sec,
-                epoch_count=epoch_count,
-                epochs_discarded=epochs_discarded,
-                utilisation=t_learn_time / uptime
-            )
+            type="learner",
+            policy_loss=avg_pl,
+            value_loss=avg_vl,
+            steps_trained=step_count,
+            steps_per_sec=steps_per_sec,
+            epoch_count=epoch_count,
+            epochs_discarded=epochs_discarded,
+            utilisation=t_learn_time / uptime,
+        )
 
     while not stop_event.is_set():
         try:
@@ -494,11 +499,10 @@ def metrics_loop(
                             if m:
                                 pprint(m[-1])
                     case "perf":
-                        if len(learner_metrics) > 0:
-                            print("-----")
-                            pprint(batcher_metrics[-1])
-                            pprint(player_metrics[-1])
-                            pprint(learner_metrics[-1])
+                        print("-----")
+                        if batcher_metrics: pprint(batcher_metrics[-1])
+                        if player_metrics: pprint(player_metrics[-1])
+                        if learner_metrics: pprint(learner_metrics[-1])
                     case _:
                         print(f"unknown cli_log_mode {config.cli_log_mode}")
         except queue.Empty:
