@@ -15,6 +15,9 @@ train:
 trainmp:
 	uv run src/train_az_mp.py
 
+profilemp:
+	uv run python -m cProfile src/train_az_mp.py profile_player > profile_mp.txt
+
 profile:
 	uv run python -m cProfile src/train_az.py profile > profile.txt
 

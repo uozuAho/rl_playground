@@ -177,7 +177,9 @@ def player_loop(
             new_state_dict = weights_queue.get_nowait()
             net.model.load_state_dict(new_state_dict)
             if config.discard_on_weight_update:
-                steps_discarded += clear_queue(step_queue, lambda x: len(x)) + len(game_steps)
+                steps_discarded += clear_queue(step_queue, lambda x: len(x)) + len(
+                    game_steps
+                )
                 game_steps.clear()
         except queue.Empty:
             pass
@@ -195,8 +197,7 @@ def player_loop(
 
     def send_metrics():
         uptime = time.perf_counter() - t_start
-        metrics_queue.put(
-            PlayerMetrics(
+        metrics = PlayerMetrics(
                 type="player",
                 name=name,
                 games_played=games_played,
@@ -204,10 +205,14 @@ def player_loop(
                 steps_per_sec=steps_generated / uptime,
                 steps_generated=steps_generated,
                 steps_discarded=steps_discarded,
-                avg_steps_per_game=steps_generated / (games_played if games_played else 1),
+                avg_steps_per_game=steps_generated
+                / (games_played if games_played else 1),
                 utilisation=t_work_time / uptime,
             )
+        metrics_queue.put(
+            metrics
         )
+        pprint(metrics)
 
     try:
         while not stop_event.is_set():
@@ -296,6 +301,7 @@ def eval_loop(
 class BatcherMetrics(TypedDict):
     type: str
     utilisation: float
+    buffer_size: int
     step_queue_size: int
     batch_queue_size: int
 
@@ -319,6 +325,7 @@ def batcher_loop(
         metrics_queue.put(
             BatcherMetrics(
                 type="batcher",
+                buffer_size=len(buffer),
                 step_queue_size=step_queue.qsize(),
                 batch_queue_size=epoch_queue.qsize(),
                 utilisation=utilisation,
@@ -505,9 +512,12 @@ def metrics_loop(
                                 pprint(m[-1])
                     case "perf":
                         print("-----")
-                        if batcher_metrics: pprint(batcher_metrics[-1])
-                        if player_metrics: pprint(player_metrics[-1])
-                        if learner_metrics: pprint(learner_metrics[-1])
+                        if batcher_metrics:
+                            pprint(batcher_metrics[-1])
+                        if player_metrics:
+                            pprint(player_metrics[-1])
+                        if learner_metrics:
+                            pprint(learner_metrics[-1])
                     case _:
                         print(f"unknown cli_log_mode {config.cli_log_mode}")
         except queue.Empty:

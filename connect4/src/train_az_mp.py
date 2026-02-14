@@ -3,22 +3,25 @@ max GPU usage and therefore fastest possible training"""
 
 import json
 import os.path
+import queue
+import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
+import multiprocessing as mp
 
 from matplotlib import pyplot as plt
 
 import agents.alphazero_mp as az
-from agents.alphazero_mp import LearnerMetrics, EvalMetrics
+from agents.alphazero_mp import LearnerMetrics, EvalMetrics, player_loop
 from agents import mcts_agent
 
 PROJ_ROOT = Path(__file__).parent.parent
 LOG_PATH = PROJ_ROOT / "train_az_mp.log"
 
 
-def main():
+def main(args: list[str]):
     config = az.Config(
         num_res_blocks=4,
         num_hidden=64,
@@ -30,7 +33,7 @@ def main():
         temperature=1.25,
         dirichlet_alpha=0.3,
         dirichlet_epsilon=0.25,
-        n_player_processes=4,
+        n_player_processes=1,
         player_n_parallel_games=20,
         epoch_size=512,
         n_epoch_repeats=4,
@@ -51,11 +54,17 @@ def main():
         console_log_level="INFO",
         log_file_path=LOG_PATH,
     )
-    if os.path.exists(LOG_PATH):
-        os.remove(LOG_PATH)
-    az.train_mp(config)
-    metrics = log2metrics(LOG_PATH)
-    plot_metrics(metrics)
+    print("args:", args)
+    if "profile_player" in args:
+        player_loop(
+            "player", queue.Queue(), queue.Queue(), queue.Queue(), mp.Event(), config
+        )
+    else:
+        if os.path.exists(LOG_PATH):
+            os.remove(LOG_PATH)
+        az.train_mp(config)
+        metrics = log2metrics(LOG_PATH)
+        plot_metrics(metrics)
 
 
 @dataclass
@@ -151,4 +160,4 @@ def plot_metrics(metrics: AzMetrics):
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)

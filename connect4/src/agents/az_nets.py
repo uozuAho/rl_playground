@@ -53,8 +53,9 @@ class ResNet(AzNet):
         return list(zip(plogits.softmax(dim=1).tolist(), vals))
 
     def forward_batch(self, states: list[c4.GameState]):
-        minput = torch.stack([self._state2tensor(s) for s in states]).to(self.device)
-        return self.model(minput)
+        n = np.stack([self.state2np(s) for s in states])
+        t = torch.from_numpy(n).to(self.device)
+        return self.model(t)
 
     def forward_states_tensor(self, t: torch.Tensor):
         return self.model(t)

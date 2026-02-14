@@ -11,7 +11,10 @@ make train
 - WIP: azmp
     - try training
         - WIP tweak for max throughput
-            - profile player. seems inefficient
+            - WIP profile player. seems inefficient
+              - delay nn pass as late as possible
+              - delay new state creation as late as possible
+              - rm asserts
             - maybe: minimised steps discarded when discard = True
         - does it improve?
             - add mctsrr opponents. compare to mctsu
