@@ -133,16 +133,17 @@ class PlayerMetrics(TypedDict):
     steps_per_sec: float
     steps_generated: int
     steps_discarded: int
+    avg_steps_per_game: float
     utilisation: float
 
 
-def clear_queue(q: mp.Queue):
+def clear_queue(q: mp.Queue, count_fn=None):
     """returns number of queue elements cleared"""
     n = 0
     try:
         while True:
-            q.get_nowait()
-            n += 1
+            item = q.get_nowait()
+            n += count_fn(item) if count_fn else 1
     except queue.Empty:
         pass
     return n
@@ -174,7 +175,7 @@ def player_loop(
         try:
             new_state_dict = weights_queue.get_nowait()
             net.model.load_state_dict(new_state_dict)
-            steps_discarded += clear_queue(step_queue) + len(game_steps)
+            steps_discarded += clear_queue(step_queue, lambda x: len(x)) + len(game_steps)
             game_steps.clear()
         except queue.Empty:
             pass
@@ -201,6 +202,7 @@ def player_loop(
                 steps_per_sec=steps_generated / uptime,
                 steps_generated=steps_generated,
                 steps_discarded=steps_discarded,
+                avg_steps_per_game=steps_generated / (games_played if games_played else 1),
                 utilisation=t_work_time / uptime,
             )
         )
