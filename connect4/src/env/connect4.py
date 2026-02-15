@@ -27,6 +27,12 @@ class GameState:
         s.winner = None
         return s
 
+    def __repr__(self):
+        cp_str = "X" if self.current_player == PLAYER1 else "O"
+        return (
+            f"cp: {cp_str}, done: {self.done}, winner: {self.winner}, {to_string(self)}"
+        )
+
     def copy(self):
         s = GameState()
         s.board = self.board.copy()
@@ -213,12 +219,12 @@ def is_draw(state: GameState) -> bool:
     return len(get_valid_moves(state)) == 0 and calc_winner(state) is None
 
 
-def to_string(state: GameState) -> str:
+def to_string(state: GameState, sep="\n") -> str:
     chars = {EMPTY: ".", PLAYER1: "X", PLAYER2: "O"}
     lines = []
     for row in state.board:
         lines.append("".join(chars[cell] for cell in row))
-    return "\n".join(lines)
+    return sep.join(lines)
 
 
 def from_string(s: str) -> GameState:

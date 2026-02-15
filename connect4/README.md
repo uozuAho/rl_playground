@@ -17,6 +17,23 @@ make train
 - train for ~20k games. get to perfect eval?
     - maybe: check with/without valid action masking
 
+cp: X, done: False, winner: None,
+OOXX...
+XXOOXO.
+OOXXOX.
+XXOOXX.
+OOXOOXO
+XXXOXOO
+
+cp: O, done: True, winner: 1,
+OOXX...
+XXOOXO.
+OOXXOX.
+XXOOXXX
+OOXOOXO
+XXXOXOO
+
+
 ## maybe
 - save net/train saved net
 - try different net/conv sizes

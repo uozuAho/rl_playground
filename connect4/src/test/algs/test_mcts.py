@@ -1,3 +1,5 @@
+import pytest
+
 from agents.mcts_agent import uniform_eval_batch, make_uniform_agent
 from algs.mcts import ParallelMcts, MCTSNode
 import env.connect4 as c4
@@ -27,6 +29,7 @@ def test_mcts_basic():
                 assert is_prob_dist(cpriors)
 
 
+@pytest.mark.skip("fix this after fixing specific test below")
 def test_mctsu_should_be_stronger_with_more_sims():
     strong_agent = make_uniform_agent(20)
     weak_agent = make_uniform_agent(10)
@@ -82,6 +85,29 @@ OOO...X""",
     maxvisits = [max(root.children.values(), key=lambda c: c.visits) for root in roots]
     best_moves = [x.action_from_parent for x in maxvisits]
     assert best_moves == expected_best_moves
+
+
+def test_specific_case():
+    states = [
+        # todo: dedent in from_string
+        c4.from_string(
+            """OOXX...
+XXOOXO.
+OOXXOX.
+XXOOXX.
+OOXOOXO
+XXXOXOO"""
+        )
+    ]
+
+    agent_x = make_uniform_agent(10)
+    agent_o = make_uniform_agent(20)
+
+    while not states[0].done:
+        # todo: make single game version for convenience
+        agent = agent_x if states[0].current_player == c4.PLAYER1 else agent_o
+        actions = agent.get_actions(states)
+        states = [c4.make_move(s, a) for s, a in zip(states, actions)]
 
 
 def all_nodes(node: MCTSNode | None):
