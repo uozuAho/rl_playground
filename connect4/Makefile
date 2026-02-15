@@ -12,6 +12,9 @@ pc:
 train:
 	uv run src/train_az.py
 
+rank:
+	uv run src/rank_bots.py
+
 trainmp:
 	uv run src/train_az_mp.py
 

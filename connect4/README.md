@@ -8,13 +8,12 @@ make train
 ```
 
 # todo
-- WIP: azmp
-    - try training
-        - WIP tweak for max throughput
-            - maybe: minimised steps discarded when discard = True
-        - does it improve?
-            - add mctsrr opponents. compare to mctsu
-            - try with/without discard on weight update
+- fix mcts: mctsu10 stronger than 20
+- azmp
+    - does it improve?
+        - try with/without discard on weight update
+        - try with/without valid action masking
+    - maybe: perf: minimised steps discarded when discard = True
 - train for ~20k games. get to perfect eval?
     - maybe: check with/without valid action masking
 
