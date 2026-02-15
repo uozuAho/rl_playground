@@ -89,15 +89,13 @@ OOO...X""",
 
 def test_specific_case():
     states = [
-        # todo: dedent in from_string
-        c4.from_string(
-            """OOXX...
-XXOOXO.
-OOXXOX.
-XXOOXX.
-OOXOOXO
-XXXOXOO"""
-        )
+        c4.from_string("""
+        OOXX...
+        XXOOXO.
+        OOXXOX.
+        XXOOXX.
+        OOXOOXO
+        XXXOXOO""")
     ]
 
     agent_x = make_uniform_agent(10)

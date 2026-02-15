@@ -1,3 +1,5 @@
+import textwrap
+
 import numpy as np
 import typing as t
 
@@ -229,6 +231,7 @@ def to_string(state: GameState, sep="\n") -> str:
 
 def from_string(s: str) -> GameState:
     chars = {".": EMPTY, "X": PLAYER1, "O": PLAYER2}
+    s = textwrap.dedent(s)
     lines = s.strip().split("\n")
     state = new_game()
     numx = s.count("X")
