@@ -1,5 +1,3 @@
-import numpy as np
-
 from agents.agent import Agent
 import env.connect4 as c4
 
@@ -21,7 +19,11 @@ def play_games_parallel(agent_1: Agent, agent_2: Agent, n_games: int):
                 winners[i] = c4.calc_winner(states[i])
         turn = c4.other_player(turn)
     assert all(x is not False for x in winners)
-    w = np.count_nonzero(winners == np.int8(c4.PLAYER1))
-    ll = np.count_nonzero(winners == np.int8(c4.PLAYER2))
-    d = np.count_nonzero(winners == np.int8(0))
+    w = countif(winners, lambda x: x == c4.PLAYER1)
+    ll = countif(winners, lambda x: x == c4.PLAYER2)
+    d = countif(winners, lambda x: x is None)
     return w, ll, d
+
+
+def countif(seq, pred):
+    return sum(1 if pred(x) else 0 for x in seq)

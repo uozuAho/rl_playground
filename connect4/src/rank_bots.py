@@ -1,6 +1,7 @@
 """Intended to replace bot showdown.
 Train bots elsewhere - this should just be a tournament.
 """
+
 import agents.mcts_agent as mcts
 # disable unused import check so u can temporarily comment out bots
 # ruff: noqa: F401
