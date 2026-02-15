@@ -8,18 +8,19 @@ from utils import maths, types
 class MCTSNode:
     def __init__(
         self,
-        state: c4.GameState,
+        state: c4.GameState | None,
         parent: "MCTSNode | None",
         prior: float,
         action_from_parent: int | None = None,
     ):
-        self.state = state
+        self._state = state
         self.parent = parent
         self.prior = prior  # P(s,a) from policy network
         self.v_est = None  # V(s) from policy network
         self.action_from_parent = action_from_parent
 
-        self.children: dict[int, MCTSNode] = {}  # action -> child node
+        # valid action -> child node
+        self.children: dict[int, MCTSNode] = {}
         self.visits = 0  # N(s,a)
         self.total_value = 0.0  # W(s,a) - sum of values backed up through this node
 
@@ -31,6 +32,13 @@ class MCTSNode:
             f"P: {self.prior:.2f}, v: {self.value():.2f}, "
             f"tv: {self.total_value:.2f}, v_est: {v_est_s}"
         )
+
+    @property
+    def state(self):
+        """Lazily calculate state (for perf reasons)"""
+        if self._state is None:
+            self._state = c4.make_move(self.parent.state, self.action_from_parent)
+        return self._state
 
     def value(self) -> float:
         return self.total_value / self.visits if self.visits > 0 else 0.0
@@ -129,9 +137,8 @@ class ParallelMcts:
 
                 # Expand: create child nodes for all valid actions
                 for action in c4.get_valid_moves(sim.node.state):
-                    child_state = c4.make_move(sim.node.state, action)
                     sim.node.children[action] = MCTSNode(
-                        state=child_state,
+                        state=None,
                         parent=sim.node,
                         prior=sim.p_eval[action],
                         action_from_parent=action,

@@ -11,22 +11,12 @@ make train
 - WIP: azmp
     - try training
         - WIP tweak for max throughput
-            - WIP profile player. seems inefficient
-                - delay new state creation as late as possible
-                    - idea: calc best child from parent, only make move on selected child
             - maybe: minimised steps discarded when discard = True
         - does it improve?
             - add mctsrr opponents. compare to mctsu
             - try with/without discard on weight update
 - train for ~20k games. get to perfect eval?
     - maybe: check with/without valid action masking
-
-perf:
-at mcts 60, parallel:
-10: 3.5 games per sec
-20: 6
-40: 8
-80: 9 . takes many secs to get 80 games done tho
 
 ## maybe
 - save net/train saved net
