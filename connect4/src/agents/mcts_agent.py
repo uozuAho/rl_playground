@@ -29,6 +29,9 @@ class MctsAgent:
     alpha: float = 0.3
     epsilon: float = 0.25
 
+    def get_action(self, state: c4.GameState):
+        return self.get_actions([state])[0]
+
     def get_actions(self, states: list[c4.GameState]):
         roots = mcts.ParallelMcts(
             states,

@@ -17,19 +17,35 @@ make train
 - train for ~20k games. get to perfect eval?
     - maybe: check with/without valid action masking
 
-cp: X, done: False, winner: None,
-OOXX...
-XXOOXO.
-OOXXOX.
-XXOOXX.
-OOXOOXO
-XXXOXOO
+cp: X, done: False, winner:  ,
+OOX....
+XXO....
+OOX....
+XXO....
+OOXO...
+XXXO...
 
-cp: O, done: True, winner: 1,
+cp: O, done: False, winner:  ,
 OOXX...
-XXOOXO.
-OOXXOX.
-XXOOXXX
+XXOO...
+OOXX...
+XXOO...
+OOXO...
+XXXOX..
+
+cp: X, done: False, winner:  ,
+OOXX...
+XXOOX..
+OOXXO..
+XXOOX..
+OOXOO..
+XXXOXO.
+
+cp: X, done: False, winner:  ,
+OOXX...
+XXOOX..
+OOXXO..
+XXOOXX.
 OOXOOXO
 XXXOXOO
 

@@ -88,24 +88,23 @@ OOO...X""",
 
 
 def test_specific_case():
-    states = [
-        c4.from_string("""
-        OOXX...
-        XXOOXO.
-        OOXXOX.
-        XXOOXX.
-        OOXOOXO
-        XXXOXOO""")
-    ]
+    # state = c4.from_string("""
+    #     OO.....
+    #     XXOOXO.
+    #     OOXXOX.
+    #     XXOOXX.
+    #     OOXOOX.
+    #     XXXOXO.""")
+
+    state = c4.new_game()
 
     agent_x = make_uniform_agent(10)
     agent_o = make_uniform_agent(20)
 
-    while not states[0].done:
-        # todo: make single game version for convenience
-        agent = agent_x if states[0].current_player == c4.PLAYER1 else agent_o
-        actions = agent.get_actions(states)
-        states = [c4.make_move(s, a) for s, a in zip(states, actions)]
+    while not state.done:
+        agent = agent_x if state.current_player == c4.PLAYER1 else agent_o
+        action = agent.get_action(state)
+        state = c4.make_move(state, action)
 
 
 def all_nodes(node: MCTSNode | None):

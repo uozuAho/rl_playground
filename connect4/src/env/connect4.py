@@ -31,8 +31,9 @@ class GameState:
 
     def __repr__(self):
         cp_str = "X" if self.current_player == PLAYER1 else "O"
+        winner_str = " " if self.winner is None else "X" if self.winner == PLAYER1 else "O"
         return (
-            f"cp: {cp_str}, done: {self.done}, winner: {self.winner}, {to_string(self)}"
+            f"cp: {cp_str}, done: {self.done}, winner: {winner_str}, {to_string(self)}"
         )
 
     def copy(self):
