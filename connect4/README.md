@@ -13,8 +13,7 @@ make train
         - WIP tweak for max throughput
             - WIP profile player. seems inefficient
                 - delay new state creation as late as possible
-                    - need more mcts tests
-                - maybe: create separate player loop benchmark for easier benchmarking/profiling
+                    - idea: calc best child from parent, only make move on selected child
             - maybe: minimised steps discarded when discard = True
         - does it improve?
             - add mctsrr opponents. compare to mctsu
