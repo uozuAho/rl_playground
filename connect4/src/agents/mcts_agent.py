@@ -46,7 +46,7 @@ class MctsAgent:
 
 
 def uniform_eval_batch(states: list[c4.GameState]) -> list[types.PV]:
-    return [([1.0 / c4.COLS] * c4.COLS, 0.1) for _ in range(len(states))]
+    return [([1.0 / c4.COLS] * c4.COLS, 0.0) for _ in range(len(states))]
 
 
 def best_by_visit_value(node: mcts.MCTSNode):

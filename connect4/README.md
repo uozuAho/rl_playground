@@ -8,7 +8,6 @@ make train
 ```
 
 # todo
-- fix mcts: mctsu10 stronger than 20
 - azmp
     - does it improve?
         - try with/without discard on weight update
@@ -16,39 +15,6 @@ make train
     - maybe: perf: minimised steps discarded when discard = True
 - train for ~20k games. get to perfect eval?
     - maybe: check with/without valid action masking
-
-cp: X, done: False, winner:  ,
-OOX....
-XXO....
-OOX....
-XXO....
-OOXO...
-XXXO...
-
-cp: O, done: False, winner:  ,
-OOXX...
-XXOO...
-OOXX...
-XXOO...
-OOXO...
-XXXOX..
-
-cp: X, done: False, winner:  ,
-OOXX...
-XXOOX..
-OOXXO..
-XXOOX..
-OOXOO..
-XXXOXO.
-
-cp: X, done: False, winner:  ,
-OOXX...
-XXOOX..
-OOXXO..
-XXOOXX.
-OOXOOXO
-XXXOXOO
-
 
 ## maybe
 - save net/train saved net
