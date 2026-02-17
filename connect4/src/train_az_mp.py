@@ -2,7 +2,6 @@
 max GPU usage and therefore fastest possible training"""
 
 import json
-import os.path
 import queue
 import sys
 from collections import defaultdict
@@ -24,8 +23,8 @@ EXPERIMENTS_DIR = PROJ_ROOT / "experiments"
 
 def main(args: list[str]):
     config = az.Config(
-        num_res_blocks=4,
-        num_hidden=64,
+        num_res_blocks=1,
+        num_hidden=2,
         learning_rate=0.001,
         weight_decay=0.0001,
         mask_invalid_actions=True,
