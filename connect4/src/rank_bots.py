@@ -15,8 +15,9 @@ def main():
         ("Random1", RandomAgent()),
         # ("Random2", RandomAgent()),
         ("FirstLegal", FirstLegalActionAgent()),
-        ("MctsU10", mcts.make_uniform_agent(10)),
+        # ("MctsU10", mcts.make_uniform_agent(10)),
         ("MctsU20", mcts.make_uniform_agent(20)),
+        ("MctsRR20", mcts.make_random_rollout_agent(20)),
     ]
     stats = ranker.full_round_robin(agents, games_per_matchup=100)
     ranker.print_rankings(stats)
