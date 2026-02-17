@@ -375,7 +375,8 @@ class LearnerMetrics(TypedDict):
 
 def learner_loop(
     epoch_queue: mp.Queue,
-    weights_queues: list[mp.Queue],
+    player_weights_queues: list[mp.Queue],
+    eval_weight_queue: mp.Queue,
     metrics_queue: mp.Queue,
     stop_event: mp.Event,
     config: Config,
@@ -397,11 +398,13 @@ def learner_loop(
 
     def send_weights():
         state_dict = net.model.state_dict()
-        for wq in weights_queues:
+        for wq in player_weights_queues:
             try:
                 wq.put(state_dict)
             except queue.Full:
-                raise
+                raise Exception("Player weight queue full")
+        clear_queue(eval_weight_queue)
+        eval_weight_queue.put(state_dict)
 
     def do_learn(raw_batch):
         nonlocal step_count, epoch_count, epochs_discarded, t_learn_time
@@ -589,9 +592,10 @@ def train_mp(config: Config):
     step_queue = mp.Queue(maxsize=config.n_player_processes)
     epoch_queue = mp.Queue(maxsize=1)
     metrics_queue = mp.Queue(maxsize=1000)
-    weights_queues = [
-        mp.Queue(maxsize=1) for _ in range(config.n_player_processes + 1)
-    ]  # +1 for evaluator
+    player_weights_queues = [
+        mp.Queue(maxsize=1) for _ in range(config.n_player_processes)
+    ]
+    eval_weight_queue = mp.Queue(maxsize=1)
     stop_event = mp.Event()
 
     processes = []
@@ -611,7 +615,7 @@ def train_mp(config: Config):
             args=(
                 name,
                 step_queue,
-                weights_queues[i],
+                player_weights_queues[i],
                 metrics_queue,
                 stop_event,
                 config,
@@ -630,7 +634,7 @@ def train_mp(config: Config):
         p = mp.Process(
             target=eval_loop,
             name="evaluator",
-            args=(weights_queues[-1], metrics_queue, stop_event, config),
+            args=(eval_weight_queue, metrics_queue, stop_event, config),
         )
         processes.append(p)
 
@@ -639,7 +643,8 @@ def train_mp(config: Config):
         name="learner",
         args=(
             epoch_queue,
-            weights_queues,
+            player_weights_queues,
+            eval_weight_queue,
             metrics_queue,
             stop_event,
             config,

@@ -24,8 +24,8 @@ EXPERIMENTS_DIR = PROJ_ROOT / "experiments"
 
 def main(args: list[str]):
     config = az.Config(
-        num_res_blocks=4,
-        num_hidden=64,
+        num_res_blocks=3,
+        num_hidden=48,
         learning_rate=0.001,
         weight_decay=0.0001,
         mask_invalid_actions=True,
@@ -40,9 +40,10 @@ def main(args: list[str]):
         n_epoch_repeats=4,
         batch_size=128,
         weights_update_interval=1,
-        discard_on_weight_update=True,
+        discard_on_weight_update=False,
         eval_opponents=[
             ("mctsrr20", mcts_agent.make_random_rollout_agent(n_sims=20)),
+            ("mctsrr100", mcts_agent.make_random_rollout_agent(n_sims=100)),
         ],
         device_player="cuda",
         device_learn="cuda",

@@ -1,5 +1,8 @@
 # Connect four
 
+Mainly focused on azmp - AlphaZero MultiProcessing - training AZ as fast as possible
+using multiple processses.
+
 ```sh
 make init
 make test
@@ -11,6 +14,23 @@ make train
 - azmp
     - can it reach azfs agent strength?
         - azfs pre-trained, net 9 128 mcts 10 100% wins against random and first legal, as X and O
+            - todo: test azfs pretrained vs mctsrr of varying difficulty
+                - 20
+                    az X vs rr, WLD:  50 0 0
+                    az O vs rr, WLD:  48 2 0
+                - 30
+                    az X vs rr, WLD:  48 2 0
+                    az O vs rr, WLD:  47 2 1
+                - 40
+                    az X vs rr, WLD:  46 4 0
+                    az O vs rr, WLD:  44 6 0
+                - 60
+                    az X vs rr, WLD:  45 5 0
+                    az O vs rr, WLD:  43 7 0
+                - 100
+                    az X vs rr, WLD:  30 18 2
+                    az O vs rr, WLD:  38 8 4
+
 
 ## maybe
 - save net/train saved net
