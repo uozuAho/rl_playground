@@ -6,7 +6,6 @@ using multiple processses.
 ```sh
 make init
 make test
-make train
 # see makefile for more
 ```
 
