@@ -12,6 +12,7 @@ from agents import mcts_agent
 from agents.az_nets import AzNet
 from algs import mcts
 from utils import maths, types
+from utils.maths import heat
 
 
 @dataclass
@@ -31,8 +32,10 @@ class GameStep:
 
     def __repr__(self):
         p = "X" if self.state.current_player == c4.PLAYER1 else "O"
-        b = "|".join(''.join('.' if c == 0 else 'X' if c == c4.PLAYER1 else 'O' for c in row)
-                     for row in self.state.board)
+        b = "|".join(
+            "".join("." if c == 0 else "X" if c == c4.PLAYER1 else "O" for c in row)
+            for row in self.state.board
+        )
         m = ",".join(f"{x:.2f}" for x in self.mcts_probs)
         # TODO: valid action masks
         return f"{p} {b} {self.final_value:0.2f}  [{m}]"
@@ -59,7 +62,17 @@ def train(
     game_steps = []
     net.eval()
     with torch.no_grad():
-        game_steps = list(_self_play_n_games(batch_mcts_eval, n_games, n_mcts_sims))
+        game_steps = list(
+            _self_play_n_games(
+                batch_mcts_eval,
+                n_games,
+                n_mcts_sims,
+                c_puct=2,
+                temperature=1.25,
+                dirichlet_alpha=0.3,
+                dirichlet_epsilon=0.125,
+            )
+        )
 
     net.train()
     pls, vls = [], []
@@ -150,6 +163,10 @@ def _self_play_n_games(
     eval_fn: types.BatchEvaluateFunc,
     n_games: int,
     n_mcts_sims: int,
+    c_puct: float,
+    temperature: float,
+    dirichlet_alpha: float,
+    dirichlet_epsilon: float,
 ) -> typing.Iterable[GameStep]:
     states = [c4.new_game() for _ in range(n_games)]
     game_overs = [False for _ in range(n_games)]
@@ -162,14 +179,17 @@ def _self_play_n_games(
             active_envs,
             eval_fn,
             num_simulations=n_mcts_sims,
-            c_puct=3.0,
+            c_puct=c_puct,
             add_dirichlet_noise=True,
+            dirichlet_alpha=dirichlet_alpha,
+            dirichlet_epsilon=dirichlet_epsilon,
         ).run()
         for i, root in zip(active_idxs, roots):
             state = root.state
             valid_mask = _valid_actions_mask(root.state)
             probs = _mcts_probs(root)
             trajectories[i].append((state, valid_mask, probs))
+            probs = heat(np.array(probs), temperature)
             action = np.random.choice(c4.ACTION_SIZE, p=probs)
             new_state = c4.make_move(state, action)
             states[i] = new_state
@@ -193,9 +213,10 @@ def nn_2_batch_eval(net: AzNet, device):
     return eval_fn
 
 
-def make_az_agent(net: AzNet, n_sims: int, device):
+def make_az_agent(net: AzNet, n_sims: int, c_puct: float, device):
     return mcts_agent.MctsAgent(
         batch_eval_fn=nn_2_batch_eval(net, device),
         select_action_fn=mcts_agent.best_by_visit_value,
         n_sims=n_sims,
+        c_puct=c_puct,
     )

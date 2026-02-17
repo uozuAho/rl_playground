@@ -1,55 +1,44 @@
 # Connect four
 
+Mainly focused on azmp - AlphaZero MultiProcessing - training AZ as fast as possible
+using multiple processses.
+
 ```sh
 make init
 make test
-make train
 # see makefile for more
 ```
 
-# todo
-- improve training speed (maybe do with ttt first)
-- train for ~20k games. get to perfect eval?
-
-## maybe
-- save net/train saved net
-- try different net/conv sizes
-- training games/sec perf:
-    - ask claude - show it profile info
-- why do agents never draw? is it very unlikely? i've never seen a draw yet
-- maybe make mcts RR agent
-
 # notes
-- past 200ish parallel games doesn't improve speed
-- my training perf:
-    - seems to be improving. after 10k games, pretty strong, not perfect. see train_az-7-perspective-10k
-- training performance of https://github.com/foersterrobert/AlphaZero
-    - pre-trained model, mcts 10 sims, 100% vs random and first legal, X and O
-    - from azfs video transcript: trained for 8 iterations, took a few hours
-    - from code: 24000 games, 600 sims for training, temp 1.25, C 2, alpha 0.3, eps 0.25
-    - training on my machine
-        - config 60 mcts, net 9, 128, cuda, 4 epoch, 128 batch, t 1.25, alpha 0.3, eps 0.25,
-          lr 0.001, weight decay 1e-4, eval 10 mcts
-        - trains at approx 2 games/sec
-        - at 5000 games
-            - nearly 100 vs rng, as x and o. note it still loses some after 6000 games
-            - still weak vs first legal, esp as o. often loses 100% as o
-        - at 8000 games
-            - strong vs rng but still loses some
-            - x vs first legal strong but variable
-            - o vs first legal very weak, loses most
-        - trained 8600 games
-            as X vs rng, WLD:  17 3 0
-            as O vs rng, WLD:  18 2 0
-            as X vs first legal, WLD:  20 0 0
-            as O vs first legal, WLD:  19 1 0
-            8500 was even stronger
-        - very strong at this point. first perfect eval at 9100
-        - still seeing poor perf against first legal after 9800
-        - can still see pretty bad regressions later, eg
-            trained 10400 games
-                as X vs rng, WLD:  17 3 0
-                as O vs rng, WLD:  15 5 0
-                as X vs first legal, WLD:  6 14 0
-                as O vs first legal, WLD:  18 2 0
+- azmp training notes
+    - avg 16 steps/game
+    - masking invalid actions during training does seem to increase efficiency
+    - discarding steps after a weight update slows training 3x, and doesn't
+      noticeably affect efficiency
+    - perf
+        - net 4 64 mcts 60:  36k steps trained in 180sec = 200 steps/sec ~= 12 games/sec
+        - net 9 128 mcts 60: 18k steps trained in 180sec = 100 steps/sec ~= 6 games/sec (approx 3x azfs)
+## agent strength vs training
+Interestingly, even a tiny network can be trained to play quite well versus
+an MCTS random rollout bot. Net 1 2 = ResNet with 1 res block, width 2. Training
+is faster with a smaller net, but it seems you won't reach as high strength as
+with a bigger net.
 
+- azmp net 1 2, mcts 60 train, 10 eval
+    - 300k steps in 800sec, 375 steps/sec ~ 23 games/sec
+    - at 100k steps
+        - as X: 70/30% win/loss vs mcts rr 100
+        - as O: 50/50
+    - at 300k steps, X: 80/20, O: 60/40
+- azmp net 4 64, mcts 60 train, 10 eval
+    - 300k steps in 1400sec, 214 steps/sec ~ 13 games/sec
+    - at 100k steps
+        - as X: 85/10% win/loss vs mcts rr 100
+        - as O: 70/30
+    - at 300k steps, X: 95/5, O: 90/10
+- azfs pre-trained, net 9 128 mcts 10: https://github.com/foersterrobert/AlphaZero
+    - opponent        win/loss% as X     win/loss% as O
+    - random                  100/?              100/?
+    - first legal             100/?              100/?
+    - mcts rr 60               90/10              86/14
+    - mcts rr 100              60/36              76/16

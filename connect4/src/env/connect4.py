@@ -1,3 +1,5 @@
+import textwrap
+
 import numpy as np
 import typing as t
 
@@ -26,6 +28,15 @@ class GameState:
         s.done = False
         s.winner = None
         return s
+
+    def __repr__(self):
+        cp_str = "X" if self.current_player == PLAYER1 else "O"
+        winner_str = (
+            " " if self.winner is None else "X" if self.winner == PLAYER1 else "O"
+        )
+        return (
+            f"cp: {cp_str}, done: {self.done}, winner: {winner_str}, {to_string(self)}"
+        )
 
     def copy(self):
         s = GameState()
@@ -213,16 +224,17 @@ def is_draw(state: GameState) -> bool:
     return len(get_valid_moves(state)) == 0 and calc_winner(state) is None
 
 
-def to_string(state: GameState) -> str:
+def to_string(state: GameState, sep="\n") -> str:
     chars = {EMPTY: ".", PLAYER1: "X", PLAYER2: "O"}
     lines = []
     for row in state.board:
         lines.append("".join(chars[cell] for cell in row))
-    return "\n".join(lines)
+    return sep.join(lines)
 
 
 def from_string(s: str) -> GameState:
     chars = {".": EMPTY, "X": PLAYER1, "O": PLAYER2}
+    s = textwrap.dedent(s)
     lines = s.strip().split("\n")
     state = new_game()
     numx = s.count("X")

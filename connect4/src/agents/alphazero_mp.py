@@ -1,22 +1,4 @@
-"""AlphaZero training with multiprocessing for max GPU utilisation.
-
-This is overkill for tic tac toe, but serves as a POC for bigger games.
-Inspired by https://github.com/google-deepmind/open_spiel/open_spiel/python/algorithms/alpha_zero
-
-Architecture:
-- Player processes: Run self-play games, put game steps on a queue
-- Batching process: Reads game steps, writes numpy array batches to another queue
-- Learning process: Reads numpy batches, updates the NN model, sends updated model weights
-- Metrics process: collects metrics from other processes, logs them etc
-
-Getting maximum throughput requires manual tweaking of config, eg.
-- n_player_processes
-- player_n_parallel_games
-
-Aim for max steps/sec through the learner process: This is how many game steps (turns)
-are being pumped through the NN to update its weights. Check the log for which queues
-are backing up.
-"""
+"""AlphaZero training with multiprocessing for max GPU utilisation."""
 
 import json
 import logging
@@ -33,7 +15,6 @@ from typing import TypedDict
 
 import numpy as np
 import torch
-from torch import nn
 from torch.optim import Adam
 import torch.nn.functional as F
 
@@ -42,11 +23,10 @@ from agents.alphazero import (
     GameStep,
     _self_play_n_games,
     _batch_eval_for_mcts,
-    AlphaZeroAgent,
+    make_az_agent,
 )
 from agents.az_nets import ResNet
-import ttt.env as t3
-from agents.compare import play_games_parallel
+from utils.play import play_games_parallel
 
 
 @dataclass
@@ -56,10 +36,12 @@ class Config:
 
     learning_rate: float = 0.001
     weight_decay: float = 0.0001
+
+    # mask: speeds training by zeroing policy outputs for invalid actions
     mask_invalid_actions: bool = True
 
     train_n_mcts_sims: int = 5
-    c_puct: float = 2.0
+    train_c_puct: float = 2.0
     temperature: float = 1.25
     dirichlet_alpha: float = 0.3
     dirichlet_epsilon: float = 0.25
@@ -71,19 +53,26 @@ class Config:
     batch_size: int = 128  # num game steps trained
     weights_update_interval: int = 10
 
+    # discard: when NN weights are updated by training, discard any pending training
+    #    steps. No noticeable gain in training efficiency, and increases training time
+    #    by 3x.
+    discard_on_weight_update: bool = False
+
     eval_c_puct: float = 1.0
     eval_n_mcts_sims: int = 10
-    eval_opponents: list[tuple[str, agents.agent.TttAgent]] = None
+    eval_opponents: list[tuple[str, agents.agent.Agent]] = None
     eval_n_games: int = 20
 
     device_player: str = "cuda"
     device_learn: str = "cuda"
     device_eval: str = "cuda"
     stop_after_n_seconds: float | None = None
-    stop_after_n_learns: int | None = None  # convenient for testing, benchmarks
+    stop_after_train_steps: int | None = None
 
     # Logging
-    log_to_console: bool = True
+    # cli_log_mode: perf or eval. perf is for tuning for max training throughput.
+    #               eval is for assessing agent strength
+    cli_log_mode: str = "perf"
     log_to_file: bool = False
     log_file_path: str | Path | None = None
     log_format_console: str = "text"  # "text" or "json"
@@ -118,7 +107,7 @@ def setup_logging(config: Config, process_name: str = "main") -> logging.Logger:
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    if config.log_to_console:
+    if config.cli_log_mode is not None:
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(getattr(logging, config.console_log_level.upper()))
         console_handler.setFormatter(
@@ -149,14 +138,22 @@ class PlayerMetrics(TypedDict):
     games_played: int
     games_per_sec: float
     steps_per_sec: float
+    steps_generated: int
+    steps_discarded: int
+    avg_steps_per_game: float
+    utilisation: float
 
 
-def clear_queue(q: mp.Queue):
+def clear_queue(q: mp.Queue, count_fn=None):
+    """returns number of queue elements cleared"""
+    n = 0
     try:
         while True:
-            q.get_nowait()
+            item = q.get_nowait()
+            n += count_fn(item) if count_fn else 1
     except queue.Empty:
         pass
+    return n
 
 
 def player_loop(
@@ -167,56 +164,79 @@ def player_loop(
     stop_event: mp.Event,
     config: Config,
 ):
-    # logger = setup_logging(config, name)
-    model = ResNet(config.num_res_blocks, config.num_hidden, config.device_player)
-    model.eval()
-
-    def batch_mcts_eval(envs):
-        return _batch_eval_for_mcts(model, envs, config.device_player)
+    net = ResNet(config.num_res_blocks, config.num_hidden, config.device_player)
+    net.eval()
 
     t_start = time.perf_counter()
+    t_work_time = 0.0
     steps_generated = 0
+    steps_discarded = 0
     games_played = 0
+    game_steps = []
+
+    def batch_mcts_eval(envs):
+        return _batch_eval_for_mcts(net, envs, config.device_player)
+
+    def try_update_weights():
+        nonlocal steps_discarded
+        try:
+            new_state_dict = weights_queue.get_nowait()
+            net.model.load_state_dict(new_state_dict)
+            if config.discard_on_weight_update:
+                steps_discarded += clear_queue(step_queue, lambda x: len(x)) + len(
+                    game_steps
+                )
+                game_steps.clear()
+        except queue.Empty:
+            pass
+
+    def play_games():
+        return _self_play_n_games(
+            batch_mcts_eval,
+            config.player_n_parallel_games,
+            config.train_n_mcts_sims,
+            config.train_c_puct,
+            config.temperature,
+            config.dirichlet_alpha,
+            config.dirichlet_epsilon,
+        )
+
+    def send_metrics():
+        uptime = time.perf_counter() - t_start
+        metrics = PlayerMetrics(
+            type="player",
+            name=name,
+            games_played=games_played,
+            games_per_sec=games_played / uptime,
+            steps_per_sec=steps_generated / uptime,
+            steps_generated=steps_generated,
+            steps_discarded=steps_discarded,
+            avg_steps_per_game=steps_generated / (games_played if games_played else 1),
+            utilisation=t_work_time / uptime,
+        )
+        metrics_queue.put(metrics)
 
     try:
         while not stop_event.is_set():
-            try:
-                new_state_dict = weights_queue.get_nowait()
-                model.load_state_dict(new_state_dict)
-                clear_queue(step_queue)
-            except queue.Empty:
-                pass
+            try_update_weights()
+            send_metrics()
 
-            with torch.no_grad():
-                game_steps = list(
-                    _self_play_n_games(
-                        batch_mcts_eval,
-                        config.player_n_parallel_games,
-                        config.train_n_mcts_sims,
-                        config.c_puct,
-                        config.temperature,
-                        config.dirichlet_alpha,
-                        config.dirichlet_epsilon,
-                    )
-                )
+            if len(game_steps) > 0:
+                try:
+                    step_queue.put(game_steps, timeout=0.1)
+                    game_steps = []
+                except queue.Full:
+                    pass
+            else:
+                t_work_start = time.perf_counter()
+                with torch.no_grad():
+                    temp_game_steps = list(play_games())
+                game_steps.extend(temp_game_steps)
 
-            games_played += config.player_n_parallel_games
-            steps_generated += len(game_steps)
-            elapsed = time.perf_counter() - t_start
-            metrics_queue.put(
-                PlayerMetrics(
-                    type="player",
-                    name=name,
-                    games_played=games_played,
-                    games_per_sec=games_played / elapsed,
-                    steps_per_sec=steps_generated / elapsed,
-                )
-            )
+                games_played += config.player_n_parallel_games
+                steps_generated += len(temp_game_steps)
+                t_work_time += time.perf_counter() - t_work_start
 
-            try:
-                step_queue.put(game_steps, timeout=1.0)
-            except queue.Full:
-                pass
     except KeyboardInterrupt:
         pass
 
@@ -226,6 +246,7 @@ class EvalMetrics(TypedDict):
     win_rates: dict[str, float]
     loss_rates: dict[str, float]
     draw_rates: dict[str, float]
+    utilisation: float
 
 
 def eval_loop(
@@ -234,15 +255,17 @@ def eval_loop(
     stop_event: mp.Event,
     config: Config,
 ):
-    model = ResNet(config.num_res_blocks, config.num_hidden, config.device_eval)
-    model.eval()
-    aza = AlphaZeroAgent.from_nn(
-        model, config.eval_n_mcts_sims, config.eval_c_puct, config.device_eval
+    net = ResNet(config.num_res_blocks, config.num_hidden, config.device_eval)
+    net.eval()
+    aza = make_az_agent(
+        net, config.eval_n_mcts_sims, config.train_c_puct, config.device_eval
     )
+    t_start = time.perf_counter()
+    t_work_time = 0.0
 
     def play_eval_games():
         eval_metrics = EvalMetrics(
-            type="eval", win_rates={}, loss_rates={}, draw_rates={}
+            type="eval", win_rates={}, loss_rates={}, draw_rates={}, utilisation=0.0
         )
 
         with torch.no_grad():
@@ -250,8 +273,9 @@ def eval_loop(
                 for azplayer in ["x", "o"]:
                     players = (aza, oagent) if azplayer == "x" else (oagent, aza)
                     pnames = ("az", oname) if azplayer == "x" else (oname, "az")
-                    r = play_games_parallel(players[0], players[1], config.eval_n_games)
-                    w, ll, d = r["X"], r["O"], r["draw"]
+                    w, ll, d = play_games_parallel(
+                        players[0], players[1], config.eval_n_games
+                    )
                     matchup = f"{pnames[0]} vs {pnames[1]}"
                     eval_metrics["win_rates"][matchup] = w / config.eval_n_games
                     eval_metrics["loss_rates"][matchup] = ll / config.eval_n_games
@@ -263,8 +287,12 @@ def eval_loop(
         while not stop_event.is_set():
             try:
                 new_state_dict = weights_queue.get(timeout=0.1)
-                model.load_state_dict(new_state_dict)
+                t_work_start = time.perf_counter()
+                net.model.load_state_dict(new_state_dict)
                 metrics = play_eval_games()
+                t_work_time += time.perf_counter() - t_work_start
+                uptime = time.perf_counter() - t_start
+                metrics["utilisation"] = t_work_time / uptime
                 metrics_queue.put(metrics)
             except queue.Empty:
                 pass
@@ -274,6 +302,8 @@ def eval_loop(
 
 class BatcherMetrics(TypedDict):
     type: str
+    utilisation: float
+    buffer_size: int
     step_queue_size: int
     batch_queue_size: int
 
@@ -286,31 +316,44 @@ def batcher_loop(
     config: Config,
 ):
     buffer = deque()
+    t_start = time.perf_counter()
+    t_work = 0.0
+    emit_metrics_time = time.perf_counter()
+    next_epoch = None
 
-    last_time = time.perf_counter()
-    while not stop_event.is_set():
-        if time.perf_counter() - last_time > 1.0:
-            last_time = time.perf_counter()
-            metrics_queue.put(
-                BatcherMetrics(
-                    type="batcher",
-                    step_queue_size=step_queue.qsize(),
-                    batch_queue_size=epoch_queue.qsize(),
-                )
+    def emit_metrics():
+        uptime = time.perf_counter() - t_start
+        utilisation = t_work / uptime
+        metrics_queue.put(
+            BatcherMetrics(
+                type="batcher",
+                buffer_size=len(buffer),
+                step_queue_size=step_queue.qsize(),
+                batch_queue_size=epoch_queue.qsize(),
+                utilisation=utilisation,
             )
+        )
+
+    while not stop_event.is_set():
+        if time.perf_counter() - emit_metrics_time > 1.0:
+            emit_metrics_time = time.perf_counter()
+            emit_metrics()
 
         try:
-            steps = step_queue.get(timeout=0.1)
-            buffer.extend(steps)
-
-            while len(buffer) >= config.epoch_size:
+            while len(buffer) < config.epoch_size:
+                steps = step_queue.get(timeout=0.1)
+                buffer.extend(steps)
+            if next_epoch is not None:
+                epoch_queue.put(next_epoch, timeout=0.1)
+                next_epoch = None
+            else:
+                t_start_work = time.perf_counter()
                 epoch_steps = []
-                for _ in range(config.epoch_size):
+                for i in range(config.epoch_size):
                     epoch_steps.append(buffer.popleft())
                 random.shuffle(epoch_steps)
-                raw_epoch = steps_to_raw_epoch(epoch_steps)
-                epoch_queue.put(raw_epoch, timeout=0.1)
-
+                next_epoch = steps_to_raw_epoch(epoch_steps)
+                t_work += time.perf_counter() - t_start_work
         except queue.Empty:
             pass
         except queue.Full:
@@ -325,36 +368,51 @@ class LearnerMetrics(TypedDict):
     value_loss: float
     steps_trained: int
     steps_per_sec: float
+    epoch_count: int
+    epochs_discarded: int
+    utilisation: float
+
+
+def get_state_dict_cpu(model):
+    return {k: v.cpu() for k, v in model.state_dict().items()}
 
 
 def learner_loop(
     epoch_queue: mp.Queue,
-    weights_queues: list[mp.Queue],
+    player_weights_queues: list[mp.Queue],
+    eval_weight_queue: mp.Queue,
     metrics_queue: mp.Queue,
     stop_event: mp.Event,
     config: Config,
 ):
     logger = setup_logging(config, "learner")
-    model = ResNet(config.num_res_blocks, config.num_hidden, config.device_learn)
-    model.train()
+    net = ResNet(config.num_res_blocks, config.num_hidden, config.device_learn)
+    net.train()
     optimizer = Adam(
-        model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay
+        net.model.parameters(),
+        lr=config.learning_rate,
+        weight_decay=config.weight_decay,
     )
 
     step_count = 0
     epoch_count = 0
+    epochs_discarded = 0
     t_start = time.perf_counter()
+    t_learn_time = 0.0
 
     def send_weights():
-        state_dict = model.state_dict()
-        for wq in weights_queues:
+        state_dict = get_state_dict_cpu(net.model)
+        for wq in player_weights_queues:
             try:
                 wq.put(state_dict)
             except queue.Full:
-                raise
+                raise Exception("Player weight queue full")
+        clear_queue(eval_weight_queue)
+        eval_weight_queue.put(state_dict)
 
     def do_learn(raw_batch):
-        nonlocal step_count, epoch_count
+        nonlocal step_count, epoch_count, epochs_discarded, t_learn_time
+        t_start_learn = time.perf_counter()
         policy_losses = []
         value_losses = []
 
@@ -365,7 +423,7 @@ def learner_loop(
         for _ in range(config.n_epoch_repeats):
             for i in range(0, config.epoch_size, config.batch_size):
                 policy_loss, value_loss = update_net(
-                    model,
+                    net,
                     optimizer,
                     states[i : i + config.batch_size],
                     policy_targets[i : i + config.batch_size],
@@ -382,32 +440,41 @@ def learner_loop(
         # Periodically share weights with player processes
         if epoch_count % config.weights_update_interval == 0:
             send_weights()
-            clear_queue(epoch_queue)
-
-        elapsed = time.perf_counter() - t_start
-        steps_per_sec = step_count / elapsed
+            if config.discard_on_weight_update:
+                epochs_discarded += clear_queue(epoch_queue)
 
         avg_pl = sum(policy_losses) / len(policy_losses) if policy_losses else 0
         avg_vl = sum(value_losses) / len(value_losses) if value_losses else 0
 
-        metrics_queue.put(
-            LearnerMetrics(
-                type="learner",
-                policy_loss=avg_pl,
-                value_loss=avg_vl,
-                steps_trained=step_count,
-                steps_per_sec=steps_per_sec,
-            )
+        uptime = time.perf_counter() - t_start
+        steps_per_sec = step_count / uptime
+        t_learn_time += time.perf_counter() - t_start_learn
+
+        return LearnerMetrics(
+            type="learner",
+            policy_loss=avg_pl,
+            value_loss=avg_vl,
+            steps_trained=step_count,
+            steps_per_sec=steps_per_sec,
+            epoch_count=epoch_count,
+            epochs_discarded=epochs_discarded,
+            utilisation=t_learn_time / uptime,
         )
 
     while not stop_event.is_set():
         try:
-            if config.stop_after_n_learns and epoch_count >= config.stop_after_n_learns:
-                logger.info(f"reached {config.stop_after_n_learns} updates, stopping")
+            if (
+                config.stop_after_train_steps
+                and step_count >= config.stop_after_train_steps
+            ):
+                logger.info(
+                    f"reached {config.stop_after_train_steps} train steps, stopping"
+                )
                 stop_event.set()
                 break
             batch = epoch_queue.get(timeout=0.1)
-            do_learn(batch)
+            metrics = do_learn(batch)
+            metrics_queue.put(metrics)
         except queue.Empty:
             continue
         except KeyboardInterrupt:
@@ -452,9 +519,21 @@ def metrics_loop(
                 metrics_queue.put(
                     {"type": "metrics", "metrics_queue": metrics_queue.qsize()}
                 )
-                for m in [learner_metrics, eval_metrics]:
-                    if m:
-                        pprint(m[-1])
+                match config.cli_log_mode:
+                    case "eval":
+                        for m in [learner_metrics, eval_metrics]:
+                            if m:
+                                pprint(m[-1])
+                    case "perf":
+                        print("-----")
+                        if batcher_metrics:
+                            pprint(batcher_metrics[-1])
+                        if player_metrics:
+                            pprint(player_metrics[-1])
+                        if learner_metrics:
+                            pprint(learner_metrics[-1])
+                    case _:
+                        print(f"unknown cli_log_mode {config.cli_log_mode}")
         except queue.Empty:
             pass
         except KeyboardInterrupt:
@@ -463,28 +542,14 @@ def metrics_loop(
 
 def steps_to_raw_epoch(game_steps: list[GameStep]):
     """Convert game steps to raw numpy arrays for efficient queue transfer."""
-    batch_size = len(game_steps)
+    boards = np.stack([ResNet.state2np(x.state) for x in game_steps], dtype=np.float32)
+    policy = np.stack([x.mcts_probs for x in game_steps], dtype=np.float32)
+    value = np.stack([x.final_value for x in game_steps], dtype=np.float32).reshape(
+        (len(game_steps), 1)
+    )
+    masks = np.stack([x.valid_action_mask for x in game_steps], dtype=np.bool_)
 
-    boards_np = np.empty((batch_size, 3, 3, 3), dtype=np.float32)
-    policy_np = np.empty((batch_size, 9), dtype=np.float32)
-    value_np = np.empty((batch_size, 1), dtype=np.float32)
-    masks_np = np.empty((batch_size, 9), dtype=np.bool_)
-
-    for i, g in enumerate(game_steps):
-        boards_np[i, 0] = np.array(
-            [c == g.player for c in g.board], dtype=np.float32
-        ).reshape(3, 3)
-        boards_np[i, 1] = np.array(
-            [c == t3.EMPTY for c in g.board], dtype=np.float32
-        ).reshape(3, 3)
-        boards_np[i, 2] = np.array(
-            [c == t3.other_player(g.player) for c in g.board], dtype=np.float32
-        ).reshape(3, 3)
-        policy_np[i] = g.mcts_probs
-        value_np[i, 0] = g.final_value
-        masks_np[i] = g.valid_action_mask
-
-    return boards_np, policy_np, value_np, masks_np
+    return boards, policy, value, masks
 
 
 def raw_epoch_to_tensors(raw_epoch, device):
@@ -498,7 +563,7 @@ def raw_epoch_to_tensors(raw_epoch, device):
 
 
 def update_net(
-    model: nn.Module,
+    net: ResNet,
     optimizer,
     states: torch.Tensor,
     policy_targets: torch.Tensor,
@@ -507,7 +572,7 @@ def update_net(
     mask_invalid_actions: bool,
 ):
     """Update the network on a batch. Returns policy_loss, value_loss."""
-    out_policy, out_value = model(states)
+    out_policy, out_value = net.forward_states_tensor(states)
 
     if mask_invalid_actions:
         out_policy = out_policy.masked_fill(~valid_action_masks, -1e32)
@@ -529,11 +594,12 @@ def train_mp(config: Config):
 
     # queue item = list of steps
     step_queue = mp.Queue(maxsize=config.n_player_processes)
-    epoch_queue = mp.Queue(maxsize=2)
+    epoch_queue = mp.Queue(maxsize=1)
     metrics_queue = mp.Queue(maxsize=1000)
-    weights_queues = [
-        mp.Queue(maxsize=1) for _ in range(config.n_player_processes + 1)
-    ]  # +1 for evaluator
+    player_weights_queues = [
+        mp.Queue(maxsize=1) for _ in range(config.n_player_processes)
+    ]
+    eval_weight_queue = mp.Queue(maxsize=1)
     stop_event = mp.Event()
 
     processes = []
@@ -553,7 +619,7 @@ def train_mp(config: Config):
             args=(
                 name,
                 step_queue,
-                weights_queues[i],
+                player_weights_queues[i],
                 metrics_queue,
                 stop_event,
                 config,
@@ -572,7 +638,7 @@ def train_mp(config: Config):
         p = mp.Process(
             target=eval_loop,
             name="evaluator",
-            args=(weights_queues[-1], metrics_queue, stop_event, config),
+            args=(eval_weight_queue, metrics_queue, stop_event, config),
         )
         processes.append(p)
 
@@ -581,7 +647,8 @@ def train_mp(config: Config):
         name="learner",
         args=(
             epoch_queue,
-            weights_queues,
+            player_weights_queues,
+            eval_weight_queue,
             metrics_queue,
             stop_event,
             config,
@@ -595,10 +662,11 @@ def train_mp(config: Config):
     try:
         if config.stop_after_n_seconds:
             time.sleep(config.stop_after_n_seconds)
+            logger.info(f"Reached {config.stop_after_n_seconds} seconds, stopping...")
             stop_event.set()
         learner.join()
     except KeyboardInterrupt:
-        logger.info("Stopping...")
+        logger.info("User requested stop. Stopping...")
         stop_event.set()
     finally:
         # Clean up

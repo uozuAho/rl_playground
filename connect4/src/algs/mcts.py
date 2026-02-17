@@ -8,29 +8,37 @@ from utils import maths, types
 class MCTSNode:
     def __init__(
         self,
-        state: c4.GameState,
+        state: c4.GameState | None,
         parent: "MCTSNode | None",
         prior: float,
         action_from_parent: int | None = None,
     ):
-        self.state = state
+        self._state = state
         self.parent = parent
         self.prior = prior  # P(s,a) from policy network
         self.v_est = None  # V(s) from policy network
         self.action_from_parent = action_from_parent
 
-        self.children: dict[int, MCTSNode] = {}  # action -> child node
+        # valid action -> child node
+        self.children: dict[int, MCTSNode] = {}
         self.visits = 0  # N(s,a)
         self.total_value = 0.0  # W(s,a) - sum of values backed up through this node
 
     def __repr__(self):
         v_est_s = "None" if not self.v_est else f"{self.v_est:.2f}"
-        board = "todo board str"
+        board = c4.to_string(self.state, sep="|")
         return (
-            f"{board} vis: {self.visits}, puc1: {self.puct(1.0):.2f}, "
+            f"{self.action_from_parent} vis: {self.visits}, puc1: {self.puct(1.0):.2f}, "
             f"P: {self.prior:.2f}, v: {self.value():.2f}, "
-            f"tv: {self.total_value:.2f}, v_est: {v_est_s}"
+            f"tv: {self.total_value:.2f}, v_est: {v_est_s}  {board}"
         )
+
+    @property
+    def state(self):
+        """Lazily calculate state (for perf reasons)"""
+        if self._state is None:
+            self._state = c4.make_move(self.parent.state, self.action_from_parent)
+        return self._state
 
     def value(self) -> float:
         return self.total_value / self.visits if self.visits > 0 else 0.0
@@ -116,37 +124,27 @@ class ParallelMcts:
 
     def _finish_sim(self):
         for sim in self._sims:
-            assert sim.p_eval is not None
-            assert sim.v_eval is not None
-
             if sim.terminal_value is None:
                 # evaluate gives the value for the current player, we want
                 # for the previous player - just need to invert the value
                 sim.v_eval = -sim.v_eval
                 sim.node.v_est = sim.v_eval
 
-                assert maths.is_prob_dist(sim.p_eval)
-
                 if sim.node == sim.root and self.add_dirichlet_noise:
                     sim.p_eval = maths.add_dirichlet_noise(
                         sim.p_eval, self.dirichlet_alpha, self.dirichlet_epsilon
                     )
 
-                assert maths.is_prob_dist(sim.p_eval)
-
                 # Expand: create child nodes for all valid actions
                 for action in c4.get_valid_moves(sim.node.state):
-                    child_state = c4.make_move(sim.node.state, action)
                     sim.node.children[action] = MCTSNode(
-                        state=child_state,
+                        state=None,
                         parent=sim.node,
                         prior=sim.p_eval[action],
                         action_from_parent=action,
                     )
 
             value = sim.terminal_value if sim.terminal_value else sim.v_eval
-            assert value is not None
-            assert value is not True
 
             # Backpropagation: update values up the search path
             while sim.node:
