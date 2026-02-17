@@ -9,12 +9,12 @@ make train
 
 # todo
 - azmp
-    - does it improve?
-        - try with/without discard on weight update
-        - try with/without valid action masking
+    - add a stronger rr eval opponent
+    - add config to plot
+    - save plot to experiments dir
+    - try with/without discard on weight update
+    - try with/without valid action masking
     - maybe: perf: minimised steps discarded when discard = True
-- train for ~20k games. get to perfect eval?
-    - maybe: check with/without valid action masking
 
 ## maybe
 - save net/train saved net
