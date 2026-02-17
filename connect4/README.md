@@ -9,9 +9,6 @@ make train
 
 # todo
 - azmp
-    - training efficiency (agent strength vs training time):
-        - try with/without discard on weight update
-        - try with/without valid action masking
     - can it reach azfs agent strength?
         - azfs pre-trained, net 9 128 mcts 10 100% wins against random and first legal, as X and O
 

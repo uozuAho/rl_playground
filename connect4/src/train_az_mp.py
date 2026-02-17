@@ -40,7 +40,7 @@ def main(args: list[str]):
         n_epoch_repeats=4,
         batch_size=128,
         weights_update_interval=1,
-        discard_on_weight_update=False,
+        discard_on_weight_update=True,
         eval_opponents=[
             ("mctsrr20", mcts_agent.make_random_rollout_agent(n_sims=20)),
         ],

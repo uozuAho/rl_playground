@@ -36,6 +36,8 @@ class Config:
 
     learning_rate: float = 0.001
     weight_decay: float = 0.0001
+
+    # mask: speeds training by zeroing policy outputs for invalid actions
     mask_invalid_actions: bool = True
 
     train_n_mcts_sims: int = 5
@@ -50,7 +52,11 @@ class Config:
     n_epoch_repeats: int = 4  # num times each epoch is trained on
     batch_size: int = 128  # num game steps trained
     weights_update_interval: int = 10
-    discard_on_weight_update: bool = True
+
+    # discard: when NN weights are updated by training, discard any pending training
+    #    steps. No noticeable gain in training efficiency, and increases training time
+    #    by 3x.
+    discard_on_weight_update: bool = False
 
     eval_c_puct: float = 1.0
     eval_n_mcts_sims: int = 10
