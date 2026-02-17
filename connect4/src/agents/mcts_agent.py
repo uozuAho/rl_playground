@@ -19,6 +19,7 @@ def make_uniform_agent(n_sims: int):
         n_sims=n_sims,
     )
 
+
 def make_random_rollout_agent(n_sims: int):
     return MctsAgent(
         batch_eval_fn=random_rollout_eval_batch,

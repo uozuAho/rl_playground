@@ -33,7 +33,7 @@ def main(args: list[str]):
         temperature=1.25,
         dirichlet_alpha=0.3,
         dirichlet_epsilon=0.25,
-        n_player_processes=1,
+        n_player_processes=2,
         player_n_parallel_games=40,
         epoch_size=512,
         n_epoch_repeats=4,
@@ -41,7 +41,7 @@ def main(args: list[str]):
         weights_update_interval=1,
         discard_on_weight_update=False,
         eval_opponents=[
-            ("mctsu10", mcts_agent.make_uniform_agent(n_sims=10)),
+            ("mctsrr10", mcts_agent.make_random_rollout_agent(n_sims=10)),
         ],
         device_player="cuda",
         device_learn="cuda",

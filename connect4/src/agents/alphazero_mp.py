@@ -209,7 +209,6 @@ def player_loop(
             utilisation=t_work_time / uptime,
         )
         metrics_queue.put(metrics)
-        pprint(metrics)
 
     try:
         while not stop_event.is_set():
