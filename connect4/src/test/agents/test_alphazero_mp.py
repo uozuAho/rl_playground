@@ -20,7 +20,6 @@ def test_train():
         weights_update_interval=10,
         device_player="cpu",
         device_learn="cpu",
-        stop_after_n_seconds=None,
-        stop_after_n_learns=1,
+        stop_after_train_steps=1,
     )
     az.train_mp(config)

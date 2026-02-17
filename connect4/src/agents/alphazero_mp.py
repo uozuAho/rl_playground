@@ -61,7 +61,7 @@ class Config:
     device_learn: str = "cuda"
     device_eval: str = "cuda"
     stop_after_n_seconds: float | None = None
-    stop_after_n_learns: int | None = None  # convenient for testing, benchmarks
+    stop_after_train_steps: int | None = None
 
     # Logging
     # cli_log_mode: perf or eval. perf is for tuning for max training throughput.
@@ -450,8 +450,13 @@ def learner_loop(
 
     while not stop_event.is_set():
         try:
-            if config.stop_after_n_learns and epoch_count >= config.stop_after_n_learns:
-                logger.info(f"reached {config.stop_after_n_learns} updates, stopping")
+            if (
+                config.stop_after_train_steps
+                and step_count >= config.stop_after_train_steps
+            ):
+                logger.info(
+                    f"reached {config.stop_after_train_steps} train steps, stopping"
+                )
                 stop_event.set()
                 break
             batch = epoch_queue.get(timeout=0.1)
@@ -642,10 +647,11 @@ def train_mp(config: Config):
     try:
         if config.stop_after_n_seconds:
             time.sleep(config.stop_after_n_seconds)
+            logger.info(f"Reached {config.stop_after_n_seconds} seconds, stopping...")
             stop_event.set()
         learner.join()
     except KeyboardInterrupt:
-        logger.info("Stopping...")
+        logger.info("User requested stop. Stopping...")
         stop_event.set()
     finally:
         # Clean up

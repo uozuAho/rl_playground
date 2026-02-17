@@ -24,8 +24,8 @@ EXPERIMENTS_DIR = PROJ_ROOT / "experiments"
 
 def main(args: list[str]):
     config = az.Config(
-        num_res_blocks=9,
-        num_hidden=128,
+        num_res_blocks=4,
+        num_hidden=64,
         learning_rate=0.001,
         weight_decay=0.0001,
         mask_invalid_actions=True,
@@ -47,8 +47,6 @@ def main(args: list[str]):
         device_player="cuda",
         device_learn="cuda",
         device_eval="cpu",
-        stop_after_n_seconds=None,
-        stop_after_n_learns=None,
         cli_log_mode="eval",
         log_to_file=True,
         log_format_file="json",
@@ -168,6 +166,7 @@ def plot_metrics(metrics: AzMetrics, train_config: az.Config):
     config_text += f"Epochs/itr: {train_config.n_epoch_repeats}\n"
     config_text += f"Batch Size: {train_config.batch_size}\n"
     config_text += f"Train mask: {train_config.mask_invalid_actions}\n"
+    config_text += f"Discard: {train_config.discard_on_weight_update}\n"
 
     fig.text(
         0.02,
