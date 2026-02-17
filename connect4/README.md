@@ -19,6 +19,11 @@ make test
         - net 4 64 mcts 60:  36k steps trained in 180sec = 200 steps/sec ~= 12 games/sec
         - net 9 128 mcts 60: 18k steps trained in 180sec = 100 steps/sec ~= 6 games/sec (approx 3x azfs)
 ## agent strength vs training
+Interestingly, even a tiny network can be trained to play quite well versus
+an MCTS random rollout bot. Net 1 2 = ResNet with 1 res block, width 2. Training
+is faster with a smaller net, but it seems you won't reach as high strength as
+with a bigger net.
+
 - azmp net 1 2, mcts 60 train, 10 eval
     - 300k steps in 800sec, 375 steps/sec ~ 23 games/sec
     - at 100k steps
