@@ -19,12 +19,13 @@ from agents import mcts_agent
 
 PROJ_ROOT = Path(__file__).parent.parent
 LOG_PATH = PROJ_ROOT / "train_az_mp.log"
+EXPERIMENTS_DIR = PROJ_ROOT / "experiments"
 
 
 def main(args: list[str]):
     config = az.Config(
-        num_res_blocks=4,
-        num_hidden=64,
+        num_res_blocks=9,
+        num_hidden=128,
         learning_rate=0.001,
         weight_decay=0.0001,
         mask_invalid_actions=True,
@@ -41,14 +42,14 @@ def main(args: list[str]):
         weights_update_interval=1,
         discard_on_weight_update=False,
         eval_opponents=[
-            ("mctsrr10", mcts_agent.make_random_rollout_agent(n_sims=10)),
+            ("mctsrr20", mcts_agent.make_random_rollout_agent(n_sims=20)),
         ],
         device_player="cuda",
         device_learn="cuda",
         device_eval="cpu",
         stop_after_n_seconds=None,
         stop_after_n_learns=None,
-        cli_log_mode="perf",
+        cli_log_mode="eval",
         log_to_file=True,
         log_format_file="json",
         console_log_level="INFO",
@@ -64,7 +65,7 @@ def main(args: list[str]):
             os.remove(LOG_PATH)
         az.train_mp(config)
         metrics = log2metrics(LOG_PATH)
-        plot_metrics(metrics)
+        plot_metrics(metrics, config)
 
 
 @dataclass
@@ -117,7 +118,7 @@ def to_relative_time(t: list[datetime]):
     return [(x - start).total_seconds() for x in t]
 
 
-def plot_metrics(metrics: AzMetrics):
+def plot_metrics(metrics: AzMetrics, train_config: az.Config):
     fig, axes = plt.subplots(2, 2, figsize=(12, 8))
 
     x, y = as_xy(metrics.policy_loss)
@@ -156,6 +157,30 @@ def plot_metrics(metrics: AzMetrics):
     axes[1, 1].legend()
     axes[1, 1].grid(True)
 
+    config_text = "Configuration:\n"
+    config_text += f"Res Blocks: {train_config.num_res_blocks}\n"
+    config_text += f"Hidden Units: {train_config.num_hidden}\n"
+    config_text += f"LR: {train_config.learning_rate}\n"
+    config_text += f"Weight Decay: {train_config.weight_decay}\n"
+    config_text += f"Train MCTS Sims: {train_config.train_n_mcts_sims}\n"
+    config_text += f"Eval MCTS Sims: {train_config.eval_n_mcts_sims}\n"
+    config_text += f"Games/itr: {train_config.epoch_size}\n"
+    config_text += f"Epochs/itr: {train_config.n_epoch_repeats}\n"
+    config_text += f"Batch Size: {train_config.batch_size}\n"
+    config_text += f"Train mask: {train_config.mask_invalid_actions}\n"
+
+    fig.text(
+        0.02,
+        0.02,
+        config_text,
+        fontsize=8,
+        family="monospace",
+        verticalalignment="bottom",
+        bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.5),
+    )
+
+    plt.tight_layout(rect=(0, 0.08, 1, 1))  # Leave space for text box
+    plt.savefig(EXPERIMENTS_DIR / "train_az_mp.png")
     plt.show()
 
 

@@ -9,25 +9,24 @@ make train
 
 # todo
 - azmp
-    - add a stronger rr eval opponent
-    - add config to plot
-    - save plot to experiments dir
-    - try with/without discard on weight update
-    - try with/without valid action masking
-    - maybe: perf: minimised steps discarded when discard = True
+    - training efficiency (agent strength vs training time):
+        - try with/without discard on weight update
+        - try with/without valid action masking
+    - can it reach azfs agent strength?
+        - azfs pre-trained, net 9 128 mcts 10 100% wins against random and first legal, as X and O
 
 ## maybe
 - save net/train saved net
 - try different net/conv sizes
-- training games/sec perf:
-    - ask claude - show it profile info
-- why do agents never draw? is it very unlikely? i've never seen a draw yet
-- maybe make mcts RR agent
+- maybe: perf: minimised steps discarded when discard = True
 
 # notes
-- past 200ish parallel games doesn't improve speed
-- my training perf:
-    - seems to be improving. after 10k games, pretty strong, not perfect. see train_az-7-perspective-10k
+- azmp training notes
+    - avg 16 steps/game
+    - perf
+        - net 4 64 mcts 60:  36k steps trained in 180sec = 200 steps/sec ~= 12 games/sec
+        - net 9 128 mcts 60: 18k steps trained in 180sec = 100 steps/sec ~= 6 games/sec (approx 3x azfs)
+    - training efficiency
 - training performance of https://github.com/foersterrobert/AlphaZero
     - pre-trained model, mcts 10 sims, 100% vs random and first legal, X and O
     - from azfs video transcript: trained for 8 iterations, took a few hours
