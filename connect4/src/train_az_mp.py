@@ -24,8 +24,8 @@ EXPERIMENTS_DIR = PROJ_ROOT / "experiments"
 
 def main(args: list[str]):
     config = az.Config(
-        num_res_blocks=3,
-        num_hidden=48,
+        num_res_blocks=4,
+        num_hidden=64,
         learning_rate=0.001,
         weight_decay=0.0001,
         mask_invalid_actions=True,
@@ -54,15 +54,14 @@ def main(args: list[str]):
         console_log_level="INFO",
         log_file_path=LOG_PATH,
     )
-    print("args:", args)
     if "profile_player" in args:
         player_loop(
             "player", queue.Queue(), queue.Queue(), queue.Queue(), mp.Event(), config
         )
     else:
-        if os.path.exists(LOG_PATH):
-            os.remove(LOG_PATH)
-        az.train_mp(config)
+        # if os.path.exists(LOG_PATH):
+        #     os.remove(LOG_PATH)
+        # az.train_mp(config)
         metrics = log2metrics(LOG_PATH)
         plot_metrics(metrics, config)
 
