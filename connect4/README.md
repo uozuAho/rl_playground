@@ -43,7 +43,6 @@ make train
     - perf
         - net 4 64 mcts 60:  36k steps trained in 180sec = 200 steps/sec ~= 12 games/sec
         - net 9 128 mcts 60: 18k steps trained in 180sec = 100 steps/sec ~= 6 games/sec (approx 3x azfs)
-    - training efficiency
 - training performance of https://github.com/foersterrobert/AlphaZero
     - pre-trained model, mcts 10 sims, 100% vs random and first legal, X and O
     - from azfs video transcript: trained for 8 iterations, took a few hours

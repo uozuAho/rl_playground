@@ -373,6 +373,10 @@ class LearnerMetrics(TypedDict):
     utilisation: float
 
 
+def get_state_dict_cpu(model):
+    return {k: v.cpu() for k, v in model.state_dict().items()}
+
+
 def learner_loop(
     epoch_queue: mp.Queue,
     player_weights_queues: list[mp.Queue],
@@ -397,7 +401,7 @@ def learner_loop(
     t_learn_time = 0.0
 
     def send_weights():
-        state_dict = net.model.state_dict()
+        state_dict = get_state_dict_cpu(net.model)
         for wq in player_weights_queues:
             try:
                 wq.put(state_dict)
