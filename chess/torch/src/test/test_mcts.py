@@ -1,4 +1,4 @@
-from agents.agent import RandomAgent
+from agents.random import RandomAgent
 from env import env
 from agents.mcts import MctsAgent, random_rollout_reward
 

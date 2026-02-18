@@ -1,5 +1,5 @@
 from env import env
-from agents.agent import RandomAgent
+from agents.random import RandomAgent
 from agents.andoma.andoma_agent import AndomaAgent
 
 

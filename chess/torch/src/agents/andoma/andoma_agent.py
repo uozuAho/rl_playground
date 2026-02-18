@@ -12,9 +12,9 @@ class AndomaAgent(ChessAgent):
         self.player = player
         self.search_depth = search_depth
 
-    def get_action(self, env):
-        assert env.turn == self.player
-        return next_move(self.search_depth, env._board, debug=False)
+    def get_action(self, game: env.ChessGame):
+        assert game.turn == self.player
+        return next_move(self.search_depth, game._board, debug=False)
 
 
 class AndomaMctsAgent(ChessAgent):
@@ -27,9 +27,9 @@ class AndomaMctsAgent(ChessAgent):
             player, n_sims, valfn=self._valfn, use_valfn_for_expand=True
         )
 
-    def get_action(self, env):
-        assert env.turn == self.player
-        return self._mctsAgent.get_action(env)
+    def get_action(self, game: env.ChessGame):
+        assert game.turn == self.player
+        return self._mctsAgent.get_action(game)
 
     def _valfn(self, board: env.ChessGame, player: env.Player):
         return evaluate_board(board._board) * player

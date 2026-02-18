@@ -49,24 +49,26 @@ class MctsAgent(ChessAgent):
         self._valfn = valfn
         self._use_valfn_for_expand = use_valfn_for_expand
 
-    def get_action(self, env: env.ChessGame):
-        assert env.turn == self.player
-        return _mcts_decision(env, self.n_sims, self._valfn, self._use_valfn_for_expand)
+    def get_action(self, game: env.ChessGame):
+        assert game.turn == self.player
+        return _mcts_decision(
+            game, self.n_sims, self._valfn, self._use_valfn_for_expand
+        )
 
-    def print_tree(self, env: env.ChessGame, n_sims=-1):
+    def print_tree(self, game: env.ChessGame, n_sims=-1):
         """For debugging"""
         n_sims = n_sims if n_sims > 0 else self.n_sims
-        tree = _build_mcts_tree(env, n_sims, self._valfn, self._use_valfn_for_expand)
+        tree = _build_mcts_tree(game, n_sims, self._valfn, self._use_valfn_for_expand)
         print_tree(tree, None)
 
 
 def _mcts_decision(
-    env: env.ChessGame,
+    game: env.ChessGame,
     n_simulations: int,
     val_func: ValFunc,
     use_val_func_for_expand: bool,
 ):
-    root = _build_mcts_tree(env, n_simulations, val_func, use_val_func_for_expand)
+    root = _build_mcts_tree(game, n_simulations, val_func, use_val_func_for_expand)
     best_move = max(
         root.children,
         key=lambda move: (root.children[move].visits, root.children[move].total_reward),

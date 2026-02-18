@@ -85,19 +85,19 @@ class GreedyChessAgent(ChessAgent):
         self.episode_rewards: list[float] = []
         self.episode_count = 0
 
-    def get_action(self, env: ChessGame) -> chess.Move:
+    def get_action(self, game: ChessGame) -> chess.Move:
         assert self.player == WHITE
-        assert env.turn == self.player
-        legal_moves = list(env.legal_moves())
+        assert game.turn == self.player
+        legal_moves = list(game.legal_moves())
 
         if not legal_moves:
             raise ValueError("No legal moves available")
 
         resulting_states = []
         for move in legal_moves:
-            env.step(move)
-            resulting_states.append(env.state_np())
-            env.undo()
+            game.step(move)
+            resulting_states.append(game.state_np())
+            game.undo()
 
         state_tensors = torch.stack(
             [torch.tensor(state, dtype=torch.float32) for state in resulting_states]

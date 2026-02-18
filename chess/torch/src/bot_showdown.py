@@ -1,5 +1,5 @@
 from env import env
-from agents.agent import RandomAgent
+from agents.random import RandomAgent
 from agents.andoma.andoma_agent import AndomaAgent, AndomaMctsAgent
 from utils.evaluate import evaluate
 from agents.greedy_agent import GreedyChessAgent

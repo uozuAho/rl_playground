@@ -1,6 +1,7 @@
 from env import env
 from env.env import ChessGame, WHITE, BLACK
-from agents.agent import ChessAgent, RandomAgent
+from agents.agent import ChessAgent
+from agents.random import RandomAgent
 from agents.greedy_agent import GreedyChessAgent
 
 
