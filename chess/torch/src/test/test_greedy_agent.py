@@ -7,7 +7,7 @@ from lib.agents.greedy_agent import GreedyChessAgent
 def test_greedy_agent():
     agent = GreedyChessAgent(WHITE, batch_size=4)
 
-    players: dict[env.Player, ChessAgent] = {  # type: ignore
+    players: dict[env.Player, ChessAgent] = {
         WHITE: agent,
         BLACK: RandomAgent(BLACK),
     }

@@ -3,6 +3,6 @@ init:
 
 pc:
 	uv run ruff format
-	uv run mypy .
 	uv run ruff check --fix
+	uv run ty check
 	uv run pytest

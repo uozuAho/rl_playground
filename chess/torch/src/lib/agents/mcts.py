@@ -145,8 +145,9 @@ def _build_mcts_tree(
                 maxchild = node
                 maxmove = None
                 for cmove, cnode in node.children.items():
-                    if cnode.val_est > maxval:  # type: ignore
-                        maxval = cnode.val_est  # type: ignore
+                    # todo: fix ty ignore here
+                    if cnode.val_est > maxval:  # ty: ignore[unsupported-operator]
+                        maxval = cnode.val_est
                         maxchild = cnode
                         maxmove = cmove
                 node = maxchild
