@@ -11,34 +11,27 @@ from env.env import ChessGame, WHITE, BLACK
 
 
 def main():
-    # 19996.07 moves/sec    56.90 games/sec
-    # print_games_per_sec(RandomAgent(WHITE), RandomAgent(BLACK))
+    print_games_per_sec(RandomAgent(WHITE), RandomAgent(BLACK))
 
-    # 199.06 moves/sec   0.67 games/sec
-    print_games_per_sec(
-        MctsAgent(
-            WHITE,
-            n_sims=10,
-            valfn=lambda e, p: random_rollout_reward(e, p, max_depth=5),
-        ),
-        RandomAgent(BLACK),
-    )
+    # print_games_per_sec(
+    #     MctsAgent(
+    #         WHITE,
+    #         n_sims=10,
+    #         valfn=lambda e, p: random_rollout_reward(e, p, max_depth=5),
+    #     ),
+    #     RandomAgent(BLACK),
+    # )
 
-    # single thread Andoma, speed vs search depth:
-    # 1: 238.93 moves/sec   3.90 games/sec
-    # 2: 33.04 moves/sec    0.61 games/sec
-    # 3: 3.37 moves/sec     0.14 games/sec
     # print_games_per_sec(AndomaAgent(WHITE, search_depth=1), RandomAgent(BLACK))
 
 
 def play_one_game(agent_w: ChessAgent, agent_b: ChessAgent):
     game = ChessGame()
-    done = False
     moves = 0
-    while not done:
+    while not game.is_game_over():
         agent = agent_w if game.turn == WHITE else agent_b
         move = agent.get_action(game)
-        done, reward = game.step(move)
+        game.do(move)
         moves += 1
     return moves
 

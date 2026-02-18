@@ -10,9 +10,8 @@ def test_random_game():
     num_moves = 0
     while not game.is_game_over():
         move = random.choice(list(game.legal_moves()))
-        game_over, _ = game.step(move)
+        game.do(move)
         num_moves += 1
-        assert game_over == game.is_game_over()
     assert num_moves <= 20
 
 
@@ -23,7 +22,7 @@ def test_random_agent():
     while not game.is_game_over():
         agent = agents[game.turn]
         move = agent.get_action(game)
-        game.step(move)
+        game.do(move)
 
 
 def test_initial_state():
