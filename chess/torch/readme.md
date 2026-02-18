@@ -10,7 +10,6 @@ make pc
 ```
 
 # todo
-- WIP rm reward from chess implementation
 - bring parallel mcts agent from c4. how many games/moves/sec?
 - maybe profile + find max single thread perf
     - eg. maybe using too much copy state?

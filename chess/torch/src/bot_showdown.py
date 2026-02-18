@@ -1,7 +1,7 @@
 from env import env
 from agents.random import RandomAgent
 from agents.andoma.andoma_agent import AndomaAgent, AndomaMctsAgent
-from utils.evaluate import evaluate
+from utils.evaluate import play_games
 from agents.greedy_agent import GreedyChessAgent
 from agents.mcts import MctsAgent, random_rollout_reward
 
@@ -18,7 +18,7 @@ def mcts_vs_random():
         env.WHITE, n_sims=5, valfn=lambda e, p: random_rollout_reward(e, p, max_depth=5)
     )
     b = RandomAgent(env.BLACK)
-    evaluate(w, b, 5)
+    play_games(w, b, 5)
 
 
 def greedy_vs_random():
@@ -29,7 +29,7 @@ def greedy_vs_random():
 
     greedy = GreedyChessAgent(env.WHITE)
     random = RandomAgent(env.BLACK)
-    evaluate(greedy, random, n_eval_episodes, halfmove_limit=halfmove_limit)
+    play_games(greedy, random, n_eval_episodes, halfmove_limit=halfmove_limit)
     print(f"training greedy agent for {n_train_episodes} episodes...")
     greedy.train_against(
         random,
@@ -38,7 +38,7 @@ def greedy_vs_random():
         halfmove_limit=halfmove_limit,
         plot=True,
     )
-    evaluate(greedy, random, n_eval_episodes, halfmove_limit=halfmove_limit)
+    play_games(greedy, random, n_eval_episodes, halfmove_limit=halfmove_limit)
 
 
 # def greedy_vs_andoma():
@@ -65,7 +65,7 @@ def andoma_vs_andoma_mcts():
     a = AndomaAgent(env.WHITE, search_depth=2)
     m = AndomaMctsAgent(env.BLACK, n_sims=30)
     print("andoma vs andoma_mcts:")
-    evaluate(a, m, 5, halfmove_limit=100)
+    play_games(a, m, 5, halfmove_limit=100)
 
 
 if __name__ == "__main__":

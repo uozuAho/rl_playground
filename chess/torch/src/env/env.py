@@ -25,7 +25,6 @@ class ChessGame:
     def turn(self) -> Player:
         return _color_to_player[self._board.turn]
 
-    @property
     def outcome(self):
         return self._board.outcome()
 
@@ -38,30 +37,8 @@ class ChessGame:
     def do(self, move: chess.Move):
         self._board.push(move)
 
-    def step(self, move: chess.Move) -> tuple[bool, float]:
-        """Returns: (game_over: bool, reward: float)"""
-        self._board.push(move)
-        outcome = self._board.outcome()
-        reward = 0.0
-        captured = self._board.piece_at(move.to_square)
-        if captured:
-            sign = 1 if captured.color == chess.WHITE else -1
-            reward = sign * captured.piece_type * self.capture_reward_factor
-
-        if self._reached_halfmove_limit():
-            return True, reward
-
-        if outcome:
-            if outcome.winner == chess.WHITE:
-                reward = 1.0
-            elif outcome.winner == chess.BLACK:
-                reward = -1.0
-            return True, reward
-
-        return False, reward
-
     def undo(self):
-        self._board.pop()
+        return self._board.pop()
 
     def is_game_over(self):
         return self._reached_halfmove_limit() or self._board.is_game_over()

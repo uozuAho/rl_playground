@@ -132,7 +132,7 @@ class GreedyChessAgent(ChessAgent):
         return 0.0
 
     def _calc_outcome_reward(self, game: ChessGame):
-        outcome = game.outcome
+        outcome = game.outcome()
         return (
             0.0
             if not outcome or outcome.winner is None
