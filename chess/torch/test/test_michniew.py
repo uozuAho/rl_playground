@@ -21,7 +21,7 @@ from lib.michniew import evaluate_board
         # random
         ("r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3", 0),
         ("rnbq1bnr/ppppkppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQ - 3 4", 50),
-        ("rnb2bnr/1p2p1p1/p1ppq2p/1P3p1k/1Q1PN3/P1P4P/3BPPP1/R3KBNR b KQ - 0 12", 110)
+        ("rnb2bnr/1p2p1p1/p1ppq2p/1P3p1k/1Q1PN3/P1P4P/3BPPP1/R3KBNR b KQ - 0 12", 110),
     ],
 )
 def test_evaluate_board(fen, expected_score):

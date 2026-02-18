@@ -3,7 +3,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
-import chess
 import matplotlib.pyplot as plt
 from lib.agents.greedy_agent import ValueNetwork
 from lib.michniew import evaluate_board
@@ -85,17 +84,17 @@ def generate_data(n_positions: int) -> t.Tuple[list[ChessGame], list[float]]:
 
 
 def generate_data_file(n_positions: int, path: Path):
-    with open(path, 'w') as ofile:
+    with open(path, "w") as ofile:
         for position, score in zip(*generate_data(n_positions)):
-            ofile.write(f'{position.fen()}, {score}\n')
+            ofile.write(f"{position.fen()}, {score}\n")
 
 
 def read_datafile(path: Path):
     positions: list[ChessGame] = []
     scores: list[float] = []
-    with open(path, 'r') as infile:
+    with open(path, "r") as infile:
         for line in infile:
-            fen, score = line.split(',')
+            fen, score = line.split(",")
             positions.append(ChessGame(fen))
             scores.append(float(score))
     return positions, scores
@@ -110,7 +109,7 @@ def train_value_network(
     epochs=100,
     batch_size=32,
     lr=1e-3,
-    device: torch.device | str ="cpu",
+    device: torch.device | str = "cpu",
 ):
     """Train the value network on the generated data."""
     value_network.to(device)
@@ -119,9 +118,13 @@ def train_value_network(
     optimizer = optim.Adam(value_network.parameters(), lr=lr)
     criterion = nn.MSELoss()
 
-    train_positions_t = torch.tensor(np.array([b.state_np() for b in train_positions])).to(device)
+    train_positions_t = torch.tensor(
+        np.array([b.state_np() for b in train_positions])
+    ).to(device)
     train_targets_t = torch.tensor(train_targets, dtype=torch.float32).to(device)
-    test_positions_t = torch.tensor(np.array([b.state_np() for b in test_positions])).to(device)
+    test_positions_t = torch.tensor(
+        np.array([b.state_np() for b in test_positions])
+    ).to(device)
     test_targets_t = torch.tensor(test_targets, dtype=torch.float32).to(device)
 
     train_losses = []
@@ -212,8 +215,8 @@ def plot_comparison(network_scores, michniew_scores, metrics):
 
 
 def train_and_test_value_network(
-        dataset_path: Path | None = None,
-        dataset_size: int | None = None):
+    dataset_path: Path | None = None, dataset_size: int | None = None
+):
     print("Training and testing ValueNetwork accuracy against Michniew evaluation...")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -295,4 +298,4 @@ def train_and_test_value_network(
 
 if __name__ == "__main__":
     # generate_data_file(5000, Path('pymieches.csv'))
-    train_and_test_value_network(Path('pymieches.csv'))
+    train_and_test_value_network(Path("pymieches.csv"))
