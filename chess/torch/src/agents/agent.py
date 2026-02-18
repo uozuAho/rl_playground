@@ -1,10 +1,9 @@
-from abc import ABC, abstractmethod
+from typing import Protocol
 
 import chess
 from env import env
 
 
-class ChessAgent(ABC):
-    @abstractmethod
+class ChessAgent(Protocol):
     def get_action(self, game: env.ChessGame) -> chess.Move:
-        raise NotImplementedError()
+        pass

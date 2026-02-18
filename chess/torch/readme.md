@@ -10,7 +10,6 @@ make pc
 ```
 
 # todo
-- make chessagent a protocol instead of ABC
 - rm reward from chess implementation
 - bring parallel mcts agent from c4. how many games/moves/sec?
 - maybe: run parallel mcts in multiprocess. how many games/moves/sec?

@@ -16,10 +16,13 @@ def main():
 
     # 199.06 moves/sec   0.67 games/sec
     print_games_per_sec(
-        MctsAgent(WHITE,
-                  n_sims=10,
-                  valfn=lambda e, p: random_rollout_reward(e, p, max_depth=5)),
-        RandomAgent(BLACK))
+        MctsAgent(
+            WHITE,
+            n_sims=10,
+            valfn=lambda e, p: random_rollout_reward(e, p, max_depth=5),
+        ),
+        RandomAgent(BLACK),
+    )
 
     # single thread Andoma, speed vs search depth:
     # 1: 238.93 moves/sec   3.90 games/sec
