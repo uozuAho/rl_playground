@@ -95,7 +95,7 @@ class GreedyChessAgent(ChessAgent):
 
         resulting_states = []
         for move in legal_moves:
-            game.step(move)
+            game.do(move)
             resulting_states.append(game.state_np())
             game.undo()
 

@@ -10,8 +10,10 @@ make pc
 ```
 
 # todo
-- rm reward from chess implementation
+- WIP rm reward from chess implementation
 - bring parallel mcts agent from c4. how many games/moves/sec?
+- maybe profile + find max single thread perf
+    - eg. maybe using too much copy state?
 - maybe: run parallel mcts in multiprocess. how many games/moves/sec?
     - hoping for ~100-200 moves/sec to keep gpu busy
 - find opponents of various strength

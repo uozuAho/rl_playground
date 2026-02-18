@@ -35,6 +35,9 @@ class ChessGame:
         """
         return ChessGame(self.fen(), self.capture_reward_factor)
 
+    def do(self, move: chess.Move):
+        self._board.push(move)
+
     def step(self, move: chess.Move) -> tuple[bool, float]:
         """Returns: (game_over: bool, reward: float)"""
         self._board.push(move)
