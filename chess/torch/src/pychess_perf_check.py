@@ -1,25 +1,27 @@
-import random
 import time
 
-from env.env import ChessGame
+from agents.agent import ChessAgent
+from agents.random import RandomAgent
+from env.env import ChessGame, WHITE, BLACK
 
 
 def main():
-    rando_games_per_sec()
+    print_games_per_sec(RandomAgent(WHITE), RandomAgent(BLACK))
 
 
-def play_one_game():
+def play_one_game(agent_w: ChessAgent, agent_b: ChessAgent):
     game = ChessGame()
     done = False
     moves = 0
     while not done:
-        move = random.choice(list(game.legal_moves()))
+        agent = agent_w if game.turn == WHITE else agent_b
+        move = agent.get_action(game)
         done, reward = game.step(move)
         moves += 1
     return moves
 
 
-def rando_games_per_sec():
+def print_games_per_sec(agent_w: ChessAgent, agent_b: ChessAgent):
     moves = 0
     games = 0
     start_time = time.perf_counter()
@@ -27,7 +29,7 @@ def rando_games_per_sec():
 
     try:
         while True:
-            moves += play_one_game()
+            moves += play_one_game(agent_w, agent_b)
             games += 1
             if time.perf_counter() - print_time >= 1.0:
                 print_time = time.perf_counter()
