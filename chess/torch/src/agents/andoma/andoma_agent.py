@@ -1,8 +1,8 @@
-from lib import env
-from lib.agents.agent import ChessAgent
-from lib.agents.andoma.movegeneration import next_move
-from lib.agents.mcts import MctsAgent
-from lib.michniew import evaluate_board
+from env import env
+from agents.agent import ChessAgent
+from agents.andoma.movegeneration import next_move
+from agents.mcts import MctsAgent
+from utils.michniew import evaluate_board
 
 
 class AndomaAgent(ChessAgent):

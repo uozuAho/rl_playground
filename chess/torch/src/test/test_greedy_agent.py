@@ -1,7 +1,7 @@
-import lib.env as env
-from lib.env import ChessGame, WHITE, BLACK
-from lib.agents.agent import ChessAgent, RandomAgent
-from lib.agents.greedy_agent import GreedyChessAgent
+from env import env
+from env.env import ChessGame, WHITE, BLACK
+from agents.agent import ChessAgent, RandomAgent
+from agents.greedy_agent import GreedyChessAgent
 
 
 def test_greedy_agent():

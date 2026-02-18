@@ -1,6 +1,6 @@
 import pytest
 import chess
-from lib.michniew import evaluate_board
+from utils.michniew import evaluate_board
 
 
 @pytest.mark.parametrize(

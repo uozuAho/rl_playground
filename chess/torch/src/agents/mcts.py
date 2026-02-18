@@ -3,8 +3,8 @@ import random
 import typing as t
 
 import chess
-import lib.env as env
-from lib.agents.agent import ChessAgent
+from env import env
+from agents.agent import ChessAgent
 
 
 # Evaluate the current env state for the given player. Expected

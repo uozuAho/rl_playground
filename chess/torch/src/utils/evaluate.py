@@ -2,8 +2,8 @@ from collections import defaultdict
 import time
 
 import chess
-from lib import env
-from lib.agents.agent import ChessAgent
+from env import env
+from agents.agent import ChessAgent
 
 
 def play_game(

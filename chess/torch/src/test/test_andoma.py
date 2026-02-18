@@ -1,6 +1,6 @@
-from lib import env
-from lib.agents.agent import RandomAgent
-from lib.agents.andoma.andoma_agent import AndomaAgent
+from env import env
+from agents.agent import RandomAgent
+from agents.andoma.andoma_agent import AndomaAgent
 
 
 def test_random_agent():

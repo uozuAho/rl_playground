@@ -1,9 +1,9 @@
-from lib import env
-from lib.agents.agent import RandomAgent
-from lib.agents.andoma.andoma_agent import AndomaAgent, AndomaMctsAgent
-from lib.evaluate import evaluate
-from lib.agents.greedy_agent import GreedyChessAgent
-from lib.agents.mcts import MctsAgent, random_rollout_reward
+from env import env
+from agents.agent import RandomAgent
+from agents.andoma.andoma_agent import AndomaAgent, AndomaMctsAgent
+from utils.evaluate import evaluate
+from agents.greedy_agent import GreedyChessAgent
+from agents.mcts import MctsAgent, random_rollout_reward
 
 
 def main():

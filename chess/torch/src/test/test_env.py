@@ -2,8 +2,8 @@ import random
 
 import chess
 import numpy as np
-from lib.agents.agent import RandomAgent
-import lib.env as env
+from agents.agent import RandomAgent
+from env import env
 
 
 def test_random_game():

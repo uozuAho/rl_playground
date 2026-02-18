@@ -1,7 +1,7 @@
 from typing import Dict, List, Any
 import chess
 import time
-from lib.michniew import evaluate_board, move_value, check_end_game
+from utils.michniew import evaluate_board, move_value, check_end_game
 
 debug_info: Dict[str, Any] = {}
 

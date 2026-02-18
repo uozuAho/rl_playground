@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import random
 
 import chess
-from lib import env
+from env import env
 
 
 class ChessAgent(ABC):

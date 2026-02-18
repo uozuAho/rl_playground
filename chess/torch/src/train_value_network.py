@@ -4,9 +4,9 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 import matplotlib.pyplot as plt
-from lib.agents.greedy_agent import ValueNetwork
-from lib.michniew import evaluate_board
-from lib.env import ChessGame
+from agents.greedy_agent import ValueNetwork
+from utils.michniew import evaluate_board
+from env.env import ChessGame
 import random
 import typing as t
 from tqdm import tqdm

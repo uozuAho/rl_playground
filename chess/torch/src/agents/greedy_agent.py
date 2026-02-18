@@ -10,8 +10,8 @@ import chess
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from lib.agents.agent import ChessAgent
-from lib.env import BLACK, WHITE, ChessGame, Player
+from agents.agent import ChessAgent
+from env.env import BLACK, WHITE, ChessGame, Player
 
 
 class ValueNetwork(nn.Module):
