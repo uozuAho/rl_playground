@@ -10,10 +10,13 @@ make pc
 ```
 
 # todo
-- check pychess perf. how many games/steps/sec vs rando?
 - make chessagent a protocol instead of ABC
 - rm reward from chess implementation
-- find opponents of various strength. fast to run?
+- bring parallel mcts agent from c4. how many games/moves/sec?
+- maybe: run parallel mcts in multiprocess. how many games/moves/sec?
+    - hoping for ~100-200 moves/sec to keep gpu busy
+- find opponents of various strength
+    - rank em: game strength and move time/perf
 - if py perf ok: copy paste azmp. does it train fast enough?
     - start with a small network. only net big net for max perf
 

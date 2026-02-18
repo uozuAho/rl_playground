@@ -5,13 +5,21 @@ import time
 
 from agents.agent import ChessAgent
 from agents.andoma.andoma_agent import AndomaAgent
+from agents.mcts import MctsAgent, random_rollout_reward
 from agents.random import RandomAgent
 from env.env import ChessGame, WHITE, BLACK
 
 
 def main():
     # 19996.07 moves/sec    56.90 games/sec
-    print_games_per_sec(RandomAgent(WHITE), RandomAgent(BLACK))
+    # print_games_per_sec(RandomAgent(WHITE), RandomAgent(BLACK))
+
+    # 199.06 moves/sec   0.67 games/sec
+    print_games_per_sec(
+        MctsAgent(WHITE,
+                  n_sims=10,
+                  valfn=lambda e, p: random_rollout_reward(e, p, max_depth=5)),
+        RandomAgent(BLACK))
 
     # single thread Andoma, speed vs search depth:
     # 1: 238.93 moves/sec   3.90 games/sec
