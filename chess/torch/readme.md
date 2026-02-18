@@ -1,14 +1,15 @@
 # Chess
 
 # Quick start
+Install uv + make.
+
 ```sh
-uv sync                   # install deps
-./precommit.sh            # run all linters + tests
-uv run bot_showdown.py    # vs all bots against each other
+make init
+make pc
+# see makefile for more
 ```
 
 # todo
-- reorg project - put src in src, use make
 - try ty instead of mypy
 
 NEW
