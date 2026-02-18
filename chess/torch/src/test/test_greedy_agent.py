@@ -20,11 +20,11 @@ def test_greedy_agent():
 
     for _ in range(agent.batch_size * 2):
         move = players[game.turn].get_action(game)
-        game_over, reward = game.step(move)
+        game.do(move)
         state = game.state_np()
-        assert not game_over
+        assert not game.is_game_over()
         if game.turn == BLACK:
-            agent.add_experience(prev_state, state, reward)
+            agent.add_experience(prev_state, state, 1.0)
         prev_state = state
 
     agent.train_step()

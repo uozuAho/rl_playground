@@ -17,4 +17,4 @@ def test_mctsrr_vs_random():
     while not game.is_game_over():
         agent = agents[game.turn]
         move = agent.get_action(game)
-        game.step(move)
+        game.do(move)

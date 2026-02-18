@@ -75,7 +75,7 @@ def generate_data(n_positions: int) -> t.Tuple[list[ChessGame], list[float]]:
             if not legal_moves or game.is_game_over():
                 break
             move = random.choice(legal_moves)
-            game.step(move)
+            game.do(move)
 
         positions.append(game)
         scores.append(normalize_michniew_score(evaluate_board(game._board)))
