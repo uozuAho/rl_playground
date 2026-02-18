@@ -13,20 +13,19 @@ from agents.agent import ChessAgent
 type ValFunc = t.Callable[[env.ChessGame, env.Player], float]
 
 
-def random_rollout_reward(env: env.ChessGame, player: env.Player, max_depth=50):
+def random_rollout_reward(game: env.ChessGame, player: env.Player, max_depth=50):
     """Returns the given player's reward from a random rollout"""
-    winner = env.winner()
-    if not env.is_game_over():
-        done = False
-        tempenv = env.copy()
+    winner = game.winner()
+    if not game.is_game_over():
+        tempgame = game.copy()
         i = 0
-        while not done:
+        while not tempgame.is_game_over():
             i += 1
             if i >= max_depth:
                 break
-            move = random.choice(list(tempenv.legal_moves()))
-            done, _ = tempenv.step(move)
-        winner = tempenv.winner()
+            move = random.choice(list(tempgame.legal_moves()))
+            tempgame.do(move)
+        winner = tempgame.winner()
     return 0 if not winner else 1 if winner == player else -1
 
 
@@ -130,12 +129,12 @@ def _build_mcts_tree(
                     maxmove = move
             node = maxchild
             assert maxmove is not None
-            temp_state.step(maxmove)
+            temp_state.do(maxmove)
 
         # expand: initialise child nodes of leaf
         if not temp_state.is_game_over():
             for move in temp_state.legal_moves():
-                temp_state.step(move)
+                temp_state.do(move)
                 if use_val_func_for_expand:
                     val = val_func(temp_state, node.turn)
                 else:
@@ -154,11 +153,11 @@ def _build_mcts_tree(
                         maxmove = cmove
                 node = maxchild
                 assert maxmove is not None
-                temp_state.step(maxmove)
+                temp_state.do(maxmove)
             else:
                 randmove, randnode = random.choice(list(node.children.items()))
                 node = randnode
-                temp_state.step(randmove)
+                temp_state.do(randmove)
 
         # simulate/rollout. Standard MCTS does a full "rollout" here, ie. plays
         # to the end of the game. Instead, we just use the state value estimate
