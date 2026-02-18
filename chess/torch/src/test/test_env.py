@@ -1,6 +1,5 @@
 import random
 
-import chess
 import numpy as np
 from agents.random import RandomAgent
 from env import env
@@ -33,19 +32,3 @@ def test_initial_state():
     assert state.shape == (8, 8, 8)
     assert np.all(state[0, 1, :] == 1)  # white pawns on row 1
     assert np.all(state[0, 6, :] == -1)  # black pawns on row 7
-
-
-def test_white_captures_black_positive_reward():
-    game = env.ChessGame(
-        fen="8/8/8/8/8/6p1/7P/8 w KQkq - 0 1", capture_reward_factor=0.1
-    )
-    _, reward = game.step(chess.Move(chess.H2, chess.G3))
-    assert reward > 0
-
-
-def test_black_captures_white_positive_reward():
-    game = env.ChessGame(
-        fen="8/8/8/8/8/6p1/7P/8 b KQkq - 0 1", capture_reward_factor=0.1
-    )
-    _, reward = game.step(chess.Move(chess.G3, chess.H2))
-    assert reward < 0

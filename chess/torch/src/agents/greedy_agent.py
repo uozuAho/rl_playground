@@ -122,6 +122,25 @@ class GreedyChessAgent(ChessAgent):
                 self.tau * param.data + (1.0 - self.tau) * target_param.data
             )
 
+    def _calc_capture_reward(
+        self, game: ChessGame, move: chess.Move, capture_reward_factor: float
+    ):
+        captured = game._board.piece_at(move.to_square)
+        if captured:
+            sign = 1 if captured.color == chess.WHITE else -1
+            return sign * captured.piece_type * capture_reward_factor
+        return 0.0
+
+    def _calc_outcome_reward(self, game: ChessGame):
+        outcome = game.outcome
+        return (
+            0.0
+            if not outcome or outcome.winner is None
+            else 1.0
+            if outcome.winner == chess.WHITE
+            else -1.0
+        )
+
     def train_against(
         self,
         opponent: ChessAgent,
@@ -146,7 +165,12 @@ class GreedyChessAgent(ChessAgent):
 
             while not done:
                 move = players[game.turn].get_action(game)
-                done, reward = game.step(move)
+                cap_reward = self._calc_capture_reward(
+                    game, move, capture_reward_factor
+                )
+                game.do(move)
+                reward = self._calc_outcome_reward(game) + cap_reward
+                done = game.is_game_over()
                 state = game.state_np()
                 game_length += 1
 
