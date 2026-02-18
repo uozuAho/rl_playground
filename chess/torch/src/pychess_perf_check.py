@@ -1,12 +1,23 @@
 import time
 
+# disable unused import check so u can temporarily comment out bots
+# ruff: noqa: F401
+
 from agents.agent import ChessAgent
+from agents.andoma.andoma_agent import AndomaAgent
 from agents.random import RandomAgent
 from env.env import ChessGame, WHITE, BLACK
 
 
 def main():
+    # 19996.07 moves/sec    56.90 games/sec
     print_games_per_sec(RandomAgent(WHITE), RandomAgent(BLACK))
+
+    # single thread Andoma, speed vs search depth:
+    # 1: 238.93 moves/sec   3.90 games/sec
+    # 2: 33.04 moves/sec    0.61 games/sec
+    # 3: 3.37 moves/sec     0.14 games/sec
+    # print_games_per_sec(AndomaAgent(WHITE, search_depth=1), RandomAgent(BLACK))
 
 
 def play_one_game(agent_w: ChessAgent, agent_b: ChessAgent):
