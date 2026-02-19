@@ -1,7 +1,7 @@
 from env import env
 from agents.random import RandomAgent
 from agents.andoma.andoma_agent import AndomaAgent, AndomaMctsAgent
-from utils.evaluate import play_games
+from utils.play import play_games
 from agents.greedy_agent import GreedyChessAgent
 from agents.mcts import MctsAgent, random_rollout_reward
 
