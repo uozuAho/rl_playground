@@ -10,6 +10,8 @@ make pc
 ```
 
 # todo
+- WIP implement ranker
+    - rm player from random agent
 - find opponents of various strength
     - rank em: game strength and move time/perf
 - if py perf ok: copy paste azmp. does it train fast enough?
