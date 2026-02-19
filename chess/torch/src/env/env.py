@@ -51,11 +51,6 @@ class ChessGame:
     def is_game_over(self):
         return self._reached_halfmove_limit() or self._board.is_game_over()
 
-    def _reached_halfmove_limit(self):
-        return (
-            self.halfmove_limit and len(self._board.move_stack) >= self.halfmove_limit
-        )
-
     def legal_moves(self):
         return self._board.generate_legal_moves()
 
@@ -64,9 +59,9 @@ class ChessGame:
 
     def winner(self) -> Player | None:
         outcome = self._board.outcome()
-        if not outcome:
+        if outcome is None:
             return None
-        if not outcome.winner:
+        if outcome.winner is None:
             return None
         return _color_to_player[outcome.winner]
 
@@ -91,6 +86,14 @@ class ChessGame:
             state[6, 0, :] = -1
         state[7, :, :] = 1
         return state
+
+    def _reached_halfmove_limit(self):
+        return (
+            self.halfmove_limit and len(self._board.move_stack) >= self.halfmove_limit
+        )
+
+    def __repr__(self):
+        return self._board.fen()
 
 
 piece_layer = {}
