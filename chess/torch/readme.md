@@ -10,8 +10,9 @@ make pc
 ```
 
 # todo
-- WIP bring parallel mcts agent from c4
-    - copy tests
+- WIP fix pmcts
+    - confirm az chess policy output. 64x64? how does it do promotions?
+    - eval func: from nn output to dict[move, prob]
 - parallel mcts: how many games/moves/sec?
 - maybe profile + find max single thread perf
     - eg. maybe using too much copy state?

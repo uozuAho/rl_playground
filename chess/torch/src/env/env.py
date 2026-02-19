@@ -7,6 +7,8 @@ import numpy as np
 type Player = t.Literal[-1, 1]
 BLACK: Player = -1  # chess.BLACK = False
 WHITE: Player = 1  # chess.WHITE = True
+ROWS = 8
+COLS = 8
 
 _color_to_player: dict[chess.Color, Player] = {chess.BLACK: BLACK, chess.WHITE: WHITE}
 

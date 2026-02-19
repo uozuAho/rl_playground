@@ -5,7 +5,7 @@ import chess
 
 from env import env
 from utils import types, maths
-from utils.types import Prior, Value
+from utils.types import Value
 
 
 class MCTSNode:
@@ -23,7 +23,7 @@ class MCTSNode:
         self.action_from_parent = action_from_parent
 
         # valid action -> child node
-        self.children: dict[int, MCTSNode] = {}
+        self.children: dict[chess.Move, MCTSNode] = {}
         self.visits = 0  # N(s,a)
         self.total_value = 0.0  # W(s,a) - sum of values backed up through this node
 
@@ -66,7 +66,7 @@ class _MctsSimState:
         self.root = root
         self.node = root
         self.terminal_value: float | None = None
-        self.p_eval: Prior | None = None
+        self.p_eval: dict[chess.Move, float] | None = None
         self.v_eval: Value | None = None
 
     def reset(self):
