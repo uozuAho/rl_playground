@@ -114,7 +114,7 @@ class ParallelMcts:
             # todo: maybe: add capture reward?
             if sim.node.is_terminal():
                 # Terminal node: use actual game outcome
-                winner = sim.node.state.winner
+                winner = sim.node.state.winner()
                 who_moved_last = env.other_player(sim.node.state.turn)
                 if winner == who_moved_last:
                     sim.terminal_value = 1.0

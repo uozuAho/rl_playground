@@ -11,7 +11,6 @@ make pc
 
 # todo
 - WIP fix pmcts
-    - mcts value again...
 - parallel mcts: how many games/moves/sec?
 - maybe profile + find max single thread perf
     - eg. maybe using too much copy state?

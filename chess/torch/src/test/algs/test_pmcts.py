@@ -31,6 +31,7 @@ def test_mcts_basic():
 def test_chooses_best_moves():
     boards_best_moves = [
         ("6k1/5ppp/8/8/8/8/5PPP/4R1K1 w - - 0 1", "e1e8"),
+        ("4r1k1/5ppp/8/8/8/8/5PPP/6K1 b - - 1 1", "e8e1"),
     ]
 
     states = [env.ChessGame(fen=x[0]) for x in boards_best_moves]
