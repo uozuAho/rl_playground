@@ -10,12 +10,6 @@ make pc
 ```
 
 # todo
-- parallel mcts: how many games/moves/sec?
-- maybe profile + find max single thread perf
-    - eg. maybe using too much copy state?
-    - see inline todos.
-- maybe: run parallel mcts in multiprocess. how many games/moves/sec?
-    - hoping for ~100-200 moves/sec to keep gpu busy
 - find opponents of various strength
     - rank em: game strength and move time/perf
 - if py perf ok: copy paste azmp. does it train fast enough?

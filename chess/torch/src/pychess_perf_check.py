@@ -6,8 +6,10 @@ import time
 from agents.agent import ChessAgent
 from agents.andoma.andoma_agent import AndomaAgent
 from agents.mcts import MctsAgent, random_rollout_reward
+from agents.mctsnew import make_uniform_agent, make_random_rollout_agent
 from agents.random import RandomAgent
 from env.env import ChessGame, WHITE, BLACK
+from utils.play import play_games_parallel
 
 
 def main():
@@ -17,10 +19,16 @@ def main():
     #     MctsAgent(
     #         WHITE,
     #         n_sims=10,
-    #         valfn=lambda e, p: random_rollout_reward(e, p, max_depth=5),
+    #         valfn=lambda e, p: random_rollout_reward(e, p, max_depth=1),
     #     ),
     #     RandomAgent(BLACK),
     # )
+
+    # print_games_per_sec_parallel(make_uniform_agent(n_sims=10), make_uniform_agent(n_sims=10), 1)
+
+    # print_games_per_sec_parallel(
+    #     make_random_rollout_agent(n_sims=10),
+    #     make_random_rollout_agent(n_sims=10), 1)
 
     # print_games_per_sec(AndomaAgent(WHITE, search_depth=1), RandomAgent(BLACK))
 
@@ -52,6 +60,22 @@ def print_games_per_sec(agent_w: ChessAgent, agent_b: ChessAgent):
                 print(
                     f"{moves / elapsed:.2f} moves/sec   {games / elapsed:.2f} games/sec"
                 )
+    except KeyboardInterrupt:
+        pass
+
+
+def print_games_per_sec_parallel(agent_w: ChessAgent, agent_b: ChessAgent, n_p: int):
+    games = 0
+    start_time = time.perf_counter()
+    print_time = time.perf_counter()
+    try:
+        while True:
+            play_games_parallel(agent_w, agent_b, n_p)
+            games += n_p
+            if time.perf_counter() - print_time >= 1.0:
+                print_time = time.perf_counter()
+                elapsed = time.perf_counter() - start_time
+                print(f"{games / elapsed:.2f} games/sec")
     except KeyboardInterrupt:
         pass
 
