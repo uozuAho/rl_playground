@@ -29,11 +29,11 @@ class MCTSNode:
 
     def __repr__(self):
         v_est_s = "None" if not self.v_est else f"{self.v_est:.2f}"
-        board = "todo: board string"
+        board = self.state.fen()
         return (
             f"{self.action_from_parent} vis: {self.visits}, puc1: {self.puct(1.0):.2f}, "
             f"P: {self.prior:.2f}, v: {self.value():.2f}, "
-            f"tv: {self.total_value:.2f}, v_est: {v_est_s}  {board}"
+            f"tv: {self.total_value:.2f}, v_est: {v_est_s}  {board} {self.state.outcome()}"
         )
 
     @property

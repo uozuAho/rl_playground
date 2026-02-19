@@ -39,6 +39,12 @@ class ChessGame:
     def do(self, move: chess.Move):
         self._board.push(move)
 
+    def do_uci(self, uci: str):
+        self._board.push_uci(uci)
+
+    def print(self):
+        print(self._board)
+
     def undo(self):
         return self._board.pop()
 
