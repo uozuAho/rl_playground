@@ -56,8 +56,14 @@ class MctsAgent:
         return [self.select_action_fn(r) for r in roots]
 
 
-def uniform_eval_batch(states: list[env.ChessGame]) -> list[types.PV]:
-    return [([1.0 / env.COLS] * env.COLS, 0.0) for _ in range(len(states))]
+def uniform_eval_batch(states: list[env.ChessGame]) -> list[types.MPV]:
+    mpvs = []
+    for state in states:
+        legal_moves = list(state.legal_moves())
+        num_moves = len(legal_moves)
+        probs = {move: 1.0 / num_moves for move in legal_moves}
+        mpvs.append((probs, 0.0))
+    return mpvs
 
 
 def random_rollout_eval_batch(states: list[env.ChessGame]):
@@ -66,11 +72,17 @@ def random_rollout_eval_batch(states: list[env.ChessGame]):
 
 def _random_rollout_eval(state: env.ChessGame):
     initial_player = state.turn
-    while not state.is_game_over():
-        action = random.choice(list(state.legal_moves()))
-        state = state.do(action)
-    val = 0 if state.winner is None else 1.0 if state.winner == initial_player else -1.0
-    return [1.0 / env.COLS] * env.COLS, val
+
+    legal_moves = list(state.legal_moves())
+    num_moves = len(legal_moves)
+    probs = {move: 1.0 / num_moves for move in legal_moves}
+
+    scpy = state.copy()
+    while not scpy.is_game_over():
+        action = random.choice(list(scpy.legal_moves()))
+        scpy.do(action)
+    val = 0 if scpy.winner is None else 1.0 if scpy.winner == initial_player else -1.0
+    return probs, val
 
 
 def best_by_visit_value(node: pmcts.MCTSNode):

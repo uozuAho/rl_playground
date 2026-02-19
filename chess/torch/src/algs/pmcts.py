@@ -142,9 +142,16 @@ class ParallelMcts:
                 sim.node.v_est = sim.v_eval
 
                 if sim.node == sim.root and self.add_dirichlet_noise:
-                    sim.p_eval = maths.add_dirichlet_noise(
-                        sim.p_eval, self.dirichlet_alpha, self.dirichlet_epsilon
+                    pitems = list(sim.p_eval.items())
+                    noisy_vals = maths.add_dirichlet_noise(
+                        [p[1] for p in pitems],
+                        self.dirichlet_alpha,
+                        self.dirichlet_epsilon,
                     )
+                    for i, pitem in enumerate(pitems):
+                        key = pitem[0]
+                        noisy_value = noisy_vals[i]
+                        sim.p_eval[key] = noisy_value
 
                 # Expand: create child nodes for all valid actions
                 for action in sim.node.state.legal_moves():

@@ -11,7 +11,6 @@ make pc
 
 # todo
 - WIP fix pmcts
-    - confirm az chess policy output. 64x64? how does it do promotions?
     - eval func: from nn output to dict[move, prob]
 - parallel mcts: how many games/moves/sec?
 - maybe profile + find max single thread perf
@@ -26,6 +25,8 @@ make pc
     - see inline todos: add capture reward?
 
 # maybe/later
+- alphazero: use full move representation (not just 64x64 from-to squares)
+    - read the original paper or ask chatty
 - old: greedy_agent (value net)
     - make & train small net
     - evaluate vs opponents
