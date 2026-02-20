@@ -44,6 +44,8 @@ class Codec4096(Codec):
         mp = {lm: probs[self.move2int(lm)] for lm in legal_moves}
         # ensure a valid probability distribution
         psum = sum(mp.values())
+        if psum == 0:
+            psum = 1
         for m in mp:
             mp[m] = mp[m] / psum
         return mp

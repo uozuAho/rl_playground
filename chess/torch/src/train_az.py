@@ -33,7 +33,7 @@ def main():
         device_player="cuda",
         device_learn="cuda",
         device_eval="cpu",
-        cli_log_mode="eval",
+        cli_log_mode="perf",
         log_to_file=True,
         log_format_file="json",
         console_log_level="INFO",
