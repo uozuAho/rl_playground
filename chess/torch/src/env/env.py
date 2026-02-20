@@ -65,6 +65,7 @@ class ChessGame:
             return None
         return _color_to_player[outcome.winner]
 
+    # I copied this from https://github.com/arjangroen/RLC, no idea if it is any good
     def state_np(self):
         state = np.zeros(shape=(8, 8, 8), dtype=np.float32)
         for i in range(64):

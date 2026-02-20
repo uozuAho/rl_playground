@@ -17,8 +17,11 @@ make pc
 # maybe/later
 - maybe find more opponents
     - maybe try mcts andoma
-- alphazero: use full move representation (not just 64x64 from-to squares)
-    - read the original paper or ask chatty
+- alphazero:
+    - use full move representation (not just 64x64 from-to squares)
+        - read the original paper or ask chatty
+    - copy original alphazero input shape
+        - eg. 8 historical positions, knights etc.
 - old: greedy_agent (value net)
     - make & train small net
     - evaluate vs opponents
