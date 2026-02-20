@@ -10,15 +10,13 @@ make pc
 ```
 
 # todo
-- find opponents of various strength/perf
-    - something faster and stronger than andoma?
-    - mcts andoma
-    - mctsrr stronger than random?
 - if py perf ok: copy paste azmp. does it train fast enough?
     - start with a small network. only net big net for max perf
     - see inline todos: add capture reward?
 
 # maybe/later
+- maybe find more opponents
+    - maybe try mcts andoma
 - alphazero: use full move representation (not just 64x64 from-to squares)
     - read the original paper or ask chatty
 - old: greedy_agent (value net)
