@@ -38,18 +38,15 @@ class MctsAgent(ChessAgent):
 
     def __init__(
         self,
-        player: env.Player,
         n_sims: int,
         valfn: ValFunc = random_rollout_reward,
         use_valfn_for_expand=False,
     ):
-        self.player = player
         self.n_sims = n_sims
         self._valfn = valfn
         self._use_valfn_for_expand = use_valfn_for_expand
 
     def get_action(self, game: env.ChessGame):
-        assert game.turn == self.player
         return _mcts_decision(
             game, self.n_sims, self._valfn, self._use_valfn_for_expand
         )
@@ -108,13 +105,13 @@ def print_tree(root: _MCTSNode, action: chess.Move | None, indent=0):
 
 
 def _build_mcts_tree(
-    env: env.ChessGame, simulations: int, val_func: ValFunc, use_val_func_for_expand
+    game: env.ChessGame, simulations: int, val_func: ValFunc, use_val_func_for_expand
 ):
-    root = _MCTSNode(env, parent=None)
-    fen_start = env.fen()
+    root = _MCTSNode(game, parent=None)
+    fen_start = game.fen()
     for _ in range(simulations):
         node = root
-        temp_state = env  # state that corresponds to node
+        temp_state = game  # state that corresponds to node
 
         # select (using tree policy): trace a path to a leaf node
         while node.children:
@@ -178,6 +175,6 @@ def _build_mcts_tree(
 
         assert temp_state.fen() == fen_start
 
-    assert env.fen() == fen_start
+    assert game.fen() == fen_start
 
     return root

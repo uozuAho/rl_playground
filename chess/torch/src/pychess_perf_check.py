@@ -8,7 +8,7 @@ from agents.andoma.andoma_agent import AndomaAgent
 from agents.mcts import MctsAgent, random_rollout_reward
 from agents.mctsnew import make_uniform_agent, make_random_rollout_agent
 from agents.random import RandomAgent
-from env.env import ChessGame, WHITE, BLACK
+from env.env import ChessGame, WHITE
 from utils.play import play_games_parallel
 
 
@@ -17,11 +17,10 @@ def main():
 
     # print_games_per_sec(
     #     MctsAgent(
-    #         WHITE,
     #         n_sims=10,
     #         valfn=lambda e, p: random_rollout_reward(e, p, max_depth=1),
     #     ),
-    #     RandomAgent(BLACK),
+    #     RandomAgent(),
     # )
 
     # print_games_per_sec_parallel(make_uniform_agent(n_sims=10), make_uniform_agent(n_sims=10), 1)
@@ -30,7 +29,7 @@ def main():
     #     make_random_rollout_agent(n_sims=10),
     #     make_random_rollout_agent(n_sims=10), 1)
 
-    # print_games_per_sec(AndomaAgent(WHITE, search_depth=1), RandomAgent(BLACK))
+    # print_games_per_sec(AndomaAgent(search_depth=1), RandomAgent())
 
 
 def play_one_game(agent_w: ChessAgent, agent_b: ChessAgent):

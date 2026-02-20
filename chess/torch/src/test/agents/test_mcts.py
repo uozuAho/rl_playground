@@ -6,7 +6,6 @@ from agents.mcts import MctsAgent, random_rollout_reward
 def test_mctsrr_vs_random():
     agents = {
         env.WHITE: MctsAgent(
-            env.WHITE,
             n_sims=2,
             valfn=lambda e, p: random_rollout_reward(e, p, max_depth=2),
         ),
