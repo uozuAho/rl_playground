@@ -9,3 +9,6 @@ pc:
 
 rank:
 	uv run src/rank_bots.py
+
+trainaz:
+	uv run src/train_az.py

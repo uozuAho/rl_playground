@@ -142,6 +142,7 @@ class ParallelMcts:
                 sim.node.v_est = sim.v_eval
 
                 if sim.node == sim.root and self.add_dirichlet_noise:
+                    # todo bug: peval is list, has no items
                     pitems = list(sim.p_eval.items())
                     noisy_vals = maths.add_dirichlet_noise(
                         [p[1] for p in pitems],
