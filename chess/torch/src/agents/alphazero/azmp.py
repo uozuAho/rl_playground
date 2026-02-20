@@ -759,9 +759,7 @@ def _self_play_n_games(
     for i, t in enumerate(trajectories):
         for state, move_probs in t:
             winner = winners[i]
-            final_reward = (
-                0 if winner is None else 1 if state.current_player == winner else -1
-            )
+            final_reward = 0 if winner is None else 1 if state.turn == winner else -1
             yield GameStep(state, move_probs, final_reward)
 
 
