@@ -13,21 +13,26 @@ from utils import types
 
 from env import env
 
-# todo: maybe centralise this somewhere with NN 2 move encoding
-ACTION_SIZE_4096 = 4096
-
 
 class AzNet(Protocol):
     def pv(self, state: env.ChessGame) -> types.PV:
+        """returns softmaxed logits, value"""
+        pass
+
+    def mpv(self, state: env.ChessGame) -> types.MPV:
+        """returns move probs dict, value"""
         pass
 
     def pv_batch(self, states: list[env.ChessGame]) -> list[types.PV]:
         pass
 
+    def mpv_batch(self, states: list[env.ChessGame]) -> list[types.MPV]:
+        pass
+
     def forward_batch(
         self, states: list[env.ChessGame]
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """Returns the raw NN tensor outputs (p logits, value)"""
+        """Returns the raw tensor outputs (p logits, value)"""
         pass
 
     def eval(self):
@@ -44,8 +49,9 @@ class AzNet(Protocol):
 
 class ResNet(AzNet):
     def __init__(self, num_res_blocks, num_hidden, device):
-        self.model = _ResNetModule(num_res_blocks, num_hidden, device)
         self.device = device
+        self.codec = Codec4096()
+        self.model = _ResNetModule(num_res_blocks, num_hidden, self.codec, device)
 
     def pv(self, state: env.ChessGame) -> types.PV:
         enc_state = torch.from_numpy(self.state2np(state)).to(self.device)
@@ -54,12 +60,20 @@ class ResNet(AzNet):
         plogits, val = self.model(minput)
         return plogits.softmax(dim=1).squeeze().tolist(), val.item()
 
+    def mpv(self, state: env.ChessGame) -> types.MPV:
+        p, v = self.pv(state)
+        return self.codec.probs2dict(p, state), v
+
     def pv_batch(self, states: list[env.ChessGame]) -> list[types.PV]:
         plogits, val = self.forward_batch(states)
         vals = val.squeeze().tolist()
         if type(vals) is float:
             vals = [vals]  # annoying torch quirk. I'm probably not using it properly
         return list(zip(plogits.softmax(dim=1).tolist(), vals))
+
+    def mpv_batch(self, states: list[env.ChessGame]) -> list[types.MPV]:
+        pvs = self.pv_batch(states)
+        return [(self.codec.probs2dict(pv[0], s), pv[1]) for s, pv in zip(states, pvs)]
 
     def forward_batch(self, states: list[env.ChessGame]):
         n = np.stack([self.state2np(s) for s in states])
@@ -76,14 +90,7 @@ class ResNet(AzNet):
         self.model.train()
 
     def get_codec(self) -> Codec:
-        return Codec4096()
-
-    @staticmethod
-    def load(path: Path, device):
-        d = torch.load(path, weights_only=True)
-        n = _ResNetModule(d["num_res_blocks"], d["num_hidden"], device)
-        n.load_state_dict(d["state_dict"])
-        return n
+        return self.codec
 
     @staticmethod
     def state2np(state: env.ChessGame):
@@ -92,7 +99,7 @@ class ResNet(AzNet):
 
 # stole this from https://github.com/foersterrobert/AlphaZero
 class _ResNetModule(nn.Module):
-    def __init__(self, num_res_blocks, num_hidden, device):
+    def __init__(self, num_res_blocks, num_hidden, codec: Codec, device):
         super().__init__()
         self.device = device
         self.num_res_blocks = num_res_blocks
@@ -111,7 +118,7 @@ class _ResNetModule(nn.Module):
             nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(32 * env.ROWS * env.COLS, ACTION_SIZE_4096),
+            nn.Linear(32 * env.ROWS * env.COLS, codec.ACTION_SIZE),
         )
         self.valueHead = nn.Sequential(
             nn.Conv2d(num_hidden, 3, kernel_size=3, padding=1),

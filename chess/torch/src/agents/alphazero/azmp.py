@@ -25,10 +25,11 @@ from agents.alphazero.move_encoding import Codec
 from agents.mctsnew import MctsAgent, best_by_visit_value
 from algs.pmcts import ParallelMcts, MCTSNode
 from env import env
-from agents.alphazero.az_nets import ResNet, AzNet, ACTION_SIZE_4096
+from agents.alphazero.az_nets import ResNet, AzNet
 from utils import types, maths
-from utils.maths import heat
+from utils.maths import heat_dict
 from utils.play import play_games_parallel
+from utils.types import MPV, MoveProbs
 
 
 @dataclass
@@ -137,22 +138,13 @@ def setup_logging(config: Config, process_name: str = "main") -> logging.Logger:
 @dataclass
 class GameStep:
     state: env.ChessGame
-    valid_action_mask: np.ndarray
-    mcts_probs: np.ndarray
+    legal_move_mcts_probs: MoveProbs
     final_value: float
-
-    def as_tuple(self):
-        return (
-            self.state,
-            self.valid_action_mask,
-            self.mcts_probs,
-            self.final_value,
-        )
 
     def __repr__(self):
         p = "W" if self.state.turn == env.WHITE else "B"
         b = self.state.fen()
-        m = ",".join(f"{x:.2f}" for x in self.mcts_probs)
+        m = ",".join(f"{m}: {p:.2f}" for m, p in self.legal_move_mcts_probs.items())
         return f"{p} {b} {self.final_value:0.2f}  [{m}]"
 
 
@@ -198,7 +190,7 @@ def player_loop(
     games_played = 0
     game_steps = []
 
-    def batch_mcts_eval(envs):
+    def batch_mcts_eval(envs) -> list[MPV]:
         return _batch_eval_for_mcts(net, envs, config.device_player)
 
     def try_update_weights():
@@ -572,7 +564,7 @@ def steps_to_raw_epoch(game_steps: list[GameStep]):
     value = np.stack([x.final_value for x in game_steps], dtype=np.float32).reshape(
         (len(game_steps), 1)
     )
-    masks = np.stack([x.valid_action_mask for x in game_steps], dtype=np.bool_)
+    masks = np.stack([x.legal_moves for x in game_steps], dtype=np.bool_)
 
     return boards, policy, value, masks
 
@@ -709,20 +701,15 @@ def train_mp(config: Config):
                 raise ChildProcessError("Something died")
 
 
-def _batch_eval_for_mcts(
-    net: AzNet, states: list[env.ChessGame], device
-) -> list[tuple[list[float], float]]:
-    return net.pv_batch(states)
+def _batch_eval_for_mcts(net: AzNet, states: list[env.ChessGame], device) -> list[MPV]:
+    return net.mpv_batch(states)
 
 
-def _mcts_probs(root: MCTSNode, codec: Codec) -> list[float]:
-    probs = [0] * codec.ACTION_SIZE
+def _mcts_probs(root: MCTSNode) -> MoveProbs:
     total_visits = sum(c.visits for c in root.children.values())
     assert total_visits > 0
-    for a, n in root.children.items():
-        idx = codec.move2int(a)
-        probs[idx] = n.visits / total_visits
-    assert maths.is_prob_dist(probs)
+    probs = {move: node.visits / total_visits for move, node in root.children.items()}
+    assert maths.is_prob_dist(probs.values())
     return probs
 
 
@@ -754,28 +741,23 @@ def _self_play_n_games(
         ).run()
         for i, root in zip(active_idxs, roots):
             state = root.state
-            valid_mask = _valid_actions_mask(root.state)
-            probs = _mcts_probs(root, codec)
-            trajectories[i].append((state, valid_mask, probs))
-            probs = heat(np.array(probs), temperature)
-            action = np.random.choice(ACTION_SIZE_4096, p=probs)
-            states[i].do(action)
+            move_probs = _mcts_probs(root)
+            trajectories[i].append((state, move_probs))
+            move_probs = heat_dict(move_probs, temperature)
+            mpi = list(move_probs.items())
+            move, _ = np.random.choice(mpi, p=[m[1] for m in mpi])
+            states[i].do(move)
             if states[i].is_game_over():
                 game_overs[i] = True
                 winners[i] = states[i].winner()
     assert not any(x is False for x in winners)
     for i, t in enumerate(trajectories):
-        for state, mask, probs in t:
+        for state, move_probs in t:
             winner = winners[i]
             final_reward = (
                 0 if winner is None else 1 if state.current_player == winner else -1
             )
-            yield GameStep(state, mask, probs, final_reward)
-
-
-def _valid_actions_mask(state: env.ChessGame):
-    valid_actions = list(state.legal_moves())
-    return [x in valid_actions for x in range(ACTION_SIZE_4096)]
+            yield GameStep(state, move_probs, final_reward)
 
 
 def make_az_agent(net: AzNet, n_sims: int, c_puct: float, device):

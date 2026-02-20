@@ -1,3 +1,5 @@
+from typing import Any
+
 import numpy as np
 
 
@@ -21,3 +23,10 @@ def heat(p: np.ndarray, temp: float):
     pp /= np.sum(pp)
     assert is_prob_dist(pp)
     return pp
+
+
+def heat_dict(d: dict[Any, float], temp: float) -> dict[Any, float]:
+    kvs = d.items()
+    ks = [kv[0] for kv in kvs]
+    vs = heat(np.array([kv[1] for kv in kvs]), temp)
+    return {k: v for k, v in zip(ks, vs)}

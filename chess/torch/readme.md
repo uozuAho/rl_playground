@@ -10,12 +10,15 @@ make pc
 ```
 
 # todo
-- WIP copy paste azmp. does it train fast enough?
-    - WIP test_azmp hangs
+- WIP fix azmp code
+    - WIP changing from ndarray prob dist to dict{move:prob}
+- azmp: does it train fast enough?
     - start with a small network. only net big net for max perf
     - see inline todos: add capture reward?
 
 # maybe/later
+- azmp perf
+    - use/store move uci instead of move classes
 - maybe find more opponents
     - maybe try mcts andoma
 - alphazero:
