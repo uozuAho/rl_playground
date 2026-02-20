@@ -7,6 +7,7 @@ from agents.random import RandomAgent
 PROJ_ROOT = Path(__file__).parent.parent
 LOG_PATH = PROJ_ROOT / "train_az_mp.log"
 
+
 def main():
     config = az.Config(
         num_res_blocks=1,

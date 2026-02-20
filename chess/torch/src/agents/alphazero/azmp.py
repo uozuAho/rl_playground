@@ -689,16 +689,24 @@ def train_mp(config: Config):
             time.sleep(config.stop_after_n_seconds)
             logger.info(f"Reached {config.stop_after_n_seconds} seconds, stopping...")
             stop_event.set()
-        learner.join()
+        while True:
+            if any(p.exitcode is not None for p in processes):
+                logger.error("Something died, stopping all processes...")
+                stop_event.set()
+                break
+            learner.join(timeout=1)
+            if not learner.is_alive():
+                break
     except KeyboardInterrupt:
         logger.info("User requested stop. Stopping...")
         stop_event.set()
     finally:
-        # Clean up
         for p in processes:
             p.join(timeout=1)
             if p.is_alive():
                 p.terminate()
+            if p.exitcode != 0:
+                raise ChildProcessError("Something died")
 
 
 def _batch_eval_for_mcts(
