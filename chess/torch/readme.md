@@ -10,10 +10,9 @@ make pc
 ```
 
 # todo
-- WIP implement ranker
-    - rm player from andoma agent
 - find opponents of various strength/perf
     - something faster and stronger than andoma?
+    - mcts andoma
     - mctsrr stronger than random?
 - if py perf ok: copy paste azmp. does it train fast enough?
     - start with a small network. only net big net for max perf

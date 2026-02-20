@@ -15,7 +15,7 @@ def main():
     agents = [
         ("Random", RandomAgent()),
         # ("MctsU", mcts.make_uniform_agent(10)),
-        ("Andoma", AndomaAgent(search_depth=1))
+        ("Andoma", AndomaAgent(search_depth=1)),
     ]
     stats = ranker.full_round_robin(agents, games_per_matchup=5)
     ranker.print_rankings(stats)

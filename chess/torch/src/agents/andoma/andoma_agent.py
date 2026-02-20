@@ -1,3 +1,5 @@
+import chess
+
 from env import env
 from agents.agent import ChessAgent
 from agents.andoma.movegeneration import next_move
@@ -14,6 +16,9 @@ class AndomaAgent(ChessAgent):
     def get_action(self, game: env.ChessGame):
         return next_move(self.search_depth, game._board, debug=False)
 
+    def get_actions(self, games: list[env.ChessGame]) -> list[chess.Move]:
+        return [self.get_action(g) for g in games]
+
 
 class AndomaMctsAgent(ChessAgent):
     """Similar to Andoma, but use MCTS + michniewski board evaluation instead
@@ -26,6 +31,8 @@ class AndomaMctsAgent(ChessAgent):
 
     def get_action(self, game: env.ChessGame):
         return self._mctsAgent.get_action(game)
+
+    # todo: use parallel mcts
 
     def _valfn(self, board: env.ChessGame, player: env.Player):
         return evaluate_board(board._board) * player
