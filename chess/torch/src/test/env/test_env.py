@@ -16,7 +16,7 @@ def test_random_game():
 
 
 def test_random_agent():
-    agents = {env.WHITE: RandomAgent(env.WHITE), env.BLACK: RandomAgent(env.BLACK)}
+    agents = {env.WHITE: RandomAgent(), env.BLACK: RandomAgent()}
     game = env.ChessGame(halfmove_limit=20)
     assert game.turn == env.WHITE
     while not game.is_game_over():

@@ -10,7 +10,7 @@ def test_mctsrr_vs_random():
             n_sims=2,
             valfn=lambda e, p: random_rollout_reward(e, p, max_depth=2),
         ),
-        env.BLACK: RandomAgent(env.BLACK),
+        env.BLACK: RandomAgent(),
     }
     game = env.ChessGame(halfmove_limit=20)
     assert game.turn == env.WHITE

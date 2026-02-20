@@ -3,8 +3,8 @@ Train bots elsewhere - this should just be a tournament.
 """
 
 import agents.mctsnew as mcts
+from agents.andoma.andoma_agent import AndomaAgent
 from agents.random import RandomAgent
-from env.env import WHITE
 # disable unused import check so u can temporarily comment out bots
 # ruff: noqa: F401
 
@@ -13,8 +13,9 @@ from utils import ranker
 
 def main():
     agents = [
-        ("Random1", RandomAgent(WHITE)),
-        ("MctsU10", mcts.make_uniform_agent(10)),
+        ("Random", RandomAgent()),
+        # ("MctsU", mcts.make_uniform_agent(10)),
+        # ("Andoma", AndomaAgent())
     ]
     stats = ranker.full_round_robin(agents, games_per_matchup=5)
     ranker.print_rankings(stats)

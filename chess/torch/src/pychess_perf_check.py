@@ -13,7 +13,7 @@ from utils.play import play_games_parallel
 
 
 def main():
-    print_games_per_sec(RandomAgent(WHITE), RandomAgent(BLACK))
+    print_games_per_sec(RandomAgent(), RandomAgent())
 
     # print_games_per_sec(
     #     MctsAgent(
