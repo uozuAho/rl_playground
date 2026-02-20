@@ -12,3 +12,12 @@ def add_dirichlet_noise(p, alpha, epsilon):
 
 def is_prob_dist(numbers):
     return all((0.99 < sum(numbers) < 1.01, all(0 <= x <= 1.0 for x in numbers)))
+
+
+def heat(p: np.ndarray, temp: float):
+    assert is_prob_dist(p)
+    assert temp >= 0.0
+    pp = p ** (1 / temp)
+    pp /= np.sum(pp)
+    assert is_prob_dist(pp)
+    return pp
