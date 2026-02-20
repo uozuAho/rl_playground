@@ -332,6 +332,7 @@ def batcher_loop(
     stop_event: Event,
     config: Config,
 ):
+    net = ResNet(1, 1, "cpu")
     buffer = deque()
     t_start = time.perf_counter()
     t_work = 0.0
@@ -369,7 +370,7 @@ def batcher_loop(
                 for i in range(config.epoch_size):
                     epoch_steps.append(buffer.popleft())
                 random.shuffle(epoch_steps)
-                next_epoch = steps_to_raw_epoch(epoch_steps)
+                next_epoch = steps_to_raw_epoch(net, epoch_steps)
                 t_work += time.perf_counter() - t_start_work
         except queue.Empty:
             pass
@@ -557,14 +558,18 @@ def metrics_loop(
             break
 
 
-def steps_to_raw_epoch(game_steps: list[GameStep]):
+def steps_to_raw_epoch(net: AzNet, game_steps: list[GameStep]):
     """Convert game steps to raw numpy arrays for efficient queue transfer."""
-    boards = np.stack([ResNet.state2np(x.state) for x in game_steps], dtype=np.float32)
-    policy = np.stack([x.mcts_probs for x in game_steps], dtype=np.float32)
+    codec = net.get_codec()
+    boards = np.stack([net.state2np(x.state) for x in game_steps], dtype=np.float32)
+    policy = np.stack(
+        [codec.dict2prior(x.legal_move_mcts_probs) for x in game_steps],
+        dtype=np.float32,
+    )
     value = np.stack([x.final_value for x in game_steps], dtype=np.float32).reshape(
         (len(game_steps), 1)
     )
-    masks = np.stack([x.legal_moves for x in game_steps], dtype=np.bool_)
+    masks = np.stack([codec.validmask(x.state) for x in game_steps], dtype=np.bool_)
 
     return boards, policy, value, masks
 
@@ -682,7 +687,7 @@ def train_mp(config: Config):
             logger.info(f"Reached {config.stop_after_n_seconds} seconds, stopping...")
             stop_event.set()
         while True:
-            if any(p.exitcode is not None for p in processes):
+            if any(p.exitcode not in [None, 0] for p in processes):
                 logger.error("Something died, stopping all processes...")
                 stop_event.set()
                 break
@@ -697,7 +702,7 @@ def train_mp(config: Config):
             p.join(timeout=1)
             if p.is_alive():
                 p.terminate()
-            if p.exitcode != 0:
+            if p.exitcode not in [None, 0]:
                 raise ChildProcessError("Something died")
 
 
@@ -745,7 +750,7 @@ def _self_play_n_games(
             trajectories[i].append((state, move_probs))
             move_probs = heat_dict(move_probs, temperature)
             mpi = list(move_probs.items())
-            move, _ = np.random.choice(mpi, p=[m[1] for m in mpi])
+            move, _ = random.choices(mpi, [m[1] for m in mpi])[0]
             states[i].do(move)
             if states[i].is_game_over():
                 game_overs[i] = True

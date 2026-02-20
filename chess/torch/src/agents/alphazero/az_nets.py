@@ -46,6 +46,9 @@ class AzNet(Protocol):
     def get_codec(self) -> Codec:
         pass
 
+    def state2np(self, state: env.ChessGame) -> np.ndarray:
+        pass
+
 
 class ResNet(AzNet):
     def __init__(self, num_res_blocks, num_hidden, device):
@@ -62,7 +65,7 @@ class ResNet(AzNet):
 
     def mpv(self, state: env.ChessGame) -> types.MPV:
         p, v = self.pv(state)
-        return self.codec.probs2dict(p, state), v
+        return self.codec.prior2dict(p, state), v
 
     def pv_batch(self, states: list[env.ChessGame]) -> list[types.PV]:
         plogits, val = self.forward_batch(states)
@@ -73,7 +76,7 @@ class ResNet(AzNet):
 
     def mpv_batch(self, states: list[env.ChessGame]) -> list[types.MPV]:
         pvs = self.pv_batch(states)
-        return [(self.codec.probs2dict(pv[0], s), pv[1]) for s, pv in zip(states, pvs)]
+        return [(self.codec.prior2dict(pv[0], s), pv[1]) for s, pv in zip(states, pvs)]
 
     def forward_batch(self, states: list[env.ChessGame]):
         n = np.stack([self.state2np(s) for s in states])
@@ -92,8 +95,7 @@ class ResNet(AzNet):
     def get_codec(self) -> Codec:
         return self.codec
 
-    @staticmethod
-    def state2np(state: env.ChessGame):
+    def state2np(self, state: env.ChessGame):
         return state.state_np()
 
 
