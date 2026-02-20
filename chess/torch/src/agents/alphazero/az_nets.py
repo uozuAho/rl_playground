@@ -7,6 +7,8 @@ import numpy as np
 import torch
 from torch import nn
 import torch.nn.functional as F
+
+from agents.alphazero.move_encoding import Codec, Codec4096
 from utils import types
 
 from env import env
@@ -34,6 +36,9 @@ class AzNet(Protocol):
 
     def train(self):
         """Set NN to train mode"""
+        pass
+
+    def get_codec(self) -> Codec:
         pass
 
 
@@ -69,6 +74,9 @@ class ResNet(AzNet):
 
     def train(self):
         self.model.train()
+
+    def get_codec(self) -> Codec:
+        return Codec4096()
 
     @staticmethod
     def load(path: Path, device):

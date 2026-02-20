@@ -21,6 +21,7 @@ from torch.optim import Adam
 import torch.nn.functional as F
 
 from agents.agent import ChessAgent
+from agents.alphazero.move_encoding import Codec
 from agents.mctsnew import MctsAgent, best_by_visit_value
 from algs.pmcts import ParallelMcts, MCTSNode
 from env import env
@@ -222,6 +223,7 @@ def player_loop(
             config.temperature,
             config.dirichlet_alpha,
             config.dirichlet_epsilon,
+            net.get_codec(),
         )
 
     def send_metrics():
@@ -705,12 +707,13 @@ def _batch_eval_for_mcts(
     return net.pv_batch(states)
 
 
-def _mcts_probs(root: MCTSNode) -> list[float]:
-    probs = [0] * ACTION_SIZE_4096
+def _mcts_probs(root: MCTSNode, codec: Codec) -> list[float]:
+    probs = [0] * codec.ACTION_SIZE
     total_visits = sum(c.visits for c in root.children.values())
     assert total_visits > 0
     for a, n in root.children.items():
-        probs[a] = n.visits / total_visits
+        idx = codec.move2int(a)
+        probs[idx] = n.visits / total_visits
     assert maths.is_prob_dist(probs)
     return probs
 
@@ -723,6 +726,7 @@ def _self_play_n_games(
     temperature: float,
     dirichlet_alpha: float,
     dirichlet_epsilon: float,
+    codec: Codec,
 ) -> typing.Iterable[GameStep]:
     states = [env.ChessGame() for _ in range(n_games)]
     game_overs = [False for _ in range(n_games)]
@@ -743,7 +747,7 @@ def _self_play_n_games(
         for i, root in zip(active_idxs, roots):
             state = root.state
             valid_mask = _valid_actions_mask(root.state)
-            probs = _mcts_probs(root)
+            probs = _mcts_probs(root, codec)
             trajectories[i].append((state, valid_mask, probs))
             probs = heat(np.array(probs), temperature)
             action = np.random.choice(ACTION_SIZE_4096, p=probs)
