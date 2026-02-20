@@ -10,10 +10,10 @@ make pc
 ```
 
 # todo
-- WIP fix azmp code
-    - WIP changing from ndarray prob dist to dict{move:prob}
-- azmp: does it train fast enough?
-    - start with a small network. only net big net for max perf
+- azmp: does it learn?
+    - seems to be missing logs
+    - eval taking too long?
+    - policy loss is huge - step thru training to see if it makes sense
     - see inline todos: add capture reward?
 
 # maybe/later

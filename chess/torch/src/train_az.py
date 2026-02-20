@@ -5,13 +5,13 @@ import agents.alphazero.azmp as az
 from agents.random import RandomAgent
 
 PROJ_ROOT = Path(__file__).parent.parent
-LOG_PATH = PROJ_ROOT / "train_az_mp.log"
+LOG_PATH = PROJ_ROOT / "train_az.log"
 
 
 def main():
     config = az.Config(
-        num_res_blocks=1,
-        num_hidden=2,
+        num_res_blocks=2,
+        num_hidden=24,
         learning_rate=0.001,
         weight_decay=0.0001,
         mask_invalid_actions=True,
@@ -33,7 +33,7 @@ def main():
         device_player="cuda",
         device_learn="cuda",
         device_eval="cpu",
-        cli_log_mode="perf",
+        cli_log_mode="eval",
         log_to_file=True,
         log_format_file="json",
         console_log_level="INFO",
