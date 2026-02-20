@@ -12,6 +12,8 @@ make pc
 # todo
 - WIP copy paste azmp. does it train fast enough?
     - WIP copy tests
+        - WIP az nets
+        - az
     - start with a small network. only net big net for max perf
     - see inline todos: add capture reward?
 

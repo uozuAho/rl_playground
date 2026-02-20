@@ -99,7 +99,7 @@ class _ResNetModule(nn.Module):
         self.num_hidden = num_hidden
 
         self.startBlock = nn.Sequential(
-            nn.Conv2d(3, num_hidden, kernel_size=3, padding=1),
+            nn.Conv2d(8, num_hidden, kernel_size=3, padding=1),
             nn.BatchNorm2d(num_hidden),
             nn.ReLU(),
         )
