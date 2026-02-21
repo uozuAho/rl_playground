@@ -1,5 +1,10 @@
 # Chess
 
+It's slow. Even using multiprocessing to max out my whole computer, I'm only
+getting < 1 game per second. Most recent effort and todos are around azmp:
+multiprocess alphazero. Dunno if it works or not, since training is so slow
+it's going to take weeks to see if there's any improvement.
+
 # Quick start
 Install uv + make.
 
