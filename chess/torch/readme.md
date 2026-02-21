@@ -11,8 +11,9 @@ make pc
 
 # todo
 - azmp: does it learn?
-    - seems to be missing logs
-    - eval taking too long?
+    - plot metrics
+    - run with decent sized net. any sign of learning?
+        - tune perf if needed
     - policy loss is huge - step thru training to see if it makes sense
     - see inline todos: add capture reward?
 

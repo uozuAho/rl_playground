@@ -30,16 +30,17 @@ def main():
         eval_opponents=[
             ("rng", RandomAgent()),
         ],
+        eval_n_games=2,
+        eval_n_mcts_sims=4,
         device_player="cuda",
         device_learn="cuda",
-        device_eval="cpu",
-        cli_log_mode="eval",
+        device_eval="cuda",
+        cli_log_mode="perf",
         log_to_file=True,
         log_format_file="json",
         console_log_level="INFO",
         log_file_path=LOG_PATH,
     )
-    az.train_mp(config)
     if os.path.exists(LOG_PATH):
         os.remove(LOG_PATH)
     az.train_mp(config)

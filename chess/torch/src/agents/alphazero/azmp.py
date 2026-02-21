@@ -544,12 +544,14 @@ def metrics_loop(
                                 pprint(m[-1])
                     case "perf":
                         print("-----")
-                        if batcher_metrics:
-                            pprint(batcher_metrics[-1])
-                        if player_metrics:
-                            pprint(player_metrics[-1])
-                        if learner_metrics:
-                            pprint(learner_metrics[-1])
+                        for m in [
+                            player_metrics,
+                            batcher_metrics,
+                            learner_metrics,
+                            eval_metrics,
+                        ]:
+                            if m:
+                                pprint(m[-1])
                     case _:
                         print(f"unknown cli_log_mode {config.cli_log_mode}")
         except queue.Empty:
@@ -699,6 +701,7 @@ def train_mp(config: Config):
         stop_event.set()
     finally:
         for p in processes:
+            logger.info(f"Waiting for {p}")
             p.join(timeout=1)
             if p.is_alive():
                 p.terminate()
