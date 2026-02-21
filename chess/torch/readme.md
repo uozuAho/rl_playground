@@ -10,15 +10,19 @@ make pc
 ```
 
 # todo
+- azmp player perf
+    - profile
+    - maybe use/store move uci instead of move classes
+- try on big machine
+    - first:
+        - run on small remote machine to iron out teething issues
+        - print perf report from log
+        - copy log from big machine
+        - plot perf metrics
 - azmp: does it learn?
-    - run with decent sized net. any sign of learning?
-        - tune perf if needed
-    - policy loss is huge - step thru training to see if it makes sense
-    - see inline todos: add capture reward?
 
 # maybe/later
-- azmp perf
-    - use/store move uci instead of move classes
+- see inline todos: add capture reward?
 - maybe find more opponents
     - maybe try mcts andoma
 - alphazero:
