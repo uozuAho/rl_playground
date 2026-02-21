@@ -243,16 +243,18 @@ public class GreedyNnAgent : IChessAgent
             epTime = end - start;
 
             var gameState = game.GameState();
-            epStats.Add(new EpisodeStats
-            {
-                Win = gameState.IsWhiteWin,
-                Draw = gameState.IsDraw || gameState.IsInProgress,  // in progress means halfmove limit
-                Loss = gameState.IsBlackWin,
-                Reward = episodeReward,
-                Halfmoves = game.HalfmoveCount(),
-                AvgLoss = episodeLosses.Count > 0 ? episodeLosses.Average() : 0,
-                Duration = epTime
-            });
+            epStats.Add(
+                new EpisodeStats
+                {
+                    Win = gameState.IsWhiteWin,
+                    Draw = gameState.IsDraw || gameState.IsInProgress, // in progress means halfmove limit
+                    Loss = gameState.IsBlackWin,
+                    Reward = episodeReward,
+                    Halfmoves = game.HalfmoveCount(),
+                    AvgLoss = episodeLosses.Count > 0 ? episodeLosses.Average() : 0,
+                    Duration = epTime,
+                }
+            );
 
             epCallback?.Invoke(epStats);
 
@@ -271,7 +273,9 @@ public class GreedyNnAgent : IChessAgent
         var draws = epStats.Sum(x => x.Draw ? 1 : 0);
         var epRate = nEpisodes / totalTrainingTimer.Elapsed.TotalSeconds;
         var posRate = epStats.Sum(x => x.Halfmoves) / totalTrainingTimer.Elapsed.TotalSeconds;
-        Console.WriteLine($"Trained {nEpisodes} eps in {totalTrainingTimer.Elapsed} ({epRate:F2} games/s, {posRate:F2} pos/s)");
+        Console.WriteLine(
+            $"Trained {nEpisodes} eps in {totalTrainingTimer.Elapsed} ({epRate:F2} games/s, {posRate:F2} pos/s)"
+        );
         Console.WriteLine($"Wins: {wins}");
         Console.WriteLine($"Draws: {draws}");
         Console.WriteLine($"Losses: {losses}");

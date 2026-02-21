@@ -8,20 +8,19 @@ TorchSharp seems decent, but requires manual memory management when
 using the GPU :(
 
 # quick start
-- install dotnet 8
+- install dotnet 8, make
 - `git clone --recurse-submodules`
 
 ```sh
-dotnet test
+make pc
 cd cschess.experiments
 dotnet run chess gpu
-
-dotnet csharpier format .   # format code
 ```
 
 # Todo
-- add new azmp todos
-    - single thread first?
+- implement alphazero
+    - single thread first
+## old todos
 - greedy nn bot
   - DONE test small run on cpu
   - DONE print stats every episode (currently pretty slow)
