@@ -11,7 +11,6 @@ make pc
 
 # todo
 - azmp: does it learn?
-    - plot metrics
     - run with decent sized net. any sign of learning?
         - tune perf if needed
     - policy loss is huge - step thru training to see if it makes sense
