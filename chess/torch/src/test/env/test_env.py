@@ -1,0 +1,33 @@
+import random
+
+import numpy as np
+from agents.random import RandomAgent
+from env import env
+
+
+def test_random_game():
+    game = env.ChessGame(halfmove_limit=20)
+    num_moves = 0
+    while not game.is_game_over():
+        move = random.choice(list(game.legal_moves()))
+        game.do(move)
+        num_moves += 1
+    assert num_moves <= 20
+
+
+def test_random_agent():
+    agents = {env.WHITE: RandomAgent(), env.BLACK: RandomAgent()}
+    game = env.ChessGame(halfmove_limit=20)
+    assert game.turn == env.WHITE
+    while not game.is_game_over():
+        agent = agents[game.turn]
+        move = agent.get_action(game)
+        game.do(move)
+
+
+def test_initial_state():
+    game = env.ChessGame()
+    state = game.state_np()
+    assert state.shape == (8, 8, 8)
+    assert np.all(state[0, 1, :] == 1)  # white pawns on row 1
+    assert np.all(state[0, 6, :] == -1)  # black pawns on row 7

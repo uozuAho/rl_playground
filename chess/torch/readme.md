@@ -1,70 +1,44 @@
 # Chess
 
-Inspired by https://www.kaggle.com/code/arjanso/reinforcement-learning-chess-5-tree-search
-Code at https://github.com/arjangroen/RLC
+It's slow. Even using multiprocessing to max out my whole computer, I'm only
+getting < 1 game per second. Most recent effort and todos are around azmp:
+multiprocess alphazero. Dunno if it works or not, since training is so slow
+it's going to take weeks to see if there's any improvement.
 
 # Quick start
+Install uv + make.
+
 ```sh
-uv sync                   # install deps
-./precommit.sh            # run all linters + tests
-uv run bot_showdown.py    # vs all bots against each other
+make init
+make pc
+# see makefile for more
 ```
 
 # todo
-- make & train small net
-    - plan
-        - DONE write implementation plan
-        - DONE do human parts first
-        - DONE: check plan with claude
-        - DONE re-check updated plan with claude
-        - WIP execute plan: implement a greedy chess agent
-            - claude "follow the instructions in impl_plan_next.md"
-- evaluate vs opponents
-    - random
-    - greedy
-    - andoma
-    - (maybe) mcts with random rollout
-    - (maybe) alphazero
-- (maybe) impl in sb3, use optuna
-- make & train big net
-- (maybe): mcts improvement: save previous game tree?
+- port to C#. py chess players are very slow, gonna be hard to speed up
+- azmp player perf
+    - profile: heavy: copy and is_terminal
+- try on big machine
+    - first:
+        - run on small remote machine to iron out teething issues
+        - print perf report from log
+        - copy log from big machine
+        - plot perf metrics
+- azmp: does it learn?
 
-
-# My notes on 'RLC'
-- V-learning: just learn state values
-- V network architecture is "quite arbitrary and can probably be optimized"
-- moves are planned with MCTS
-
-## training
-- https://github.com/arjangroen/RLC/blob/e54eb7380875f64fd06106c59aa376b426d9e5ca/RLC/real_chess/agent.py#L21
-`opponent = agent.GreedyAgent()` Greedily chooses highest material value.
-
-- [network](https://github.com/arjangroen/RLC/blob/e54eb7380875f64fd06106c59aa376b426d9e5ca/RLC/real_chess/agent.py#L43)
-`player = agent.Agent(lr=0.0005,network='big')`
-
-- [learn](https://github.com/arjangroen/RLC/blob/e54eb7380875f64fd06106c59aa376b426d9e5ca/RLC/real_chess/learn.py#L18)
-- play game `iters` times
-    - [play_game](https://github.com/arjangroen/RLC/blob/e54eb7380875f64fd06106c59aa376b426d9e5ca/RLC/real_chess/learn.py#L73)
-        - max 80 halfmoves
-        - move = white move:
-            - mcts move after X games, else random legal move
-            - tree = self.mcts
-        - move = black move:
-            - pick highest value next state (greedy)
-    - `reward`: gives small reward for piece captures
-        - [saves state, samples minibatch, trains agent](https://github.com/arjangroen/RLC/blob/e54eb7380875f64fd06106c59aa376b426d9e5ca/RLC/real_chess/learn.py#L152)
-            - self.update_agent -> agent.TD_update
-            - [agent.TD_update](https://github.com/arjangroen/RLC/blob/e54eb7380875f64fd06106c59aa376b426d9e5ca/RLC/real_chess/agent.py#L205)
-                - straightforward batch state + next state + reward fit
-
-
-## other implementation details
-- instead of copying the board state, keeps track of moves & reverts board state
-  with:
-```py
-self.env.board.pop()
-self.env.init_layer_board()
-```
-
-- color: 1 = white, -1 = black: https://github.com/arjangroen/RLC/blob/e54eb7380875f64fd06106c59aa376b426d9e5ca/RLC/real_chess/tree.py#L61
-- note that pychess `chess.Color` uses True = white, False = black
+# maybe/later
+- see inline todos: add capture reward?
+- maybe find more opponents
+    - maybe try mcts andoma
+- alphazero:
+    - use full move representation (not just 64x64 from-to squares)
+        - read the original paper or ask chatty
+    - copy original alphazero input shape
+        - eg. 8 historical positions, knights etc.
+- old: greedy_agent (value net)
+    - make & train small net
+    - evaluate vs opponents
+        - random
+        - greedy
+        - andoma
+        - (maybe) mcts with random rollout
