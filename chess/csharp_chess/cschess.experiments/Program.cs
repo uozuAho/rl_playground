@@ -42,7 +42,8 @@ void TrainGreedyNn()
     void Eval(List<EpisodeStats> episodes)
     {
         // eval against random every 10
-        if (episodes.Count % 10 != 0) return;
+        if (episodes.Count % 10 != 0)
+            return;
 
         var match = PlayMatch(nnAgent, "GreedyNN", randomAgent, "Random");
         Console.WriteLine("Eval vs random:");

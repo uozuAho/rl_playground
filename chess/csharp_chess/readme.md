@@ -9,16 +9,19 @@ using the GPU :(
 
 # quick start
 - install dotnet 8
+- `git clone --recurse-submodules`
 
 ```sh
 dotnet test
-cd csharp.experiments
+cd cschess.experiments
 dotnet run chess gpu
 
 dotnet csharpier format .   # format code
 ```
 
 # Todo
+- add new azmp todos
+    - single thread first?
 - greedy nn bot
   - DONE test small run on cpu
   - DONE print stats every episode (currently pretty slow)
