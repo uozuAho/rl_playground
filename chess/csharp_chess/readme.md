@@ -12,7 +12,7 @@ using the GPU :(
 - `git clone --recurse-submodules`
 
 ```sh
-make pc
+make pc  # restoring packages on first run may take some time - torchsharp is big
 cd cschess.experiments
 dotnet run chess gpu
 ```
