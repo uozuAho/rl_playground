@@ -9,6 +9,7 @@ def test_train():
         weight_decay=0.0001,
         mask_invalid_actions=True,
         train_n_mcts_sims=2,
+        train_halfmove_limit=10,
         train_c_puct=2.0,
         temperature=1.25,
         dirichlet_alpha=0.3,

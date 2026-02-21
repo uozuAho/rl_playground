@@ -21,7 +21,6 @@ from torch.optim import Adam
 import torch.nn.functional as F
 
 from agents.agent import ChessAgent
-from agents.alphazero.move_encoding import Codec
 from agents.mctsnew import MctsAgent, best_by_visit_value
 from algs.pmcts import ParallelMcts, MCTSNode
 from env import env
@@ -44,6 +43,7 @@ class Config:
     mask_invalid_actions: bool = True
 
     train_n_mcts_sims: int = 5
+    train_halfmove_limit: int | None = None
     train_c_puct: float = 2.0
     temperature: float = 1.25
     dirichlet_alpha: float = 0.3
@@ -215,7 +215,7 @@ def player_loop(
             config.temperature,
             config.dirichlet_alpha,
             config.dirichlet_epsilon,
-            net.get_codec(),
+            config.train_halfmove_limit,
         )
 
     def send_metrics():
@@ -729,9 +729,9 @@ def _self_play_n_games(
     temperature: float,
     dirichlet_alpha: float,
     dirichlet_epsilon: float,
-    codec: Codec,
+    halfmove_limit: int | None,
 ) -> typing.Iterable[GameStep]:
-    states = [env.ChessGame() for _ in range(n_games)]
+    states = [env.ChessGame(halfmove_limit=halfmove_limit) for _ in range(n_games)]
     game_overs = [False for _ in range(n_games)]
     trajectories = [[] for _ in range(n_games)]
     winners: list[bool | None | env.Player] = [False for _ in range(n_games)]

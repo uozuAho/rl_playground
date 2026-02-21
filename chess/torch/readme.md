@@ -10,9 +10,9 @@ make pc
 ```
 
 # todo
+- port to C#. py chess players are very slow, gonna be hard to speed up
 - azmp player perf
-    - profile
-    - maybe use/store move uci instead of move classes
+    - profile: heavy: copy and is_terminal
 - try on big machine
     - first:
         - run on small remote machine to iron out teething issues
