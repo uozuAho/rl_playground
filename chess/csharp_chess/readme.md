@@ -19,6 +19,9 @@ dotnet run chess gpu
 
 # Todo
 - make/finish bot ranker
+  - print results: rank by score
+  - add andoma
+  - maybe: report avg time per move per agent
 - implement alphazero
     - single thread first
 ## old todos

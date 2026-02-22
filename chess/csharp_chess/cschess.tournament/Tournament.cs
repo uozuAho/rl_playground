@@ -5,7 +5,9 @@ using cschess.game;
 
 namespace cschess.tournament;
 
-public record TournamentResults(ImmutableList<MatchResult> Matches);
+public record TournamentResults(
+    ImmutableList<TournamentEntrant> Entrants,
+    ImmutableList<MatchResult> Matches);
 
 public record TournamentOptions(int NumGamesPerMatch, TimeSpan TurnTimeLimit);
 
@@ -27,7 +29,7 @@ public record MatchResult(
         var whiteWins = Games.Count(x => x.WhiteWon);
         var draws = Games.Count(x => x.IsDraw);
         var blackWins = numGames - whiteWins - draws;
-        return $"{White.Name} (white) vs {Black.Name} (black): W/D/L: {whiteWins}/{draws}/{blackWins}. "
+        return $"{White.Name} vs {Black.Name}: WLD {whiteWins}/{blackWins}/{draws}. "
             + $"Avg halfmoves: {avgHalfmoves}. Avg game time: {avgGameTime.TotalSeconds:#.###}s.";
     }
 }
@@ -40,7 +42,7 @@ public record GameResult(
     TimeSpan TotalTime
 );
 
-public class Tournament
+public static class Tournament
 {
     public static TournamentResults RunWith(
         TournamentOptions options,
@@ -58,7 +60,6 @@ public class Tournament
             """
         );
 
-        // todo: swiss-style rather than round robin
         for (var i = 0; i < entrants.Length; i++)
         {
             for (var j = 0; j < entrants.Length; j++)
@@ -75,7 +76,7 @@ public class Tournament
             }
         }
 
-        return new TournamentResults(matches.ToImmutableList());
+        return new TournamentResults(entrants.ToImmutableList(), matches.ToImmutableList());
     }
 
     public static MatchResult PlaySingleMatch(
