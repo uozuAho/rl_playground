@@ -18,6 +18,7 @@ dotnet run chess gpu
 ```
 
 # Todo
+- make/finish bot ranker
 - implement alphazero
     - single thread first
 ## old todos

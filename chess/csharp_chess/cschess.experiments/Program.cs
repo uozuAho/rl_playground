@@ -2,7 +2,6 @@
 using cschess.experiments;
 using cschess.tournament;
 
-// TrainValueNet();
 TrainGreedyNn();
 
 void TrainValueNet()
