@@ -14,10 +14,6 @@ Console.WriteLine();
 foreach (var match in results.Matches)
 {
     Console.WriteLine(match.Summary());
-    // maybe todo: end types
-    // var asdf  = match.Games
-    //     .GroupBy(x => x.FinalState)
-    //     .OrderDescending(g => g.)
 }
 
 Console.WriteLine();
