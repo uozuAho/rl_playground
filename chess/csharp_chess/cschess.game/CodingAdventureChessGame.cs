@@ -60,7 +60,7 @@ public class CodingAdventureChessGame : IChessGame
 
     public void MakeMove(MyMove move)
     {
-        _board.MakeMove(Chess.Core.Move.NullMove);
+        _board.MakeMove(ToCoreMove(move));
     }
 
     public PieceType? PieceAt(int square)
@@ -127,5 +127,12 @@ public class CodingAdventureChessGame : IChessGame
         var fromSq = Square.FromRankAndFile(from.rankIndex, from.fileIndex);
         var toSq = Square.FromRankAndFile(to.rankIndex, to.fileIndex);
         return new MyMove(fromSq, toSq);
+    }
+
+    public static Move ToCoreMove(MyMove move)
+    {
+        var from = new Coord(move.From.File, move.From.Rank);
+        var to = new Coord(move.To.File, move.To.Rank);
+        return new Move(from.SquareIndex, to.SquareIndex);
     }
 }

@@ -13,6 +13,8 @@ public class Square
 {
     private byte _rank; // row 1-8
     private byte _file; // col a-h
+    public int File => _file;
+    public int Rank => _rank;
 
     private Square(int rank, int file)
     {

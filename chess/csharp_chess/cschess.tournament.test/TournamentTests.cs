@@ -2,10 +2,10 @@ using cschess.agents;
 
 namespace cschess.tournament.test;
 
-public class UnitTest1
+public class TournamentTests
 {
     [Fact]
-    public void Test1()
+    public void Play2Randoms()
     {
         var results = Tournament.RunWith(
             new TournamentOptions(2, TimeSpan.FromMilliseconds(1)),
