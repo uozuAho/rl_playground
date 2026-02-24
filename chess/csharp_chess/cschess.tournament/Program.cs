@@ -14,12 +14,11 @@ Console.WriteLine();
 foreach (var match in results.Matches)
 {
     Console.WriteLine(match.Summary());
-
-    // todo: visualise results like
-    // X vs Y: win/draw/loss  WWWWWWWWWWWWWWWWWW..............LLLLLLLLLLLLLLLLL
-
-    // todo: end types
+    // maybe todo: end types
     // var asdf  = match.Games
     //     .GroupBy(x => x.FinalState)
     //     .OrderDescending(g => g.)
 }
+
+Console.WriteLine();
+results.PrintStats();

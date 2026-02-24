@@ -7,7 +7,68 @@ namespace cschess.tournament;
 
 public record TournamentResults(
     ImmutableList<TournamentEntrant> Entrants,
-    ImmutableList<MatchResult> Matches);
+    ImmutableList<MatchResult> Matches
+)
+{
+    private IEnumerable<TournamentEntrantStats> Stats()
+    {
+        foreach (var entrant in Entrants)
+        {
+            var whiteWins = Matches.Where(x => x.White == entrant).Sum(x => x.WhiteWins);
+            var blackWins = Matches.Where(x => x.Black == entrant).Sum(x => x.BlackWins);
+            var whiteLosses = Matches.Where(x => x.White == entrant).Sum(x => x.BlackWins);
+            var blackLosses = Matches.Where(x => x.Black == entrant).Sum(x => x.WhiteWins);
+            var whiteDraws = Matches.Where(x => x.White == entrant).Sum(x => x.Draws);
+            var blackDraws = Matches.Where(x => x.Black == entrant).Sum(x => x.Draws);
+
+            yield return new TournamentEntrantStats(
+                entrant,
+                whiteWins,
+                whiteLosses,
+                whiteDraws,
+                blackWins,
+                blackLosses,
+                blackDraws
+            );
+        }
+    }
+
+    public void PrintStats()
+    {
+        Console.WriteLine("entrant             score    WLD     WWLD      BWLD");
+        foreach (var s in Stats().OrderByDescending(Score))
+        {
+            Console.WriteLine(
+                $"{s.Entrant.Name, -20}{Score(s), 5:0.00}    {s.Wins}/{s.Losses}/{s.Draws}   "
+                    + $"{s.WhiteWins}/{s.WhiteLosses}/{s.WhiteDraws}     "
+                    + $"{s.BlackWins}/{s.BlackLosses}/{s.BlackDraws}"
+            );
+        }
+    }
+
+    private static double Score(TournamentEntrantStats stats)
+    {
+        return (stats.Wins - stats.Losses) / (double)stats.Matches;
+    }
+}
+
+public record TournamentEntrantStats(
+    TournamentEntrant Entrant,
+    int WhiteWins,
+    int WhiteLosses,
+    int WhiteDraws,
+    int BlackWins,
+    int BlackLosses,
+    int BlackDraws
+)
+{
+    public int WhiteMatches => WhiteWins + WhiteLosses + WhiteDraws;
+    public int BlackMatches => BlackWins + BlackLosses + BlackDraws;
+    public int Matches => WhiteMatches + BlackMatches;
+    public int Wins => WhiteWins + BlackWins;
+    public int Draws => WhiteDraws + BlackDraws;
+    public int Losses => WhiteLosses + BlackLosses;
+}
 
 public record TournamentOptions(int NumGamesPerMatch, TimeSpan TurnTimeLimit);
 
@@ -19,6 +80,12 @@ public record MatchResult(
     ImmutableList<GameResult> Games
 )
 {
+    public int Draws => Games.Count(x => x.IsDraw);
+
+    public int WhiteWins => Games.Count(x => x.WhiteWon);
+
+    public int BlackWins => Games.Count - WhiteWins - Draws;
+
     public string Summary()
     {
         var numGames = Games.Count;
@@ -26,9 +93,9 @@ public record MatchResult(
         var avgGameTime = TimeSpan.FromSeconds(
             Games.Average(x => x.TotalTime.TotalSeconds) / numGames
         );
-        var whiteWins = Games.Count(x => x.WhiteWon);
-        var draws = Games.Count(x => x.IsDraw);
-        var blackWins = numGames - whiteWins - draws;
+        var whiteWins = WhiteWins;
+        var draws = Draws;
+        var blackWins = BlackWins;
         return $"{White.Name} vs {Black.Name}: WLD {whiteWins}/{blackWins}/{draws}. "
             + $"Avg halfmoves: {avgHalfmoves}. Avg game time: {avgGameTime.TotalSeconds:#.###}s.";
     }
