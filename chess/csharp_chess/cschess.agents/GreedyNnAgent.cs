@@ -121,7 +121,7 @@ public class GreedyNnAgent : IChessAgent
         _replayBuffer = new ExperienceReplay(experienceBufferSize);
     }
 
-    public Move NextMove(IChessGame game, TimeSpan timeout)
+    public MyMove NextMove(IChessGame game, TimeSpan timeout)
     {
         if (game is not CodingAdventureChessGame internalGame)
             throw new InvalidOperationException("Only CodingAdventureChessGame is supported");

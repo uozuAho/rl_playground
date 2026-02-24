@@ -20,6 +20,8 @@ dotnet run chess gpu
 # Todo
 - WIP implement alphazero
   - WIP impl 'move' type for chess
+    - rename to move?
+  - remove int square refs from chess game interface
   - single thread first
 - bot ranker
   - add andoma?

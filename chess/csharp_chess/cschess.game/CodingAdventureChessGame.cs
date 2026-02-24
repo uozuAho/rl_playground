@@ -53,14 +53,14 @@ public class CodingAdventureChessGame : IChessGame
         return Arbiter.IsDrawResult(state);
     }
 
-    public IEnumerable<Move> LegalMoves()
+    public IEnumerable<MyMove> LegalMoves()
     {
-        return _moveGenerator.GenerateMoves(_board).ToArray().Select(Move.From);
+        return _moveGenerator.GenerateMoves(_board).ToArray().Select(ToMyMove);
     }
 
-    public void MakeMove(Move move)
+    public void MakeMove(MyMove move)
     {
-        _board.MakeMove(move.CoreMove);
+        _board.MakeMove(Chess.Core.Move.NullMove);
     }
 
     public PieceType? PieceAt(int square)
@@ -119,36 +119,13 @@ public class CodingAdventureChessGame : IChessGame
     {
         _board.UnmakeMove(_board.AllGameMoves[^1]);
     }
-}
 
-public class Move
-{
-    internal readonly Chess.Core.Move CoreMove;
-
-    public static Move From(Chess.Core.Move move)
+    public static MyMove ToMyMove(Move move)
     {
-        return new Move(move);
+        var from = new Coord(move.StartSquare);
+        var to = new Coord(move.TargetSquare);
+        var fromSq = Square.FromRankAndFile(from.rankIndex, from.fileIndex);
+        var toSq = Square.FromRankAndFile(to.rankIndex, to.fileIndex);
+        return new MyMove(fromSq, toSq);
     }
-
-    private Move(Chess.Core.Move coreMove)
-    {
-        CoreMove = coreMove;
-    }
-}
-
-public enum PieceType
-{
-    Pawn = 1,
-    Rook = 2,
-    Bishop = 3,
-    Knight = 4,
-    Queen = 5,
-    King = 6,
-};
-
-public enum Color
-{
-    Black = -1,
-    None = 0,
-    White = 1,
 }
