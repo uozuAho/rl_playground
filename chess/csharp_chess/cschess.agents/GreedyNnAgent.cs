@@ -305,10 +305,11 @@ public class GreedyNnAgent : IChessAgent
         {
             var row = i / 8;
             var col = i % 8;
-            var pieceType = game.PieceAt(i);
+            var square = ToSquare(i);
+            var pieceType = game.PieceAt(square);
             if (!pieceType.HasValue)
                 continue;
-            var color = game.ColorAt(i);
+            var color = game.ColorAt(square);
             Debug.Assert(color != Color.None);
             var pieceIdx = (int)pieceType - 1;
             data[pieceIdx, row, col] = (float)color;
@@ -330,6 +331,11 @@ public class GreedyNnAgent : IChessAgent
             data[7, row, col] = 1.0f;
 
         return data;
+    }
+
+    private static Square ToSquare(int i)
+    {
+        return Square.FromRankAndFile(i / 8, i % 8);
     }
 
     private void UpdateTargetNetwork()

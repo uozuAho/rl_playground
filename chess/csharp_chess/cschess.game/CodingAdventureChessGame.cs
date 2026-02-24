@@ -63,9 +63,9 @@ public class CodingAdventureChessGame : IChessGame
         _board.MakeMove(ToCoreMove(move));
     }
 
-    public PieceType? PieceAt(int square)
+    public PieceType? PieceAt(Square square)
     {
-        var pieceInt = _board.Square[square];
+        var pieceInt = _board.Square[ToIndex(square)];
 
         return Piece.PieceType(pieceInt) switch
         {
@@ -80,12 +80,12 @@ public class CodingAdventureChessGame : IChessGame
         };
     }
 
-    public Color ColorAt(int square)
+    public Color ColorAt(Square square)
     {
         if (!PieceAt(square).HasValue)
             return Color.None;
 
-        var pieceInt = _board.Square[square];
+        var pieceInt = _board.Square[ToIndex(square)];
 
         return Piece.PieceColour(pieceInt) switch
         {
@@ -129,10 +129,15 @@ public class CodingAdventureChessGame : IChessGame
         return new MyMove(fromSq, toSq);
     }
 
-    public static Move ToCoreMove(MyMove move)
+    private static Move ToCoreMove(MyMove move)
     {
         var from = new Coord(move.From.File, move.From.Rank);
         var to = new Coord(move.To.File, move.To.Rank);
         return new Move(from.SquareIndex, to.SquareIndex);
+    }
+
+    private static int ToIndex(Square square)
+    {
+        return new Coord(square.File, square.Rank).SquareIndex;
     }
 }

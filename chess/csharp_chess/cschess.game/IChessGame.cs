@@ -35,8 +35,8 @@ public interface IChessGame
     bool IsGameOver();
     GameState GameState();
     IEnumerable<MyMove> LegalMoves();
-    PieceType? PieceAt(int square);
-    Color ColorAt(int square);
+    PieceType? PieceAt(Square square);
+    Color ColorAt(Square square);
     int FullmoveCount();
     int HalfmoveCount();
     Color Turn();

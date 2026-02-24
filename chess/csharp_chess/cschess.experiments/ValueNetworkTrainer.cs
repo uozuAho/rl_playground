@@ -107,10 +107,11 @@ public class ValueNetworkTrainer
         {
             var row = i / 8;
             var col = i % 8;
-            var pieceType = game.PieceAt(i);
+            var square = ToSquare(i);
+            var pieceType = game.PieceAt(square);
             if (!pieceType.HasValue)
                 continue;
-            var color = game.ColorAt(i);
+            var color = game.ColorAt(square);
             Debug.Assert(color != Color.None);
             var pieceIdx = (int)pieceType - 1;
             tensor[pieceIdx][row][col] = (float)color;
@@ -130,6 +131,13 @@ public class ValueNetworkTrainer
         }
         tensor[7].fill_(1.0f);
         return tensor;
+    }
+
+    private static Square ToSquare(int i)
+    {
+        var rank = i / 8;
+        var file = i % 8;
+        return Square.FromRankAndFile(rank, file);
     }
 
     // Train value network
