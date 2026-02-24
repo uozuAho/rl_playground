@@ -18,7 +18,8 @@ dotnet run chess gpu
 ```
 
 # Todo
-- implement alphazero
+- WIP implement alphazero
+  - WIP impl 'move' type for chess
   - single thread first
 - bot ranker
   - add andoma?
