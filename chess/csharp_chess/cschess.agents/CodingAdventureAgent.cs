@@ -1,12 +1,13 @@
 using System.Diagnostics;
 using Chess.Core;
 using cschess.game;
+using Move = cschess.game.Move;
 
 namespace cschess.agents;
 
 public sealed class CodingAdventureAgent : IChessAgent
 {
-    public MyMove NextMove(IChessGame game, TimeSpan fromMilliseconds)
+    public Move NextMove(IChessGame game, TimeSpan fromMilliseconds)
     {
         var timeout = TimeSpan.FromMilliseconds(1);
         // todo: maybe later: use opening book before search

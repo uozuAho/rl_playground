@@ -4,7 +4,7 @@ namespace cschess.agents;
 
 public interface IChessAgent
 {
-    MyMove NextMove(IChessGame game) => NextMove(game, TimeSpan.FromMilliseconds(10));
+    Move NextMove(IChessGame game) => NextMove(game, TimeSpan.FromMilliseconds(10));
 
-    MyMove NextMove(IChessGame game, TimeSpan timeout);
+    Move NextMove(IChessGame game, TimeSpan timeout);
 }

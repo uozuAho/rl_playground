@@ -53,12 +53,12 @@ public class CodingAdventureChessGame : IChessGame
         return Arbiter.IsDrawResult(state);
     }
 
-    public IEnumerable<MyMove> LegalMoves()
+    public IEnumerable<Move> LegalMoves()
     {
         return _moveGenerator.GenerateMoves(_board).ToArray().Select(ToMyMove);
     }
 
-    public void MakeMove(MyMove move)
+    public void MakeMove(Move move)
     {
         _board.MakeMove(ToCoreMove(move));
     }
@@ -120,20 +120,20 @@ public class CodingAdventureChessGame : IChessGame
         _board.UnmakeMove(_board.AllGameMoves[^1]);
     }
 
-    public static MyMove ToMyMove(Move move)
+    public static Move ToMyMove(Chess.Core.Move move)
     {
         var from = new Coord(move.StartSquare);
         var to = new Coord(move.TargetSquare);
         var fromSq = Square.FromRankAndFile(from.rankIndex, from.fileIndex);
         var toSq = Square.FromRankAndFile(to.rankIndex, to.fileIndex);
-        return new MyMove(fromSq, toSq);
+        return new Move(fromSq, toSq);
     }
 
-    private static Move ToCoreMove(MyMove move)
+    private static Chess.Core.Move ToCoreMove(Move move)
     {
         var from = new Coord(move.From.File, move.From.Rank);
         var to = new Coord(move.To.File, move.To.Rank);
-        return new Move(from.SquareIndex, to.SquareIndex);
+        return new Chess.Core.Move(from.SquareIndex, to.SquareIndex);
     }
 
     private static int ToIndex(Square square)

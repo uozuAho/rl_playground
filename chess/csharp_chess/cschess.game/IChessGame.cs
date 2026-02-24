@@ -28,20 +28,20 @@ public class Square
     }
 }
 
-public record MyMove(Square From, Square To);
+public record Move(Square From, Square To);
 
 public interface IChessGame
 {
     bool IsGameOver();
     GameState GameState();
-    IEnumerable<MyMove> LegalMoves();
+    IEnumerable<Move> LegalMoves();
     PieceType? PieceAt(Square square);
     Color ColorAt(Square square);
     int FullmoveCount();
     int HalfmoveCount();
     Color Turn();
 
-    void MakeMove(MyMove move);
+    void MakeMove(Move move);
     void Undo();
 }
 
