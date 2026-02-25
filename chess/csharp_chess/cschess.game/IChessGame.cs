@@ -9,9 +9,11 @@ public record GameState(
 );
 
 //todo: should this be a struct/record/etc
+//todo: make illegal construction impossible
 public readonly record struct Square
 {
-    private readonly byte _rank; // row 1-8
+    private const string ColChars = "abcdefgh";
+    private readonly byte _rank; // row 1-8, 0-indexed
     private readonly byte _file; // col a-h
     public int File => _file;
     public int Rank => _rank;
@@ -26,9 +28,22 @@ public readonly record struct Square
     {
         return new Square(rank, file);
     }
+
+    public string ToUci()
+    {
+        var col = ColChars[_file];
+        var rank = (_rank + 1).ToString();
+        return col + rank;
+    }
 }
 
-public record struct Move(Square From, Square To);
+public readonly record struct Move(Square From, Square To)
+{
+    public string ToUci()
+    {
+        return From.ToUci() + To.ToUci();
+    }
+}
 
 public interface IChessGame
 {

@@ -18,7 +18,7 @@ public record MctsNode
     public MctsNode? Parent { get; init; }
     public double Prior { get; init; }
     public Move? MoveFromParent { get; init; }
-    public Dictionary<Move, MctsNode> Children = new Dictionary<Move, MctsNode>();
+    public Dictionary<Move, MctsNode> Children = new();
     public int Visits = 0;
     public double TotalValue = 0.0;
     public double? VEst = null;

@@ -20,7 +20,7 @@ dotnet run chess gpu
 # Todo
 - WIP implement alphazero
   - WIP pmcts
-    - WIP tests
+    - fix all squiggles
   - single thread first
   - check training speed, maybe optimise, maybe make multithread version
 - bot ranker

@@ -1,3 +1,4 @@
+using cschess.csutils;
 using cschess.game;
 using Shouldly;
 
@@ -21,8 +22,31 @@ public class PmctsTests
         foreach (var root in roots)
         {
             root.Visits.ShouldBe(numSims);
-            // todo: assert prob dist
+            var cprobs = root.Children.Values.Select(x => x.Prior);
+            Maths.IsProbDist(cprobs).ShouldBe(true);
         }
+    }
+
+    [Fact]
+    public void chooses_checkmates()
+    {
+        var boardMoves = new[]
+        {
+            ("6k1/5ppp/8/8/8/8/5PPP/4R1K1 w - - 0 1", "e1e8"),
+            ("4r1k1/5ppp/8/8/8/8/5PPP/6K1 b - - 1 1", "e8e1"),
+        };
+
+        var games = boardMoves
+            .Select(b => CodingAdventureChessGame.FromFen(b.Item1))
+            .Cast<IChessGame>()
+            .ToList();
+        var expectedMoves = boardMoves.Select(bm => bm.Item2).ToList();
+
+        var roots = new ParallelMcts(games, new DummyEval(), 100).Run();
+        var maxVisitMoves = roots.Select(x =>
+            x.Children.Values.MaxBy(c => c.Visits)!.MoveFromParent!.Value.ToUci()
+        );
+        maxVisitMoves.ShouldBe(expectedMoves);
     }
 }
 
