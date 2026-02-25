@@ -29,6 +29,11 @@ public class CodingAdventureChessGame : IChessGame
         _moveGenerator = new MoveGenerator();
     }
 
+    public IChessGame Copy()
+    {
+        return new CodingAdventureChessGame(Board.CreateBoard(_board));
+    }
+
     public bool IsGameOver()
     {
         return Arbiter.GetGameState(_board) != GameResult.InProgress;

@@ -43,6 +43,7 @@ public interface IChessGame
 
     void MakeMove(Move move);
     void Undo();
+    IChessGame Copy();
 }
 
 public enum PieceType

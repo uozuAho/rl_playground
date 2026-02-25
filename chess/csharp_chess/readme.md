@@ -19,8 +19,10 @@ dotnet run chess gpu
 
 # Todo
 - WIP implement alphazero
-  - rename mymove to move?
+  - WIP pmcts
+    - WIP tests
   - single thread first
+  - check training speed, maybe optimise, maybe make multithread version
 - bot ranker
   - add andoma?
   - maybe: report avg time per move per agent
