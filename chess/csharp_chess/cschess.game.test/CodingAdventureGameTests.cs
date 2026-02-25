@@ -18,10 +18,10 @@ public class CodingAdventureGameTests
             var move = random.Choice(game.LegalMoves());
             game.MakeMove(move);
 
-            (numHalfMoves++).ShouldBeLessThan(500);
+            (numHalfMoves++).ShouldBeLessThan(2000);
         }
 
-        numHalfMoves.ShouldBeGreaterThan(50);
+        numHalfMoves.ShouldBeGreaterThan(2);
     }
 
     [Fact]

@@ -3,14 +3,11 @@ using cschess.game;
 
 namespace cschess.agents;
 
-using Value = double;
 using MoveProbs = Dictionary<Move, double>;
-
-public delegate IEnumerable<(MoveProbs, Value)> BatchEvalFn(IEnumerable<IChessGame> games);
 
 public interface IEvaluator
 {
-    IEnumerable<(MoveProbs, Value)> BatchEval(IEnumerable<IChessGame> games);
+    IEnumerable<(MoveProbs, double)> BatchEval(IEnumerable<IChessGame> games);
 }
 
 public record MctsNode
@@ -18,22 +15,21 @@ public record MctsNode
     public MctsNode? Parent { get; init; }
     public double Prior { get; init; }
     public Move? MoveFromParent { get; init; }
-    public Dictionary<Move, MctsNode> Children = new();
-    public int Visits = 0;
-    public double TotalValue = 0.0;
-    public double? VEst = null;
+    public readonly Dictionary<Move, MctsNode> Children = new();
+    public int Visits;
+    public double TotalValue;
 
-    internal IChessGame? _state = null;
+    internal IChessGame? _state;
 
     public IChessGame State()
     {
-        if (_state == null)
-        {
-            Debug.Assert(Parent != null);
-            _state = Parent.State().Copy();
-            Debug.Assert(MoveFromParent.HasValue);
-            _state.MakeMove(MoveFromParent.Value);
-        }
+        if (_state != null)
+            return _state;
+
+        Debug.Assert(Parent != null);
+        _state = Parent.State().Copy();
+        Debug.Assert(MoveFromParent.HasValue);
+        _state.MakeMove(MoveFromParent.Value);
 
         return _state;
     }
@@ -56,18 +52,12 @@ public record MctsNode
     internal bool IsTerminal => State().IsGameOver();
 }
 
-internal class MctsSimState
+internal class MctsSimState(MctsNode root)
 {
-    public MctsSimState(MctsNode root)
-    {
-        Root = root;
-        Node = root;
-    }
-
-    internal MctsNode Root { get; set; }
-    internal MctsNode Node { get; set; }
+    internal MctsNode Root { get; set; } = root;
+    internal MctsNode Node { get; set; } = root;
     internal double? TerminalValue = null;
-    internal Dictionary<Move, double>? Peval = null;
+    internal MoveProbs? Peval = null;
     internal double? Veval = null;
 
     internal void Reset()
@@ -79,41 +69,25 @@ internal class MctsSimState
     }
 }
 
-public class ParallelMcts
+public class ParallelMcts(
+    List<IChessGame> states,
+    IEvaluator evaluator,
+    int numSimulations,
+    double cPuct = 1.0,
+    bool addDirichletNoise = false,
+    double dirichletAlpha = 0.3,
+    double dirichletEpsilon = 0.25
+)
 {
-    private List<IChessGame> States;
-    private IEvaluator Evaluator;
-    private int NumSimulations;
-    private double CPuct;
-    private bool AddDirichletNoise;
-    private double DirichletAlpha;
-    private double DirichletEpsilon;
+    private double _dirichletAlpha = dirichletAlpha;
+    private double _dirichletEpsilon = dirichletEpsilon;
 
-    private int _simCount = 0;
-    private List<MctsSimState> _sims = new();
-
-    public ParallelMcts(
-        List<IChessGame> states,
-        IEvaluator evaluator,
-        int numSimulations,
-        double cPuct = 1.0,
-        bool addDirichletNoise = false,
-        double dirichletAlpha = 0.3,
-        double dirichletEpsilon = 0.25
-    )
-    {
-        States = states;
-        Evaluator = evaluator;
-        NumSimulations = numSimulations;
-        CPuct = cPuct;
-        AddDirichletNoise = addDirichletNoise;
-        DirichletAlpha = dirichletAlpha;
-        DirichletEpsilon = dirichletEpsilon;
-    }
+    private int _simCount;
+    private List<MctsSimState> _sims = [];
 
     public List<MctsNode> Run()
     {
-        _sims = States
+        _sims = states
             .Select(state => new MctsSimState(
                 new MctsNode
                 {
@@ -125,7 +99,7 @@ public class ParallelMcts
             ))
             .ToList();
 
-        while (_simCount < NumSimulations)
+        while (_simCount < numSimulations)
         {
             StartSim();
             Eval();
@@ -144,7 +118,7 @@ public class ParallelMcts
 
             while (sim.Node is { IsExpanded: true, IsTerminal: false })
             {
-                sim.Node = sim.Node.Children.Values.MaxBy(c => c.Puct(CPuct))!;
+                sim.Node = sim.Node.Children.Values.MaxBy(c => c.Puct(cPuct))!;
             }
 
             if (sim.Node.IsTerminal)
@@ -169,7 +143,7 @@ public class ParallelMcts
     private void Eval()
     {
         var envs = _sims.Select(s => s.Node.State());
-        var pvs = Evaluator.BatchEval(envs).ToList();
+        var pvs = evaluator.BatchEval(envs).ToList();
         for (var i = 0; i < _sims.Count; i++)
         {
             var (p, v) = pvs[i];
@@ -188,9 +162,8 @@ public class ParallelMcts
             if (sim.TerminalValue == null)
             {
                 sim.Veval = -sim.Veval;
-                sim.Node.VEst = sim.Veval;
 
-                if (ReferenceEquals(sim.Node, sim.Root) && AddDirichletNoise)
+                if (ReferenceEquals(sim.Node, sim.Root) && addDirichletNoise)
                 {
                     AddDirichletNoiseToEval(sim);
                 }
@@ -211,8 +184,7 @@ public class ParallelMcts
                     ? sim.TerminalValue.Value
                     : sim.Veval!.Value;
 
-            // Backpropagation: update values up the search path
-            var node = (MctsNode?)sim.Node;
+            var node = sim.Node;
             while (node != null)
             {
                 node.Visits++;

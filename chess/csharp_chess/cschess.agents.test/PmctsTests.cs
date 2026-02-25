@@ -9,8 +9,8 @@ public class PmctsTests
     [Fact]
     public void it_runs()
     {
-        var numGames = 2;
-        var numSims = 3;
+        const int numGames = 2;
+        const int numSims = 3;
         var games = Enumerable
             .Range(0, numGames)
             .Select(_ => CodingAdventureChessGame.StandardGame())
