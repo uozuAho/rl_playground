@@ -9,10 +9,10 @@ public record GameState(
 );
 
 //todo: should this be a struct/record/etc
-public class Square
+public readonly record struct Square
 {
-    private byte _rank; // row 1-8
-    private byte _file; // col a-h
+    private readonly byte _rank; // row 1-8
+    private readonly byte _file; // col a-h
     public int File => _file;
     public int Rank => _rank;
 
@@ -28,7 +28,7 @@ public class Square
     }
 }
 
-public record Move(Square From, Square To);
+public record struct Move(Square From, Square To);
 
 public interface IChessGame
 {

@@ -33,6 +33,6 @@ internal class DummyEval : IEvaluator
         return from chessGame in games
             select chessGame.LegalMoves().ToList() into moves
             let prob = 1.0 / moves.Count
-            select (moves.ToDictionary(x => x, x => prob), 0.0);
+            select (moves.ToDictionary(x => x, _ => prob), 0.0);
     }
 }

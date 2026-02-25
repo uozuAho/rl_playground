@@ -31,8 +31,8 @@ public record MctsNode
         {
             Debug.Assert(Parent != null);
             _state = Parent.State().Copy();
-            Debug.Assert(MoveFromParent != null);
-            _state.MakeMove(MoveFromParent);
+            Debug.Assert(MoveFromParent.HasValue);
+            _state.MakeMove(MoveFromParent.Value);
         }
 
         return _state;
@@ -142,8 +142,7 @@ public class ParallelMcts
         {
             sim.Reset();
 
-            // Selection: traverse tree using PUCT until we reach a leaf
-            while (sim.Node.IsExpanded && !sim.Node.IsTerminal)
+            while (sim.Node is { IsExpanded: true, IsTerminal: false })
             {
                 sim.Node = sim.Node.Children.Values.MaxBy(c => c.Puct(CPuct))!;
             }
@@ -171,7 +170,7 @@ public class ParallelMcts
     {
         var envs = _sims.Select(s => s.Node.State());
         var pvs = Evaluator.BatchEval(envs).ToList();
-        for (int i = 0; i < _sims.Count; i++)
+        for (var i = 0; i < _sims.Count; i++)
         {
             var (p, v) = pvs[i];
             _sims[i].Peval = p;
@@ -188,8 +187,6 @@ public class ParallelMcts
 
             if (sim.TerminalValue == null)
             {
-                // evaluate gives the value for the current player, we want
-                // for the previous player - just need to invert the value
                 sim.Veval = -sim.Veval;
                 sim.Node.VEst = sim.Veval;
 
@@ -198,7 +195,6 @@ public class ParallelMcts
                     AddDirichletNoiseToEval(sim);
                 }
 
-                // Expand: create child nodes for all valid actions
                 foreach (var action in sim.Node.State().LegalMoves())
                 {
                     sim.Node.Children[action] = new MctsNode
