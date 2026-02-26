@@ -60,7 +60,7 @@ public class CodingAdventureChessGame : IChessGame
 
     public IEnumerable<Move> LegalMoves()
     {
-        return _moveGenerator.GenerateMoves(_board).ToArray().Select(ToMyMove);
+        return _moveGenerator.GenerateMoves(_board).ToArray().Select(ToMyMove).Distinct();
     }
 
     public void MakeMove(Move move)
