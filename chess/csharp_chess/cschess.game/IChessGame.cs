@@ -1,18 +1,12 @@
 namespace cschess.game;
 
-public record GameState(
-    string Description,
-    bool IsInProgress,
-    bool IsDraw,
-    bool IsWhiteWin,
-    bool IsBlackWin
-);
+public record GameStatus(string Description, bool IsInProgress, Color? Winner);
 
 //todo: should this be a struct/record/etc
 //todo: make illegal construction impossible
 public readonly record struct Square
 {
-    private const string ColChars = "abcdefgh";
+    private const string fileChars = "abcdefgh";
     private readonly byte _rank; // row 1-8, 0-indexed
     private readonly byte _file; // col a-h
     public int File => _file;
@@ -31,7 +25,7 @@ public readonly record struct Square
 
     public string ToUci()
     {
-        var col = ColChars[_file];
+        var col = fileChars[_file];
         var rank = (_rank + 1).ToString();
         return col + rank;
     }
@@ -48,7 +42,7 @@ public readonly record struct Move(Square From, Square To)
 public interface IChessGame
 {
     bool IsGameOver();
-    GameState GameState();
+    GameStatus GameStatus();
     IEnumerable<Move> LegalMoves();
     PieceType? PieceAt(Square square);
     Color ColorAt(Square square);

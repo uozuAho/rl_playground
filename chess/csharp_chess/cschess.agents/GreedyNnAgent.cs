@@ -152,18 +152,14 @@ public class GreedyNnAgent : IChessAgent
 
     private float Reward(CodingAdventureChessGame state)
     {
-        var gameState = state.GameState();
+        var gameState = state.GameStatus();
         // assumes greedy agent is white
-        if (gameState.IsWhiteWin)
+        return gameState.Winner switch
         {
-            return 1.0f;
-        }
-        if (gameState.IsBlackWin)
-        {
-            return -1.0f;
-        }
-
-        return 0.0f;
+            null => 0.0f,
+            Color.White => 1.0f,
+            _ => -1.0f,
+        };
     }
 
     /// <summary>
@@ -242,13 +238,13 @@ public class GreedyNnAgent : IChessAgent
             var end = totalTrainingTimer.Elapsed;
             epTime = end - start;
 
-            var gameState = game.GameState();
+            var gameState = game.GameStatus();
             epStats.Add(
                 new EpisodeStats
                 {
-                    Win = gameState.IsWhiteWin,
-                    Draw = gameState.IsDraw || gameState.IsInProgress, // in progress means halfmove limit
-                    Loss = gameState.IsBlackWin,
+                    Win = gameState.Winner == Color.White,
+                    Draw = gameState.IsInProgress || gameState.Winner == null, // in progress means halfmove limit
+                    Loss = gameState.Winner == Color.Black,
                     Reward = episodeReward,
                     Halfmoves = game.HalfmoveCount(),
                     AvgLoss = episodeLosses.Count > 0 ? episodeLosses.Average() : 0,

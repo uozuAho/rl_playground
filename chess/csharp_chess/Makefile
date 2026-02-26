@@ -6,6 +6,7 @@ rebuild:
 
 precommit:
 	dotnet csharpier format .
+	dotnet build
 	dotnet test
 
 rank:

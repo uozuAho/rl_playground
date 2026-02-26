@@ -123,19 +123,17 @@ public class ParallelMcts(
 
             if (sim.Node.IsTerminal)
             {
-                var gameState = sim.Node.State().GameState();
+                var gameState = sim.Node.State().GameStatus();
                 var turn = sim.Node.State().Turn();
-                var otherPlayer = turn == Color.White ? Color.Black : Color.White;
+                var movedLast = turn == Color.White ? Color.Black : Color.White;
+                var winner = gameState.Winner;
 
-                if (gameState.IsDraw)
+                if (winner == null)
                     sim.TerminalValue = 0.0;
-                else if (
-                    (gameState.IsWhiteWin && otherPlayer == Color.White)
-                    || (gameState.IsBlackWin && otherPlayer == Color.Black)
-                )
-                    sim.TerminalValue = 1.0;
                 else
-                    sim.TerminalValue = -1.0;
+                {
+                    sim.TerminalValue = winner == movedLast ? 1.0 : -1.0;
+                }
             }
         }
     }

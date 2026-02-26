@@ -180,13 +180,13 @@ public static class Tournament
         }
         stopwatch.Stop();
 
-        var gameState = game.GameState();
+        var gameState = game.GameStatus();
 
         return new GameResult(
             FinalState: gameState.Description,
             Halfmoves: game.HalfmoveCount(),
-            IsDraw: gameState.IsDraw,
-            WhiteWon: gameState.IsWhiteWin,
+            IsDraw: gameState is { IsInProgress: false, Winner: null },
+            WhiteWon: gameState.Winner == Color.White,
             TotalTime: stopwatch.Elapsed
         );
     }

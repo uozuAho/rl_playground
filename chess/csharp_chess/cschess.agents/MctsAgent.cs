@@ -86,15 +86,11 @@ internal class RandomRolloutEval : IEvaluator
             gCopy.MakeMove(move);
         }
 
-        var gs = gCopy.GameState();
-        var winner =
-            gs.IsWhiteWin ? Color.White
-            : gs.IsBlackWin ? Color.Black
-            : (Color?)null;
+        var gs = gCopy.GameStatus();
         var val = 0.0;
-        if (winner != null)
+        if (gs.Winner != null)
         {
-            val = player == winner ? 1.0 : -1.0;
+            val = player == gs.Winner ? 1.0 : -1.0;
         }
 
         return (moveProbs, val);

@@ -39,23 +39,19 @@ public class CodingAdventureChessGame : IChessGame
         return Arbiter.GetGameState(_board) != GameResult.InProgress;
     }
 
-    public GameState GameState()
+    public GameStatus GameStatus()
     {
         var state = Arbiter.GetGameState(_board);
+        var winner =
+            Arbiter.IsDrawResult(state) ? (Color?)null
+            : Arbiter.IsWhiteWinsResult(state) ? Color.White
+            : Color.Black;
 
-        return new GameState(
+        return new GameStatus(
             Description: state.ToString(),
             IsInProgress: state == GameResult.InProgress,
-            IsDraw: Arbiter.IsDrawResult(state),
-            IsWhiteWin: Arbiter.IsWhiteWinsResult(state),
-            IsBlackWin: Arbiter.IsBlackWinsResult(state)
+            Winner: winner
         );
-    }
-
-    public bool IsDraw()
-    {
-        var state = Arbiter.GetGameState(_board);
-        return Arbiter.IsDrawResult(state);
     }
 
     public IEnumerable<Move> LegalMoves()

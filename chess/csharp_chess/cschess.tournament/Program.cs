@@ -5,9 +5,8 @@ var results = Tournament.RunWith(
     new TournamentOptions(NumGamesPerMatch: 3, TurnTimeLimit: TimeSpan.FromMilliseconds(10)),
     new TournamentEntrant(new RandomAgent(), "random"),
     new TournamentEntrant(new CodingAdventureAgent(), "CodingAdventure")
-
-    // slow!
-    // new TournamentEntrant(MctsAgent.RandomRollout(10), "MctsRR-10")
+// slow!
+// new TournamentEntrant(MctsAgent.RandomRollout(10), "MctsRR-10")
 );
 
 Console.WriteLine();
