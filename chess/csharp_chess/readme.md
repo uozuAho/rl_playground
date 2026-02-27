@@ -19,10 +19,9 @@ dotnet run chess gpu
 
 # Todo
 - WIP implement alphazero
-  - WIP net.
-    - test net
-      - output p is prob dist
-  - single thread first
+  - do one/few training steps ASAP. does training work?
+    - single thread
+  - todo: unskip batch eval test. Still NaN?
   - check training speed, maybe optimise, maybe make multithread version
   - maybe make mcts agents respect timeout
 - bot ranker
