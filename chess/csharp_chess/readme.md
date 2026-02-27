@@ -18,15 +18,16 @@ dotnet run chess gpu
 ```
 
 # Todo
-- WIP implement alphazero
-  - do one/few training steps ASAP. does training work?
-    - single thread
+- WIP implement alphazero single thread first
+  - WIP do one/few training steps ASAP. does training work?
+    - WIP learner
+  - WIP self play games
     - test for state immutability, see todos
     - test heat, heat dict
     - test self play games - does returned trajectory make sense?
   - todo: unskip batch eval test. Still NaN?
-  - check training speed, maybe optimise, maybe make multithread version
-  - maybe make mcts agents respect timeout
+- check training speed, maybe optimise, maybe make multithread version
+- maybe make mcts agents respect timeout
 - bot ranker
   - add andoma?
   - maybe: report avg time per move per agent

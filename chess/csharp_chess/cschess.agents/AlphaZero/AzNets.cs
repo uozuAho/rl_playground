@@ -17,69 +17,19 @@ public interface IAzNet
     IEnumerable<(Dictionary<Move, float>, float)> BatchEval(IEnumerable<IChessGame> games);
 }
 
-public class ResNet : IAzNet
+/// <summary>
+/// Encode game states for feeding into a net
+/// </summary>
+public interface IStateEncoder
 {
-    public ICodec Codec { get; } = new Codec4096();
-    private readonly ResNetModule _model;
-    private readonly Device _device;
+    float[,,,] StatesToNumbers(IEnumerable<IChessGame> games);
 
-    public ResNet(int numResBlocks, int numHidden, Device device)
-    {
-        _model = new ResNetModule(numResBlocks, numHidden, Codec).to(device);
-        _device = device;
-    }
+    float[,,] StateToNumbers(IChessGame game);
+}
 
-    public IEnumerable<(Dictionary<Move, float>, float)> BatchEval(IEnumerable<IChessGame> games)
-    {
-        var gameList = games.ToList();
-        var pvs = Pv(gameList).ToList();
-        Debug.Assert(pvs.Count == gameList.Count);
-        foreach (var pvgs in pvs.Zip(gameList))
-        {
-            var (pv, game) = pvgs;
-            var (p, v) = pv;
-            yield return (Codec.Probdist2Dict(p, game), v);
-        }
-    }
-
-    /// <summary>
-    /// games to list(probs, value) output
-    /// </summary>
-    private IEnumerable<(float[], float)> Pv(IEnumerable<IChessGame> games)
-    {
-        var (logits, values) = Forward(games);
-        var parr = logits.softmax(dim: 1).cpu().data<float>().ToArray();
-        var varr = values.squeeze().cpu().data<float>().ToArray();
-        Debug.Assert(parr.Length == varr.Length * Codec.ActionSize);
-        // todo: check batch is in the right axis. assert probdist
-        return parr.Batch(Codec.ActionSize).Zip(varr);
-    }
-
-    /// <summary>
-    /// games to raw model tensor outputs
-    /// </summary>
-    private (Tensor, Tensor) Forward(IEnumerable<IChessGame> games)
-    {
-        var arr = StatesToNumbers(games);
-        var input = from_array(arr).to(_device);
-        return _model.forward(input);
-    }
-
-    private static int PieceLayer(PieceType piece)
-    {
-        return piece switch
-        {
-            PieceType.Pawn => 0,
-            PieceType.Rook => 1,
-            PieceType.Knight => 2,
-            PieceType.Bishop => 3,
-            PieceType.Queen => 4,
-            PieceType.King => 5,
-            _ => throw new ArgumentOutOfRangeException(nameof(piece), piece, null),
-        };
-    }
-
-    private static float[,,,] StatesToNumbers(IEnumerable<IChessGame> games)
+public class ResNetEncoder : IStateEncoder
+{
+    public float[,,,] StatesToNumbers(IEnumerable<IChessGame> games)
     {
         var gamesList = games.ToList();
         var batch = new float[gamesList.Count, 8, 8, 8];
@@ -94,7 +44,7 @@ public class ResNet : IAzNet
         return batch;
     }
 
-    private static float[,,] StateToNumbers(IChessGame game)
+    public float[,,] StateToNumbers(IChessGame game)
     {
         var state = new float[8, 8, 8];
 
@@ -138,6 +88,70 @@ public class ResNet : IAzNet
         }
 
         return state;
+    }
+
+    private static int PieceLayer(PieceType piece)
+    {
+        return piece switch
+        {
+            PieceType.Pawn => 0,
+            PieceType.Rook => 1,
+            PieceType.Knight => 2,
+            PieceType.Bishop => 3,
+            PieceType.Queen => 4,
+            PieceType.King => 5,
+            _ => throw new ArgumentOutOfRangeException(nameof(piece), piece, null),
+        };
+    }
+}
+
+public class ResNet : IAzNet
+{
+    public ICodec Codec { get; } = new Codec4096();
+    public IStateEncoder StateEncoder { get; } = new ResNetEncoder();
+    private readonly ResNetModule _model;
+    private readonly Device _device;
+
+    public ResNet(int numResBlocks, int numHidden, Device device)
+    {
+        _model = new ResNetModule(numResBlocks, numHidden, Codec).to(device);
+        _device = device;
+    }
+
+    public IEnumerable<(Dictionary<Move, float>, float)> BatchEval(IEnumerable<IChessGame> games)
+    {
+        var gameList = games.ToList();
+        var pvs = Pv(gameList).ToList();
+        Debug.Assert(pvs.Count == gameList.Count);
+        foreach (var pvgs in pvs.Zip(gameList))
+        {
+            var (pv, game) = pvgs;
+            var (p, v) = pv;
+            yield return (Codec.Probdist2Dict(p, game), v);
+        }
+    }
+
+    /// <summary>
+    /// games to list(probs, value) output
+    /// </summary>
+    private IEnumerable<(float[], float)> Pv(IEnumerable<IChessGame> games)
+    {
+        var (logits, values) = Forward(games);
+        var parr = logits.softmax(dim: 1).cpu().data<float>().ToArray();
+        var varr = values.squeeze().cpu().data<float>().ToArray();
+        Debug.Assert(parr.Length == varr.Length * Codec.ActionSize);
+        // todo: check batch is in the right axis. assert probdist
+        return parr.Batch(Codec.ActionSize).Zip(varr);
+    }
+
+    /// <summary>
+    /// games to raw model tensor outputs
+    /// </summary>
+    private (Tensor, Tensor) Forward(IEnumerable<IChessGame> games)
+    {
+        var arr = StateEncoder.StatesToNumbers(games);
+        var input = from_array(arr).to(_device);
+        return _model.forward(input);
     }
 }
 
