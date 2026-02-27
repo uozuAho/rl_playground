@@ -19,6 +19,7 @@ public record MctsNode
     public int Visits;
     public double TotalValue;
 
+    // todo: make this private
     internal IChessGame? _state;
 
     public IChessGame State()

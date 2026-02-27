@@ -2,6 +2,9 @@ using cschess.game;
 
 namespace cschess.agents.AlphaZero;
 
+/// <summary>
+/// Convert between chess moves / NN outputs etc.
+/// </summary>
 public interface ICodec
 {
     int ActionSize { get; }

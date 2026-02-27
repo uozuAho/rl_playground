@@ -7,6 +7,10 @@ using static TorchSharp.torch;
 
 namespace cschess.agents.AlphaZero;
 
+/// <summary>
+/// An NN that alphazero can use. Given a chess game, outputs move probabilities
+/// and value estimate.
+/// </summary>
 public interface IAzNet
 {
     ICodec Codec { get; }
