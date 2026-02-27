@@ -19,7 +19,9 @@ dotnet run chess gpu
 
 # Todo
 - WIP implement alphazero
-  - change game state to have winner. rename gamestate?
+  - WIP net.
+    - test net
+      - output p is prob dist
   - single thread first
   - check training speed, maybe optimise, maybe make multithread version
   - maybe make mcts agents respect timeout
