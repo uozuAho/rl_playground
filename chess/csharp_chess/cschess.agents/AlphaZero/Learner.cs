@@ -10,7 +10,7 @@ public class Learner
         IAzNet net,
         optim.Optimizer optimizer,
         IStateEncoder encoder,
-        ICodec codec,  // todo: rename these to input/output codecs? or merge them
+        ICodec codec, // todo: rename these to input/output codecs? or merge them
         IEnumerable<GameSample> samples,
         bool maskInvalidActions
     )
@@ -34,7 +34,7 @@ public class Learner
         var tProbs = from_array(encProbs);
         var tVals = from_array(encValues);
 
-        var (outpol, outval) = net.forward(tStates);
+        var (outpol, outval) = net.Forward(tStates);
 
         // todo: mask invalid actions
 

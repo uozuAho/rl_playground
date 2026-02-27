@@ -15,6 +15,9 @@ public interface IAzNet
 {
     ICodec Codec { get; }
     IEnumerable<(Dictionary<Move, float>, float)> BatchEval(IEnumerable<IChessGame> games);
+
+    // Raw tensor passthrough for learning
+    (Tensor policy, Tensor value) Forward(Tensor states);
 }
 
 /// <summary>
@@ -68,7 +71,7 @@ public class ResNetEncoder : IStateEncoder
             }
         }
 
-        var moveValue = 1f / game.FullmoveCount();
+        var moveValue = 1f / (game.FullmoveCount() + 1);
         for (var r = 0; r < 8; r++)
         {
             for (var c = 0; c < 8; c++)
@@ -127,7 +130,7 @@ public class ResNetEncoder : IStateEncoder
 public class ResNet : IAzNet
 {
     public ICodec Codec { get; } = new Codec4096();
-    public IStateEncoder StateEncoder { get; } = new ResNetEncoder();
+    private IStateEncoder StateEncoder { get; } = new ResNetEncoder();
     private readonly ResNetModule _model;
     private readonly Device _device;
 
@@ -135,6 +138,16 @@ public class ResNet : IAzNet
     {
         _model = new ResNetModule(numResBlocks, numHidden, Codec).to(device);
         _device = device;
+    }
+
+    public void Train()
+    {
+        _model.train();
+    }
+
+    public void Eval()
+    {
+        _model.eval();
     }
 
     public IEnumerable<(Dictionary<Move, float>, float)> BatchEval(IEnumerable<IChessGame> games)
@@ -148,6 +161,11 @@ public class ResNet : IAzNet
             var (p, v) = pv;
             yield return (Codec.Probdist2Dict(p, game), v);
         }
+    }
+
+    public (Tensor policy, Tensor value) Forward(Tensor states)
+    {
+        return _model.forward(states);
     }
 
     /// <summary>
@@ -171,6 +189,11 @@ public class ResNet : IAzNet
         var arr = StateEncoder.StatesToNumbers(games);
         var input = from_array(arr).to(_device);
         return _model.forward(input);
+    }
+
+    public IEnumerable<Parameter> ModelParams()
+    {
+        return _model.parameters();
     }
 }
 
