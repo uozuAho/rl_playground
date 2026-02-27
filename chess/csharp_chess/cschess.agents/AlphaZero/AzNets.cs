@@ -18,13 +18,17 @@ public interface IAzNet
 }
 
 /// <summary>
-/// Encode game states for feeding into a net
+/// Encode game states into 'numbers' for feeding into a net.
+/// These numbers are easily converted to Tensors via TorchSharp's
+/// from_array
 /// </summary>
 public interface IStateEncoder
 {
     float[,,,] StatesToNumbers(IEnumerable<IChessGame> games);
 
     float[,,] StateToNumbers(IChessGame game);
+
+    float[,] ProbsToNumbers(IEnumerable<Dictionary<Move, float>> moveProbs, ICodec codec);
 }
 
 public class ResNetEncoder : IStateEncoder
@@ -88,6 +92,21 @@ public class ResNetEncoder : IStateEncoder
         }
 
         return state;
+    }
+
+    public float[,] ProbsToNumbers(IEnumerable<Dictionary<Move, float>> moveProbs, ICodec codec)
+    {
+        var targetProbs = moveProbs.Select(codec.Dict2Probdist).ToList();
+        var nums = new float[targetProbs.Count, codec.ActionSize];
+        for (var i = 0; i < targetProbs.Count; i++)
+        {
+            for (var j = 0; j < codec.ActionSize; j++)
+            {
+                nums[i, j] = targetProbs[i][j];
+            }
+        }
+
+        return nums;
     }
 
     private static int PieceLayer(PieceType piece)

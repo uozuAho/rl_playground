@@ -10,6 +10,7 @@ public interface ICodec
     int ActionSize { get; }
     int Move2Int(Move move);
     Dictionary<Move, float> Probdist2Dict(float[] probdist, IChessGame state);
+    public float[] Dict2Probdist(Dictionary<Move, float> moveProbs);
 }
 
 /// <summary>
@@ -30,6 +31,16 @@ public class Codec4096 : ICodec
     public Dictionary<Move, float> Probdist2Dict(float[] probdist, IChessGame state)
     {
         return state.LegalMoves().ToDictionary(x => x, x => probdist[Move2Int(x)]);
+    }
+
+    public float[] Dict2Probdist(Dictionary<Move, float> moveProbs)
+    {
+        var probs = new float[ActionSize];
+        foreach (var (move, prob) in moveProbs)
+        {
+            probs[Move2Int(move)] = prob;
+        }
+        return probs;
     }
 
     private static int SquareToInt(Square square)

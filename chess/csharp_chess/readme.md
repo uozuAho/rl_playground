@@ -21,6 +21,8 @@ dotnet run chess gpu
 - WIP implement alphazero single thread first
   - WIP do one/few training steps ASAP. does training work?
     - WIP learner
+      - finish update_net, see if u can train it
+      - later: merge state encoder/codec. they depend on each other
   - WIP self play games
     - test for state immutability, see todos
     - test heat, heat dict
