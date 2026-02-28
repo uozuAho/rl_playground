@@ -21,7 +21,9 @@ dotnet run chess gpu
 - WIP implement alphazero single thread first
     - WIP self play games
         - WIP test self play games - does returned trajectory make sense?
-            - test for state immutability
+            - WIP check not modifying state
+                - play games
+                - mcts search
         - test heat, heat dict
     - learner/player loop. does nn output change with training?
     - todo: unskip batch eval test. Still NaN?

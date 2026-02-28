@@ -53,31 +53,31 @@ public class MctsAgent(
 
 internal class UniformBatchEval : IEvaluator
 {
-    public IEnumerable<(Dictionary<Move, double>, double)> BatchEval(IEnumerable<IChessGame> games)
+    public IEnumerable<(Dictionary<Move, float>, float)> BatchEval(IEnumerable<IChessGame> games)
     {
         foreach (var game in games)
         {
             var moves = game.LegalMoves().ToList();
-            var prob = 1.0 / moves.Count;
+            var prob = 1.0f / moves.Count;
             var probs = moves.ToDictionary(x => x, _ => prob);
-            yield return (probs, 0.0);
+            yield return (probs, 0.0f);
         }
     }
 }
 
 internal class RandomRolloutEval : IEvaluator
 {
-    public IEnumerable<(Dictionary<Move, double>, double)> BatchEval(IEnumerable<IChessGame> games)
+    public IEnumerable<(Dictionary<Move, float>, float)> BatchEval(IEnumerable<IChessGame> games)
     {
         return games.Select(EvalSingle);
     }
 
-    private static (Dictionary<Move, double>, double) EvalSingle(IChessGame game)
+    private static (Dictionary<Move, float>, float) EvalSingle(IChessGame game)
     {
         var rng = new Random();
         var player = game.Turn();
         var legalMoves = game.LegalMoves().ToList();
-        var moveProbs = legalMoves.ToDictionary(x => x, _ => 1.0 / legalMoves.Count);
+        var moveProbs = legalMoves.ToDictionary(x => x, _ => 1.0f / legalMoves.Count);
 
         var gCopy = game.Copy();
         while (!gCopy.IsGameOver())
@@ -87,10 +87,10 @@ internal class RandomRolloutEval : IEvaluator
         }
 
         var gs = gCopy.GameStatus();
-        var val = 0.0;
+        var val = 0.0f;
         if (gs.Winner != null)
         {
-            val = player == gs.Winner ? 1.0 : -1.0;
+            val = player == gs.Winner ? 1.0f : -1.0f;
         }
 
         return (moveProbs, val);

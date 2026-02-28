@@ -1,13 +1,14 @@
 using System.Diagnostics;
+using cschess.csutils;
 using cschess.game;
 
 namespace cschess.agents;
 
-using MoveProbs = Dictionary<Move, double>;
+using MoveProbs = Dictionary<Move, float>;
 
 public interface IEvaluator
 {
-    IEnumerable<(MoveProbs, double)> BatchEval(IEnumerable<IChessGame> games);
+    IEnumerable<(MoveProbs, float)> BatchEval(IEnumerable<IChessGame> games);
 }
 
 public record MctsNode
@@ -80,9 +81,6 @@ public class ParallelMcts(
     double dirichletEpsilon = 0.25
 )
 {
-    private double _dirichletAlpha = dirichletAlpha;
-    private double _dirichletEpsilon = dirichletEpsilon;
-
     private int _simCount;
     private List<MctsSimState> _sims = [];
 
@@ -164,7 +162,11 @@ public class ParallelMcts(
 
                 if (ReferenceEquals(sim.Node, sim.Root) && addDirichletNoise)
                 {
-                    AddDirichletNoiseToEval(sim);
+                    sim.Peval = Maths.AddDirichletNoise(
+                        sim.Peval,
+                        dirichletAlpha,
+                        dirichletEpsilon
+                    );
                 }
 
                 foreach (var action in sim.Node.State().LegalMoves())
@@ -192,10 +194,5 @@ public class ParallelMcts(
                 value = -value;
             }
         }
-    }
-
-    private void AddDirichletNoiseToEval(MctsSimState sim)
-    {
-        throw new NotImplementedException("Dirichlet noise not yet implemented");
     }
 }

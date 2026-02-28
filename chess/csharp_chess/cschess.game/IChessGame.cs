@@ -1,7 +1,10 @@
+using System.Diagnostics;
+
 namespace cschess.game;
 
 public record GameStatus(string Description, bool IsInProgress, Color? Winner);
 
+[DebuggerDisplay("{ToUci()}")]
 public readonly record struct Square
 {
     private const string fileChars = "abcdefgh";
@@ -40,6 +43,7 @@ public readonly record struct Square
     }
 }
 
+[DebuggerDisplay("{ToUci()}")]
 public readonly record struct Move(Square From, Square To)
 {
     public static Move FromUci(string uci)

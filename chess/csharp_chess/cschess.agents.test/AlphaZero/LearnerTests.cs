@@ -18,21 +18,12 @@ public class LearnerTests
         {
             new GameSample(
                 CodingAdventureChessGame.StandardGame(),
-                new Dictionary<Move, float>
-                {
-                    { Move.FromUci("e2e3"), 1.0f },
-                },
+                new Dictionary<Move, float> { { Move.FromUci("e2e3"), 1.0f } },
                 1.0f
             ),
         };
         net.Train();
-        var (ploss, vloss) = Learner.UpdateNet(
-            net,
-            optimiser,
-            new Codec4096(),
-            gameSamples,
-            false
-        );
+        var (ploss, vloss) = Learner.UpdateNet(net, optimiser, new Codec4096(), gameSamples, false);
         ploss.ShouldNotBe(float.NaN);
         vloss.ShouldNotBe(float.NaN);
         net.Eval();
