@@ -77,7 +77,7 @@ public class Codec4096 : ICodec
         {
             for (var file = 0; file < 8; file++)
             {
-                var square = Square.FromRankAndFile(rank, file);
+                var square = Square.Rank0File0(rank, file);
                 var piece = game.PieceAt(square);
                 if (piece == null)
                     continue;
@@ -146,11 +146,11 @@ public class Codec4096 : ICodec
 
     private static int SquareToInt(Square square)
     {
-        return square.Rank * 8 + square.File;
+        return square.Rank0 * 8 + square.File0;
     }
 
     private static Square IntToSquare(int value)
     {
-        return Square.FromRankAndFile(value >> 3, value & 0b0111);
+        return Square.Rank0File0(value >> 3, value & 0b0111);
     }
 }

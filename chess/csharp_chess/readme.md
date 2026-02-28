@@ -19,6 +19,7 @@ dotnet run chess gpu
 
 # Todo
 - WIP implement alphazero single thread first
+    - WIP learner test todos
     - WIP self play games
         - test self play games - does returned trajectory make sense?
             - test for state immutability

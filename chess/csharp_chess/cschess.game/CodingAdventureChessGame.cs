@@ -125,20 +125,20 @@ public class CodingAdventureChessGame : IChessGame
     {
         var from = new Coord(move.StartSquare);
         var to = new Coord(move.TargetSquare);
-        var fromSq = Square.FromRankAndFile(from.rankIndex, from.fileIndex);
-        var toSq = Square.FromRankAndFile(to.rankIndex, to.fileIndex);
+        var fromSq = Square.Rank0File0(from.rankIndex, from.fileIndex);
+        var toSq = Square.Rank0File0(to.rankIndex, to.fileIndex);
         return new Move(fromSq, toSq);
     }
 
     private static Chess.Core.Move ToCoreMove(Move move)
     {
-        var from = new Coord(move.From.File, move.From.Rank);
-        var to = new Coord(move.To.File, move.To.Rank);
+        var from = new Coord(move.From.File0, move.From.Rank0);
+        var to = new Coord(move.To.File0, move.To.Rank0);
         return new Chess.Core.Move(from.SquareIndex, to.SquareIndex);
     }
 
     private static int ToIndex(Square square)
     {
-        return new Coord(square.File, square.Rank).SquareIndex;
+        return new Coord(square.File0, square.Rank0).SquareIndex;
     }
 }

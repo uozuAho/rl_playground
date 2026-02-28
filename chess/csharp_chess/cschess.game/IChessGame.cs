@@ -2,37 +2,53 @@ namespace cschess.game;
 
 public record GameStatus(string Description, bool IsInProgress, Color? Winner);
 
-//todo: should this be a struct/record/etc
-//todo: make illegal construction impossible
 public readonly record struct Square
 {
     private const string fileChars = "abcdefgh";
-    private readonly byte _rank; // row 1-8, 0-indexed
-    private readonly byte _file; // col a-h
-    public int File => _file;
-    public int Rank => _rank;
+    private readonly byte _rank0; // row 1-8, 0-indexed
+    private readonly byte _file0; // col a-h, 0-indexed
+    public int File0 => _file0;
+    public int Rank0 => _rank0;
 
-    private Square(int rank, int file)
+    private Square(int rank0, int file0)
     {
-        _rank = (byte)rank;
-        _file = (byte)file;
+        ArgumentOutOfRangeException.ThrowIfLessThan(rank0, 0);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(rank0, 7);
+        ArgumentOutOfRangeException.ThrowIfLessThan(file0, 0);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(file0, 7);
+        _rank0 = (byte)rank0;
+        _file0 = (byte)file0;
     }
 
-    public static Square FromRankAndFile(int rank, int file)
+    public static Square Rank0File0(int rank, int file)
     {
         return new Square(rank, file);
     }
 
     public string ToUci()
     {
-        var col = fileChars[_file];
-        var rank = (_rank + 1).ToString();
+        var col = fileChars[_file0];
+        var rank = (_rank0 + 1).ToString();
         return col + rank;
+    }
+
+    public static Square FromUci(string uci)
+    {
+        var file0 = fileChars.IndexOf(uci[0]);
+        var rank1 = int.Parse(uci.Substring(1, 1));
+        return new Square(rank1 - 1, file0);
     }
 }
 
 public readonly record struct Move(Square From, Square To)
 {
+    public static Move FromUci(string uci)
+    {
+        var fromUci = uci.Substring(0, 2);
+        var toUci = uci.Substring(2, 2);
+        return new Move(Square.FromUci(fromUci), Square.FromUci(toUci));
+    }
+
     public string ToUci()
     {
         return From.ToUci() + To.ToUci();

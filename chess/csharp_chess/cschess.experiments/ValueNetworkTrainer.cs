@@ -137,7 +137,7 @@ public class ValueNetworkTrainer
     {
         var rank = i / 8;
         var file = i % 8;
-        return Square.FromRankAndFile(rank, file);
+        return Square.Rank0File0(rank, file);
     }
 
     // Train value network

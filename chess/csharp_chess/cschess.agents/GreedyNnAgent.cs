@@ -331,7 +331,7 @@ public class GreedyNnAgent : IChessAgent
 
     private static Square ToSquare(int i)
     {
-        return Square.FromRankAndFile(i / 8, i % 8);
+        return Square.Rank0File0(i / 8, i % 8);
     }
 
     private void UpdateTargetNetwork()
