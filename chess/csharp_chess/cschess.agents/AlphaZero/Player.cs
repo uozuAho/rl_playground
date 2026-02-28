@@ -40,7 +40,6 @@ public class Player
             ).Run();
             foreach (var (idx, root) in activeIdxs.Zip(roots))
             {
-                // todo: test that tree state is immutable
                 var state = root.State();
                 var probs = MctsProbs(root);
                 trajectories[idx].Add(new GameSample(state, probs, -999));

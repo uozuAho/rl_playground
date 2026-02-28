@@ -9,7 +9,7 @@ public class Learner
     public static (float policyLoss, float valueLoss) UpdateNet(
         IAzNet net,
         optim.Optimizer optimizer,
-        ICodec codec, // todo: rename these to input/output codecs? or merge them
+        ICodec codec,
         IEnumerable<GameSample> samples,
         bool maskInvalidActions
     )

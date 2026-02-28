@@ -69,7 +69,6 @@ public class ResNet : IAzNet
         var parr = logits.softmax(dim: 1).cpu().data<float>().ToArray();
         var varr = values.squeeze().cpu().data<float>().ToArray();
         Debug.Assert(parr.Length == varr.Length * Codec.ActionSize);
-        // todo: check batch is in the right axis. assert probdist
         return parr.Batch(Codec.ActionSize).Zip(varr);
     }
 
