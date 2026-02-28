@@ -19,7 +19,6 @@ dotnet run chess gpu
 
 # Todo
 - WIP implement alphazero single thread first
-    - rm codec from learner updatenet
     - mask invalid actions
 - train. does it improve?
     - WIP check training speed, maybe optimise, maybe make multithread version

@@ -9,11 +9,11 @@ public class Learner
     public static (float policyLoss, float valueLoss) UpdateNet(
         IAzNet net,
         optim.Optimizer optimizer,
-        ICodec codec,
         IEnumerable<GameSample> samples,
         bool maskInvalidActions
     )
     {
+        var codec = net.Codec;
         var states = new List<IChessGame>();
         var probs = new List<Dictionary<Move, float>>();
         var values = new List<float>();
@@ -26,7 +26,7 @@ public class Learner
         }
 
         var encStates = codec.States2Array(states);
-        var encProbs = codec.Probs2Array(probs, codec);
+        var encProbs = codec.Probs2Array(probs);
         var encValues = codec.Values2Array(values);
 
         var tStates = from_array(encStates);

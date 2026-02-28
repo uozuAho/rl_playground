@@ -15,7 +15,7 @@ public interface ICodec
     public float[] Dict2Probdist(Dictionary<Move, float> moveProbs);
     float[,,,] States2Array(IEnumerable<IChessGame> games);
     float[,,] State2Array(IChessGame game);
-    float[,] Probs2Array(IEnumerable<Dictionary<Move, float>> moveProbs, ICodec codec);
+    float[,] Probs2Array(IEnumerable<Dictionary<Move, float>> moveProbs);
     float[,] Values2Array(IEnumerable<float> values);
 }
 
@@ -118,13 +118,13 @@ public class Codec4096 : ICodec
         return state;
     }
 
-    public float[,] Probs2Array(IEnumerable<Dictionary<Move, float>> moveProbs, ICodec codec)
+    public float[,] Probs2Array(IEnumerable<Dictionary<Move, float>> moveProbs)
     {
-        var targetProbs = moveProbs.Select(codec.Dict2Probdist).ToList();
-        var nums = new float[targetProbs.Count, codec.ActionSize];
+        var targetProbs = moveProbs.Select(Dict2Probdist).ToList();
+        var nums = new float[targetProbs.Count, ActionSize];
         for (var i = 0; i < targetProbs.Count; i++)
         {
-            for (var j = 0; j < codec.ActionSize; j++)
+            for (var j = 0; j < ActionSize; j++)
             {
                 nums[i, j] = targetProbs[i][j];
             }

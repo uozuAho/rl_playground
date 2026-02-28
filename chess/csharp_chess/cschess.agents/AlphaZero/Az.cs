@@ -27,8 +27,7 @@ public class Az
                     dirichletEpsilon: 0.25
                 ).ToList();
             }
-            // todo: remove net.codec
-            var (ploss, vloss) = Learner.UpdateNet(net, optimiser, net.Codec, samples, false);
+            var (ploss, vloss) = Learner.UpdateNet(net, optimiser, samples, false);
             Console.WriteLine($"{ploss}, {vloss}");
         }
     }

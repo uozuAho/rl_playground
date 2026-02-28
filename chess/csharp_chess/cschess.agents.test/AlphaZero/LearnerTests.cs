@@ -23,7 +23,7 @@ public class LearnerTests
             ),
         };
         net.Train();
-        var (ploss, vloss) = Learner.UpdateNet(net, optimiser, new Codec4096(), gameSamples, false);
+        var (ploss, vloss) = Learner.UpdateNet(net, optimiser, gameSamples, false);
         ploss.ShouldNotBe(float.NaN);
         vloss.ShouldNotBe(float.NaN);
         net.Eval();
