@@ -32,8 +32,8 @@ public static class RandomExtensions
             var hasNext = sourceEnum.MoveNext();
             Debug.Assert(hasNext);
             total += weight;
-            Debug.Assert(weight is >= 0.0 and <= 1.0);
-            Debug.Assert(total <= 1.0);
+            Debug.Assert(weight is >= 0.0 and <= 1.0001);
+            Debug.Assert(total <= 1.0001);
             if (rval < total)
             {
                 return sourceEnum.Current;

@@ -20,7 +20,7 @@ public interface IAzNet
     (Tensor policy, Tensor value) Forward(Tensor states);
 }
 
-public class ResNet : IAzNet
+public class ResNet : IAzNet, IEvaluator
 {
     public ICodec Codec { get; } = new Codec4096();
     private readonly ResNetModule _model;

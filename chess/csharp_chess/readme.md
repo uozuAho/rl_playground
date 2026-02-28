@@ -19,9 +19,10 @@ dotnet run chess gpu
 
 # Todo
 - WIP implement alphazero single thread first
-    - learner/player loop. does nn output change with training?
+    - rm codec from learner updatenet
+    - mask invalid actions
 - train. does it improve?
-    - check training speed, maybe optimise, maybe make multithread version
+    - WIP check training speed, maybe optimise, maybe make multithread version
     - if no improvement, test basics, eg
         - heat, heat dict
         - self play final reward is correct for win, loss, draw scenarios

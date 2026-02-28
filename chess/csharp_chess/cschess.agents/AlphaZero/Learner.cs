@@ -27,7 +27,7 @@ public class Learner
 
         var encStates = codec.States2Array(states);
         var encProbs = codec.Probs2Array(probs, codec);
-        var encValues = values.ToArray();
+        var encValues = codec.Values2Array(values);
 
         var tStates = from_array(encStates);
         var tProbs = from_array(encProbs);

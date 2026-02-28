@@ -139,13 +139,18 @@ public class ParallelMcts(
 
     private void Eval()
     {
-        var envs = _sims.Select(s => s.Node.State());
-        var pvs = evaluator.BatchEval(envs).ToList();
-        for (var i = 0; i < _sims.Count; i++)
+        var games = _sims.Where(s => !s.Node.IsTerminal).Select(s => s.Node.State()).ToList();
+        if (games.Count == 0)
         {
-            var (p, v) = pvs[i];
-            _sims[i].Peval = p;
-            _sims[i].Veval = v;
+            return;
+        }
+        var pvs = evaluator.BatchEval(games).ToList();
+        foreach (var spv in _sims.Where(s => !s.Node.IsTerminal).Zip(pvs))
+        {
+            var (sim, pv) = spv;
+            var (p, v) = pv;
+            sim.Peval = p;
+            sim.Veval = v;
         }
     }
 
@@ -153,11 +158,11 @@ public class ParallelMcts(
     {
         foreach (var sim in _sims)
         {
-            Debug.Assert(sim.Veval != null);
-            Debug.Assert(sim.Peval != null);
+            Debug.Assert(sim.TerminalValue.HasValue || sim.Veval.HasValue);
 
             if (sim.TerminalValue == null)
             {
+                Debug.Assert(sim.Peval != null);
                 sim.Veval = -sim.Veval;
 
                 if (ReferenceEquals(sim.Node, sim.Root) && addDirichletNoise)
@@ -180,10 +185,7 @@ public class ParallelMcts(
                 }
             }
 
-            var value =
-                (sim.TerminalValue.HasValue && sim.TerminalValue.Value != 0.0)
-                    ? sim.TerminalValue.Value
-                    : sim.Veval!.Value;
+            var value = sim.TerminalValue ?? sim.Veval!.Value;
 
             var node = sim.Node;
             while (node != null)

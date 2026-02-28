@@ -16,6 +16,7 @@ public interface ICodec
     float[,,,] States2Array(IEnumerable<IChessGame> games);
     float[,,] State2Array(IChessGame game);
     float[,] Probs2Array(IEnumerable<Dictionary<Move, float>> moveProbs, ICodec codec);
+    float[,] Values2Array(IEnumerable<float> values);
 }
 
 /// <summary>
@@ -37,6 +38,7 @@ public class Codec4096 : ICodec
     {
         Debug.Assert(Maths.IsProbDist(probdist));
         var moves = state.LegalMoves().ToList();
+        Debug.Assert(moves.Count > 0);
         var probs = moves.Select(m => probdist[Move2Int(m)]).ToList();
         var sum = probs.Sum();
         probs = probs.Select(x => x / sum).ToList();
@@ -57,6 +59,7 @@ public class Codec4096 : ICodec
     public float[,,,] States2Array(IEnumerable<IChessGame> games)
     {
         var gamesList = games.ToList();
+        Debug.Assert(gamesList.Count > 0);
         var batch = new float[gamesList.Count, 8, 8, 8];
         for (var b = 0; b < gamesList.Count; b++)
         {
@@ -128,6 +131,18 @@ public class Codec4096 : ICodec
         }
 
         return nums;
+    }
+
+    public float[,] Values2Array(IEnumerable<float> values)
+    {
+        var vList = values.ToList();
+        var outf = new float[vList.Count, 1];
+        for (var i = 0; i < vList.Count; i++)
+        {
+            outf[i, 0] = vList[i];
+        }
+
+        return outf;
     }
 
     private static int PieceLayer(PieceType piece)

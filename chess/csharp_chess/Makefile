@@ -11,3 +11,6 @@ precommit:
 
 rank:
 	dotnet run --project cschess.tournament
+
+experiment:
+	dotnet run --project cschess.experiments
