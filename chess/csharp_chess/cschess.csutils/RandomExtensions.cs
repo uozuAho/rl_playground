@@ -29,6 +29,8 @@ public static class RandomExtensions
         var rval = random.NextDouble();
         foreach (var weight in weights)
         {
+            var hasNext = sourceEnum.MoveNext();
+            Debug.Assert(hasNext);
             total += weight;
             Debug.Assert(weight is >= 0.0 and <= 1.0);
             Debug.Assert(total <= 1.0);
@@ -36,8 +38,6 @@ public static class RandomExtensions
             {
                 return sourceEnum.Current;
             }
-
-            sourceEnum.MoveNext();
         }
 
         Debug.Assert(total >= 0.999);
