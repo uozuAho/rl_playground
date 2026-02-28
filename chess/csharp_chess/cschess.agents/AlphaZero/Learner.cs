@@ -25,8 +25,8 @@ public class Learner
             values.Add(sample.FinalReward);
         }
 
-        var encStates = codec.StatesToNumbers(states);
-        var encProbs = codec.ProbsToNumbers(probs, codec);
+        var encStates = codec.States2Array(states);
+        var encProbs = codec.Probs2Array(probs, codec);
         var encValues = values.ToArray();
 
         var tStates = from_array(encStates);

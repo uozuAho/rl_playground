@@ -19,8 +19,6 @@ dotnet run chess gpu
 
 # Todo
 - WIP implement alphazero single thread first
-    - WIP merge state encoder/codec. they depend on each other
-        - rename state to array etc
     - unskip tests
     - WIP self play games
         - test for state immutability, see todos

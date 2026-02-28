@@ -11,9 +11,9 @@ public interface ICodec
     int Move2Int(Move move);
     Dictionary<Move, float> Probdist2Dict(float[] probdist, IChessGame state);
     public float[] Dict2Probdist(Dictionary<Move, float> moveProbs);
-    float[,,,] StatesToNumbers(IEnumerable<IChessGame> games);
-    float[,,] StateToNumbers(IChessGame game);
-    float[,] ProbsToNumbers(IEnumerable<Dictionary<Move, float>> moveProbs, ICodec codec);
+    float[,,,] States2Array(IEnumerable<IChessGame> games);
+    float[,,] State2Array(IChessGame game);
+    float[,] Probs2Array(IEnumerable<Dictionary<Move, float>> moveProbs, ICodec codec);
 }
 
 /// <summary>
@@ -46,13 +46,13 @@ public class Codec4096 : ICodec
         return probs;
     }
 
-    public float[,,,] StatesToNumbers(IEnumerable<IChessGame> games)
+    public float[,,,] States2Array(IEnumerable<IChessGame> games)
     {
         var gamesList = games.ToList();
         var batch = new float[gamesList.Count, 8, 8, 8];
         for (var b = 0; b < gamesList.Count; b++)
         {
-            var arr = StateToNumbers(gamesList[b]);
+            var arr = State2Array(gamesList[b]);
             for (var i = 0; i < 8; i++)
             for (var j = 0; j < 8; j++)
             for (var k = 0; k < 8; k++)
@@ -61,7 +61,7 @@ public class Codec4096 : ICodec
         return batch;
     }
 
-    public float[,,] StateToNumbers(IChessGame game)
+    public float[,,] State2Array(IChessGame game)
     {
         var state = new float[8, 8, 8];
 
@@ -107,7 +107,7 @@ public class Codec4096 : ICodec
         return state;
     }
 
-    public float[,] ProbsToNumbers(IEnumerable<Dictionary<Move, float>> moveProbs, ICodec codec)
+    public float[,] Probs2Array(IEnumerable<Dictionary<Move, float>> moveProbs, ICodec codec)
     {
         var targetProbs = moveProbs.Select(codec.Dict2Probdist).ToList();
         var nums = new float[targetProbs.Count, codec.ActionSize];

@@ -1,15 +1,14 @@
 ﻿using cschess.agents;
-using cschess.experiments;
 using cschess.tournament;
 
 TrainGreedyNn();
 
-void TrainValueNet()
-{
-    Console.WriteLine(string.Join(",", args));
-    var fenScoresPath = args[0];
-    ValueNetworkTrainer.TrainAndTestValueNetwork(fenScoresPath);
-}
+// void TrainValueNet()
+// {
+//     Console.WriteLine(string.Join(",", args));
+//     var fenScoresPath = args[0];
+//     ValueNetworkTrainer.TrainAndTestValueNetwork(fenScoresPath);
+// }
 
 void TrainGreedyNn()
 {

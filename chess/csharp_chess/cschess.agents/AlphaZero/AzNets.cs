@@ -78,7 +78,7 @@ public class ResNet : IAzNet
     /// </summary>
     private (Tensor, Tensor) Forward(IEnumerable<IChessGame> games)
     {
-        var arr = Codec.StatesToNumbers(games);
+        var arr = Codec.States2Array(games);
         var input = from_array(arr).to(_device);
         return _model.forward(input);
     }
