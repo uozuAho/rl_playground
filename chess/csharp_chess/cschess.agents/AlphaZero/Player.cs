@@ -42,7 +42,7 @@ public class Player
             {
                 var state = root.State();
                 var probs = MctsProbs(root);
-                trajectories[idx].Add(new GameSample(state, probs, -999));
+                trajectories[idx].Add(new GameSample(state.Copy(), probs, -999));
                 probs = Maths.Heat(probs, temperature);
                 var move = rng.Choice(probs.Keys, probs.Values);
                 games[idx].MakeMove(move);

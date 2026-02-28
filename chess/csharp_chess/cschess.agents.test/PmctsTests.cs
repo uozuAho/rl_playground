@@ -17,6 +17,8 @@ public class PmctsTests
             .Cast<IChessGame>()
             .ToList();
 
+        var startFens = games.Select(x => x.Fen()).ToList();
+
         var roots = new ParallelMcts(games, new UniformEvaluator(), numSims).Run();
 
         foreach (var root in roots)
@@ -25,6 +27,8 @@ public class PmctsTests
             var cprobs = root.Children.Values.Select(x => x.Prior);
             Maths.IsProbDist(cprobs).ShouldBe(true);
         }
+
+        games.Select(x => x.Fen()).ShouldBe(startFens, "should not modify games");
     }
 
     [Fact]
