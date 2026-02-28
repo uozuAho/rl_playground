@@ -17,7 +17,7 @@ public class PmctsTests
             .Cast<IChessGame>()
             .ToList();
 
-        var roots = new ParallelMcts(games, new DummyEval(), numSims).Run();
+        var roots = new ParallelMcts(games, new UniformEvaluator(), numSims).Run();
 
         foreach (var root in roots)
         {
@@ -42,21 +42,10 @@ public class PmctsTests
             .ToList();
         var expectedMoves = boardMoves.Select(bm => bm.Item2).ToList();
 
-        var roots = new ParallelMcts(games, new DummyEval(), 100).Run();
+        var roots = new ParallelMcts(games, new UniformEvaluator(), 100).Run();
         var maxVisitMoves = roots.Select(x =>
             x.Children.Values.MaxBy(c => c.Visits)!.MoveFromParent!.Value.ToUci()
         );
         maxVisitMoves.ShouldBe(expectedMoves);
-    }
-}
-
-internal class DummyEval : IEvaluator
-{
-    public IEnumerable<(Dictionary<Move, double>, double)> BatchEval(IEnumerable<IChessGame> games)
-    {
-        return from chessGame in games
-            select chessGame.LegalMoves().ToList() into moves
-            let prob = 1.0 / moves.Count
-            select (moves.ToDictionary(x => x, _ => prob), 0.0);
     }
 }

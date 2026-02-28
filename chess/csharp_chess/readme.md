@@ -19,9 +19,8 @@ dotnet run chess gpu
 
 # Todo
 - WIP implement alphazero single thread first
-    - WIP learner test todos
     - WIP self play games
-        - test self play games - does returned trajectory make sense?
+        - WIP test self play games - does returned trajectory make sense?
             - test for state immutability
         - test heat, heat dict
     - learner/player loop. does nn output change with training?
