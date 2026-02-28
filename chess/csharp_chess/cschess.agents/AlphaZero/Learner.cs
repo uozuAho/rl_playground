@@ -9,7 +9,6 @@ public class Learner
     public static (float policyLoss, float valueLoss) UpdateNet(
         IAzNet net,
         optim.Optimizer optimizer,
-        IStateEncoder encoder,
         ICodec codec, // todo: rename these to input/output codecs? or merge them
         IEnumerable<GameSample> samples,
         bool maskInvalidActions
@@ -26,8 +25,8 @@ public class Learner
             values.Add(sample.FinalReward);
         }
 
-        var encStates = encoder.StatesToNumbers(states);
-        var encProbs = encoder.ProbsToNumbers(probs, codec);
+        var encStates = codec.StatesToNumbers(states);
+        var encProbs = codec.ProbsToNumbers(probs, codec);
         var encValues = values.ToArray();
 
         var tStates = from_array(encStates);

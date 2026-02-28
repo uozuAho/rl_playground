@@ -34,7 +34,6 @@ public class LearnerTests
             var (ploss, vloss) = Learner.UpdateNet(
                 net,
                 optimiser,
-                new ResNetEncoder(),
                 new Codec4096(),
                 gameSamples,
                 false

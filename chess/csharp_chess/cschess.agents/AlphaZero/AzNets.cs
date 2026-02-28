@@ -20,117 +20,9 @@ public interface IAzNet
     (Tensor policy, Tensor value) Forward(Tensor states);
 }
 
-/// <summary>
-/// Encode game states into 'numbers' for feeding into a net.
-/// These numbers are easily converted to Tensors via TorchSharp's
-/// from_array
-/// </summary>
-public interface IStateEncoder
-{
-    float[,,,] StatesToNumbers(IEnumerable<IChessGame> games);
-
-    float[,,] StateToNumbers(IChessGame game);
-
-    float[,] ProbsToNumbers(IEnumerable<Dictionary<Move, float>> moveProbs, ICodec codec);
-}
-
-public class ResNetEncoder : IStateEncoder
-{
-    public float[,,,] StatesToNumbers(IEnumerable<IChessGame> games)
-    {
-        var gamesList = games.ToList();
-        var batch = new float[gamesList.Count, 8, 8, 8];
-        for (var b = 0; b < gamesList.Count; b++)
-        {
-            var arr = StateToNumbers(gamesList[b]);
-            for (var i = 0; i < 8; i++)
-            for (var j = 0; j < 8; j++)
-            for (var k = 0; k < 8; k++)
-                batch[b, i, j, k] = arr[i, j, k];
-        }
-        return batch;
-    }
-
-    public float[,,] StateToNumbers(IChessGame game)
-    {
-        var state = new float[8, 8, 8];
-
-        for (var rank = 0; rank < 8; rank++)
-        {
-            for (var file = 0; file < 8; file++)
-            {
-                var square = Square.FromRankAndFile(rank, file);
-                var piece = game.PieceAt(square);
-                if (piece == null)
-                    continue;
-
-                var sign = game.ColorAt(square) == Color.White ? 1f : -1f;
-
-                var layer = PieceLayer(piece.Value);
-                state[layer, rank, file] = sign;
-            }
-        }
-
-        var moveValue = 1f / (game.FullmoveCount() + 1);
-        for (var r = 0; r < 8; r++)
-        {
-            for (var c = 0; c < 8; c++)
-            {
-                state[6, r, c] = moveValue;
-            }
-        }
-
-        var turnValue = game.Turn() == Color.White ? 1f : -1f;
-        for (var c = 0; c < 8; c++)
-        {
-            state[6, 0, c] = turnValue;
-        }
-
-        for (var r = 0; r < 8; r++)
-        {
-            for (var c = 0; c < 8; c++)
-            {
-                state[7, r, c] = 1f;
-            }
-        }
-
-        return state;
-    }
-
-    public float[,] ProbsToNumbers(IEnumerable<Dictionary<Move, float>> moveProbs, ICodec codec)
-    {
-        var targetProbs = moveProbs.Select(codec.Dict2Probdist).ToList();
-        var nums = new float[targetProbs.Count, codec.ActionSize];
-        for (var i = 0; i < targetProbs.Count; i++)
-        {
-            for (var j = 0; j < codec.ActionSize; j++)
-            {
-                nums[i, j] = targetProbs[i][j];
-            }
-        }
-
-        return nums;
-    }
-
-    private static int PieceLayer(PieceType piece)
-    {
-        return piece switch
-        {
-            PieceType.Pawn => 0,
-            PieceType.Rook => 1,
-            PieceType.Knight => 2,
-            PieceType.Bishop => 3,
-            PieceType.Queen => 4,
-            PieceType.King => 5,
-            _ => throw new ArgumentOutOfRangeException(nameof(piece), piece, null),
-        };
-    }
-}
-
 public class ResNet : IAzNet
 {
     public ICodec Codec { get; } = new Codec4096();
-    private IStateEncoder StateEncoder { get; } = new ResNetEncoder();
     private readonly ResNetModule _model;
     private readonly Device _device;
 
@@ -186,7 +78,7 @@ public class ResNet : IAzNet
     /// </summary>
     private (Tensor, Tensor) Forward(IEnumerable<IChessGame> games)
     {
-        var arr = StateEncoder.StatesToNumbers(games);
+        var arr = Codec.StatesToNumbers(games);
         var input = from_array(arr).to(_device);
         return _model.forward(input);
     }

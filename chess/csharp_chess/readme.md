@@ -19,13 +19,15 @@ dotnet run chess gpu
 
 # Todo
 - WIP implement alphazero single thread first
-  - merge state encoder/codec. they depend on each other
-  - WIP self play games
-    - test for state immutability, see todos
-    - test heat, heat dict
-    - test self play games - does returned trajectory make sense?
-  - learner/player loop. does nn output change with training?
-  - todo: unskip batch eval test. Still NaN?
+    - WIP merge state encoder/codec. they depend on each other
+        - rename state to array etc
+    - unskip tests
+    - WIP self play games
+        - test for state immutability, see todos
+        - test heat, heat dict
+        - test self play games - does returned trajectory make sense?
+    - learner/player loop. does nn output change with training?
+    - todo: unskip batch eval test. Still NaN?
 - check training speed, maybe optimise, maybe make multithread version
 - maybe make mcts agents respect timeout
 - bot ranker
