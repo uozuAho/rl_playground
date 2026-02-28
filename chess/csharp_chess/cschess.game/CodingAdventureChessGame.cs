@@ -34,6 +34,11 @@ public class CodingAdventureChessGame : IChessGame
         return new CodingAdventureChessGame(Board.CreateBoard(_board));
     }
 
+    public override string ToString()
+    {
+        return BoardHelper.CreateDiagram(_board, true);
+    }
+
     public bool IsGameOver()
     {
         return Arbiter.GetGameState(_board) != GameResult.InProgress;
