@@ -13,6 +13,7 @@ namespace cschess.agents.AlphaZero;
 /// </summary>
 public interface IAzNet
 {
+    Device Device { get; }
     ICodec Codec { get; }
     IEnumerable<(Dictionary<Move, float>, float)> BatchEval(IEnumerable<IChessGame> games);
 
@@ -24,12 +25,12 @@ public class ResNet : IAzNet, IEvaluator
 {
     public ICodec Codec { get; } = new Codec4096();
     private readonly ResNetModule _model;
-    private readonly Device _device;
+    public Device Device { get; private set; }
 
     public ResNet(int numResBlocks, int numHidden, Device device)
     {
-        _model = new ResNetModule(numResBlocks, numHidden, Codec).to(device);
-        _device = device;
+        _model = new ResNetModule(numResBlocks, numHidden, Codec, device).to(device);
+        Device = device;
     }
 
     public void Train()
@@ -78,7 +79,7 @@ public class ResNet : IAzNet, IEvaluator
     private (Tensor, Tensor) Forward(IEnumerable<IChessGame> games)
     {
         var arr = Codec.States2Array(games);
-        var input = from_array(arr).to(_device);
+        var input = from_array(arr).to(Device);
         return _model.forward(input);
     }
 
@@ -95,17 +96,17 @@ internal sealed class ResNetModule : nn.Module<Tensor, (Tensor, Tensor)>
     private readonly Sequential _policyHead;
     private readonly Sequential _valueHead;
 
-    public ResNetModule(int numResBlocks, int numHidden, ICodec codec)
+    public ResNetModule(int numResBlocks, int numHidden, ICodec codec, Device device)
         : base("ResNet")
     {
         _start = nn.Sequential(
             ("conv1", nn.Conv2d(8, numHidden, kernel_size: 3, padding: 1)),
             ("bn1", nn.BatchNorm2d(numHidden)),
             ("relu", nn.ReLU())
-        );
+        ).to(device);
         _backbone = nn.Sequential(
             Enumerable.Range(0, numResBlocks).Select(i => new ResBlock(numHidden))
-        );
+        ).to(device);
         _policyHead = nn.Sequential(
             nn.Conv2d(numHidden, 32, kernel_size: 3, padding: 1),
             nn.BatchNorm2d(32),
@@ -113,7 +114,7 @@ internal sealed class ResNetModule : nn.Module<Tensor, (Tensor, Tensor)>
             nn.Flatten(),
             // 8x8 for chess board
             nn.Linear(32 * 8 * 8, codec.ActionSize)
-        );
+        ).to(device);
         _valueHead = nn.Sequential(
             nn.Conv2d(numHidden, 3, kernel_size: 3, padding: 1),
             nn.BatchNorm2d(3),
@@ -121,7 +122,9 @@ internal sealed class ResNetModule : nn.Module<Tensor, (Tensor, Tensor)>
             nn.Flatten(),
             nn.Linear(3 * 8 * 8, 1),
             nn.Tanh()
-        );
+        ).to(device);
+
+        RegisterComponents();
     }
 
     public override (Tensor, Tensor) forward(Tensor x)

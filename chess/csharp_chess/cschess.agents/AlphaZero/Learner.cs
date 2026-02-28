@@ -29,9 +29,9 @@ public class Learner
         var encProbs = codec.Probs2Array(probs);
         var encValues = codec.Values2Array(values);
 
-        var tStates = from_array(encStates);
-        var tProbs = from_array(encProbs);
-        var tVals = from_array(encValues);
+        var tStates = from_array(encStates).to(net.Device);
+        var tProbs = from_array(encProbs).to(net.Device);
+        var tVals = from_array(encValues).to(net.Device);
 
         var (outpol, outval) = net.Forward(tStates);
 

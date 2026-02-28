@@ -10,8 +10,8 @@ public class Az
     public static void Train()
     {
         const int numIterations = 1;
-        const int nParallelGames = 4;
-        var net = new ResNet(1, 1, CPU);
+        const int nParallelGames = 8;
+        var net = new ResNet(1, 1, CUDA);
         var optimiser = new Adam(net.ModelParams());
         var gameTimes = new List<TimeSpan>();
         var learnTimes = new List<TimeSpan>();

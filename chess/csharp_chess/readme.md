@@ -18,13 +18,13 @@ dotnet run chess gpu
 ```
 
 # Todo
-- WIP implement alphazero single thread first
-    - mask invalid actions
 - train. does it improve?
-    - WIP check training speed, maybe optimise, maybe make multithread version
+    - just check pol val loss for now
+    - if looks ok, eval vs random opponent
     - if no improvement, test basics, eg
         - heat, heat dict
         - self play final reward is correct for win, loss, draw scenarios
+- mask invalid actions
 - maybe make mcts agents respect timeout
 - bot ranker
   - add andoma?
