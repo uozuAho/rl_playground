@@ -19,7 +19,6 @@ dotnet run chess gpu
 
 # Todo
 - WIP implement alphazero single thread first
-    - unskip tests
     - WIP self play games
         - test for state immutability, see todos
         - test heat, heat dict

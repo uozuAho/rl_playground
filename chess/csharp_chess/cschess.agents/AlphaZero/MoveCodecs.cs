@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using cschess.csutils;
 using cschess.game;
 
 namespace cschess.agents.AlphaZero;
@@ -33,7 +35,13 @@ public class Codec4096 : ICodec
 
     public Dictionary<Move, float> Probdist2Dict(float[] probdist, IChessGame state)
     {
-        return state.LegalMoves().ToDictionary(x => x, x => probdist[Move2Int(x)]);
+        Debug.Assert(Maths.IsProbDist(probdist));
+        var moves = state.LegalMoves().ToList();
+        var probs = moves.Select(m => probdist[Move2Int(m)]).ToList();
+        var sum = probs.Sum();
+        probs = probs.Select(x => x / sum).ToList();
+        Debug.Assert(Maths.IsProbDist(probs));
+        return moves.Zip(probs).ToDictionary(x => x.First, x => x.Second);
     }
 
     public float[] Dict2Probdist(Dictionary<Move, float> moveProbs)

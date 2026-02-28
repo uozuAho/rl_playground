@@ -8,7 +8,7 @@ namespace cschess.agents.test.AlphaZero;
 
 public class AzNetsTests
 {
-    [Fact(Skip = "NN output is all NaNs and I dunno why")]
+    [Fact]
     public void BatchEval_doesnt_throw()
     {
         var net = new ResNet(1, 1, CPU);
