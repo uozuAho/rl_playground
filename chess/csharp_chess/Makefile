@@ -13,4 +13,7 @@ rank:
 	dotnet run --project cschess.tournament
 
 experiment:
-	dotnet run --project cschess.experiments
+	dotnet run --project cschess.experiments -c Release
+
+exp-trace:
+	dotnet trace collect --format Speedscope -- dotnet ./cschess.experiments/bin/Debug/net8.0/cschess.experiments.dll
