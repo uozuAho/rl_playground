@@ -19,12 +19,12 @@ dotnet run chess gpu
 
 # Todo
 - WIP implement alphazero single thread first
-    - WIP self play games
-        - WIP test self play games - does returned trajectory make sense?
-        - test heat, heat dict
     - learner/player loop. does nn output change with training?
-    - todo: unskip batch eval test. Still NaN?
-- check training speed, maybe optimise, maybe make multithread version
+- train. does it improve?
+    - check training speed, maybe optimise, maybe make multithread version
+    - if no improvement, test basics, eg
+        - heat, heat dict
+        - self play final reward is correct for win, loss, draw scenarios
 - maybe make mcts agents respect timeout
 - bot ranker
   - add andoma?
