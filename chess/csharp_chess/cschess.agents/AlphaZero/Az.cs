@@ -11,7 +11,7 @@ public class Az
     {
         const int numIterations = 1;
         const int nParallelGames = 8;
-        var net = new ResNet(1, 1, CUDA);
+        var net = new ResNet(2, 48, CUDA);
         var optimiser = new Adam(net.ModelParams());
         var gameTimes = new List<TimeSpan>();
         var learnTimes = new List<TimeSpan>();
@@ -28,7 +28,7 @@ public class Az
                 samples = Player.SelfPlayGames(
                     net,
                     nGames: nParallelGames,
-                    nMctsSims: 10,
+                    nMctsSims: 60,
                     cPuct: 2.0,
                     temperature: 1.25,
                     dirichletAlpha: 0.3,

@@ -19,12 +19,20 @@ dotnet run chess gpu
 
 # Todo
 - train. does it improve?
-    - just check pol val loss for now
-    - if looks ok, eval vs random opponent
+    - perf: still p slow. do low hanging fruit. not multithread yet
+        - py maxed out about 30 steps/sec with nn 2 48, mcts 60, multiprocess
+        - current C# nn 2 48, mcts 60, single thread: 30-50 steps/sec, 4-8 parallel games
+    - check pol val loss - does it improve?
+        - if looks ok, eval vs random opponent
     - if no improvement, test basics, eg
         - heat, heat dict
         - self play final reward is correct for win, loss, draw scenarios
-- mask invalid actions
+        - mask invalid actions
+        - maybe: check for wins/losses during training. only seeing draws?
+            - maybe:
+                - add capture reward
+                - simplify rules
+                - train with existing replays
 - maybe make mcts agents respect timeout
 - bot ranker
   - add andoma?
