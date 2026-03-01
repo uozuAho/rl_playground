@@ -35,18 +35,33 @@ public static class Maths
     }
 
     public static Dictionary<T, float> AddDirichletNoise<T>(
-        Dictionary<T, float> simPeval,
+        Dictionary<T, float> valdict,
         double alpha,
         double epsilon
     )
         where T : notnull
     {
         var nVals = AddDirichletNoise(
-            simPeval.Values.Select(x => (double)x).ToArray(),
+            valdict.Values.Select(x => (double)x).ToArray(),
             alpha,
             epsilon
         );
-        return simPeval.Keys.Zip(nVals).ToDictionary(x => x.First, x => (float)x.Second);
+        return valdict.Keys.Zip(nVals).ToDictionary(x => x.First, x => (float)x.Second);
+    }
+
+    public static void AddDirichletNoiseInPlace<T>(
+        Dictionary<T, float> valdict,
+        double alpha,
+        double epsilon
+    )
+        where T : notnull
+    {
+        var nVals = AddDirichletNoise(valdict.Values.ToArray(), alpha, epsilon);
+        var keys = valdict.Keys.ToArray();
+        for (var i = 0; i < keys.Length; i++)
+        {
+            valdict[keys[i]] = nVals[i];
+        }
     }
 
     private static double[] AddDirichletNoise(double[] vals, double alpha, double epsilon)
@@ -54,6 +69,23 @@ public static class Maths
         var noisy = DirichletNoise.AddDirichletNoise(vals, alpha, epsilon);
         Debug.Assert(IsProbDist(noisy));
         return noisy;
+    }
+
+    private static float[] AddDirichletNoise(float[] vals, double alpha, double epsilon)
+    {
+        var dvals = new double[vals.Length];
+        for (var i = 0; i < vals.Length; i++)
+        {
+            dvals[i] = vals[i];
+        }
+        var noisy = DirichletNoise.AddDirichletNoise(dvals, alpha, epsilon);
+        Debug.Assert(IsProbDist(noisy));
+        var fvals = new float[vals.Length];
+        for (var i = 0; i < vals.Length; i++)
+        {
+            fvals[i] = (float)noisy[i];
+        }
+        return fvals;
     }
 }
 

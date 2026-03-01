@@ -74,6 +74,7 @@ public class Player
 
     private static Dictionary<Move, float> MctsProbs(MctsNode root)
     {
+        Debug.Assert(root.Children != null);
         var totalVisits = root.Children.Values.Select(c => c.Visits).Sum();
         Debug.Assert(totalVisits > 0);
         var probs = root.Children.ToDictionary(

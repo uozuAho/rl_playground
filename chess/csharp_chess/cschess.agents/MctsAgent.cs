@@ -40,7 +40,7 @@ public class MctsAgent(
         ).Run();
         foreach (var root in roots)
         {
-            var maxVis = root.Children.Values.MaxBy(c => c.Visits);
+            var maxVis = root.Children?.Values.MaxBy(c => c.Visits);
             if (maxVis?.MoveFromParent == null)
             {
                 throw new InvalidOperationException("doh");

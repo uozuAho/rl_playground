@@ -16,7 +16,7 @@ public record MctsNode
     public MctsNode? Parent { get; init; }
     public double Prior { get; init; }
     public Move? MoveFromParent { get; init; }
-    public readonly Dictionary<Move, MctsNode> Children = new();
+    public Dictionary<Move, MctsNode>? Children;
     public int Visits;
     public double TotalValue;
 
@@ -49,8 +49,6 @@ public record MctsNode
         return Value() + cPuct * Prior * v;
     }
 
-    internal bool IsExpanded => Children.Count > 0;
-
     internal bool IsTerminal => State().IsGameOver();
 }
 
@@ -58,9 +56,9 @@ internal class MctsSimState(MctsNode root)
 {
     internal MctsNode Root { get; set; } = root;
     internal MctsNode Node { get; set; } = root;
-    internal double? TerminalValue = null;
-    internal MoveProbs? Peval = null;
-    internal double? Veval = null;
+    internal double? TerminalValue;
+    internal MoveProbs? Peval;
+    internal double? Veval;
 
     internal void Reset()
     {
@@ -115,7 +113,7 @@ public class ParallelMcts(
         {
             sim.Reset();
 
-            while (sim.Node is { IsExpanded: true, IsTerminal: false })
+            while (sim.Node.Children?.Count > 0 && !sim.Node.IsTerminal)
             {
                 sim.Node = sim.Node.Children.Values.MaxBy(c => c.Puct(cPuct))!;
             }
@@ -167,20 +165,19 @@ public class ParallelMcts(
 
                 if (ReferenceEquals(sim.Node, sim.Root) && addDirichletNoise)
                 {
-                    sim.Peval = Maths.AddDirichletNoise(
-                        sim.Peval,
-                        dirichletAlpha,
-                        dirichletEpsilon
-                    );
+                    Maths.AddDirichletNoiseInPlace(sim.Peval, dirichletAlpha, dirichletEpsilon);
                 }
 
-                foreach (var action in sim.Node.State().LegalMoves())
+                var legalMoves = sim.Node.State().LegalMoves().ToArray();
+                sim.Node.Children = new Dictionary<Move, MctsNode>(legalMoves.Length);
+                for (var i = 0; i < legalMoves.Length; i++)
                 {
-                    sim.Node.Children[action] = new MctsNode
+                    var move = legalMoves[i];
+                    sim.Node.Children[move] = new MctsNode
                     {
                         Parent = sim.Node,
-                        Prior = sim.Peval[action],
-                        MoveFromParent = action,
+                        Prior = sim.Peval[move],
+                        MoveFromParent = move,
                     };
                 }
             }

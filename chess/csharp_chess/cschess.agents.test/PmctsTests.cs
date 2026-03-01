@@ -24,6 +24,7 @@ public class PmctsTests
         foreach (var root in roots)
         {
             root.Visits.ShouldBe(numSims);
+            root.Children.ShouldNotBeNull();
             var cprobs = root.Children.Values.Select(x => x.Prior);
             Maths.IsProbDist(cprobs).ShouldBe(true);
         }
@@ -48,7 +49,7 @@ public class PmctsTests
 
         var roots = new ParallelMcts(games, new UniformEvaluator(), 100).Run();
         var maxVisitMoves = roots.Select(x =>
-            x.Children.Values.MaxBy(c => c.Visits)!.MoveFromParent!.Value.ToUci()
+            x.Children?.Values.MaxBy(c => c.Visits)!.MoveFromParent!.Value.ToUci()
         );
         maxVisitMoves.ShouldBe(expectedMoves);
     }
