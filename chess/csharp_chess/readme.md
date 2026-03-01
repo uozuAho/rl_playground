@@ -17,6 +17,17 @@ cd cschess.experiments
 dotnet run chess gpu
 ```
 
+# opt log
+```cs
+const int numIterations = 2;
+const int nParallelGames = 4;
+const int nMctsSims = 60;
+var evaluaotr = UnifBatchEval
+```
+- release ~500 steps/sec
+- most time in finish sim, resize dict
+
+
 # Todo
 - train. does it improve?
     - WIP perf: still p slow. do low hanging fruit. not multithread yet
@@ -25,7 +36,7 @@ dotnet run chess gpu
         - profile notes:
             - most time in net.forward + cpu/gpu data transfer
         - ideas
-            - try: profile with noop evaluator. find non-gpu related issues
+            - WIP try: profile with noop evaluator. find non-gpu related issues
             - game queue instead of batches of games - keep inference batch size the same
             - maybe multithread before/after eval
     - check pol val loss - does it improve?

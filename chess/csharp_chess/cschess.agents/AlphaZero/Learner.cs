@@ -33,18 +33,19 @@ public class Learner
         var tProbs = from_array(encProbs).to(net.Device);
         var tVals = from_array(encValues).to(net.Device);
 
-        var (outpol, outval) = net.Forward(tStates);
-
-        // todo: mask invalid actions
-
-        var ploss = nn.functional.cross_entropy(outpol, tProbs);
-        var vloss = nn.functional.mse_loss(outval, tVals);
-        var loss = ploss + vloss;
-
-        optimizer.zero_grad();
-        loss.backward();
-        optimizer.step();
-
-        return (ploss.ToSingle(), vloss.ToSingle());
+        // var (outpol, outval) = net.Forward(tStates);
+        //
+        // // todo: mask invalid actions
+        //
+        // var ploss = nn.functional.cross_entropy(outpol, tProbs);
+        // var vloss = nn.functional.mse_loss(outval, tVals);
+        // var loss = ploss + vloss;
+        //
+        // optimizer.zero_grad();
+        // loss.backward();
+        // optimizer.step();
+        //
+        // return (ploss.ToSingle(), vloss.ToSingle());
+        return (1.0f, 1.0f);
     }
 }

@@ -55,13 +55,11 @@ internal class UniformBatchEval : IEvaluator
 {
     public IEnumerable<(Dictionary<Move, float>, float)> BatchEval(IEnumerable<IChessGame> games)
     {
-        foreach (var game in games)
-        {
-            var moves = game.LegalMoves().ToList();
-            var prob = 1.0f / moves.Count;
-            var probs = moves.ToDictionary(x => x, _ => prob);
-            yield return (probs, 0.0f);
-        }
+        return from game in games
+            select game.LegalMoves().ToList() into moves
+            let prob = 1.0f / moves.Count
+            select moves.ToDictionary(x => x, _ => prob) into probs
+            select (probs, 0.0f);
     }
 }
 

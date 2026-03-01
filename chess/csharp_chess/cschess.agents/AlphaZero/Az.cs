@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using cschess.game;
 using TorchSharp.Modules;
 
 namespace cschess.agents.AlphaZero;
@@ -9,9 +10,11 @@ public class Az
 {
     public static void Train()
     {
-        const int numIterations = 1;
-        const int nParallelGames = 2;
+        const int numIterations = 2;
+        const int nParallelGames = 4;
+        const int nMctsSims = 60;
         var net = new ResNet(2, 48, CUDA);
+        var unif = new UniformBatchEval();
         var optimiser = new Adam(net.ModelParams());
         var gameTimes = new List<TimeSpan>();
         var learnTimes = new List<TimeSpan>();
@@ -25,15 +28,17 @@ public class Az
             using (no_grad())
             {
                 stopwatch.Start();
-                samples = Player.SelfPlayGames(
-                    net,
-                    nGames: nParallelGames,
-                    nMctsSims: 60,
-                    cPuct: 2.0,
-                    temperature: 1.25,
-                    dirichletAlpha: 0.3,
-                    dirichletEpsilon: 0.25
-                ).ToList();
+                samples = Player
+                    .SelfPlayGames(
+                        evaluator: unif,
+                        nGames: nParallelGames,
+                        nMctsSims: nMctsSims,
+                        cPuct: 2.0,
+                        temperature: 1.25,
+                        dirichletAlpha: 0.3,
+                        dirichletEpsilon: 0.25
+                    )
+                    .ToList();
                 playTime = stopwatch.Elapsed;
                 totalSamples += samples.Count;
             }
@@ -47,7 +52,9 @@ public class Az
             var avgLearnTimeS = learnTimes.Select(x => x.TotalSeconds).Average();
             var gamesPerSec = nParallelGames / avgGameTimeS;
             var playStepsPerSec = totalSamples / avgGameTimeS;
-            Console.WriteLine($"{gamesPerSec} games/sec, {playStepsPerSec} steps/sec, avg learn: {avgLearnTimeS}");
+            Console.WriteLine(
+                $"{gamesPerSec} games/sec, {playStepsPerSec} steps/sec, avg learn: {avgLearnTimeS}"
+            );
         }
     }
 }

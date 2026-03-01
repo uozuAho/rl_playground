@@ -19,6 +19,7 @@ public interface IAzNet
 
     // Raw tensor passthrough for learning
     (Tensor policy, Tensor value) Forward(Tensor states);
+    public IEnumerable<Parameter> ModelParams();
 }
 
 public class ResNet : IAzNet, IEvaluator
@@ -100,29 +101,33 @@ internal sealed class ResNetModule : nn.Module<Tensor, (Tensor, Tensor)>
         : base("ResNet")
     {
         _start = nn.Sequential(
-            ("conv1", nn.Conv2d(8, numHidden, kernel_size: 3, padding: 1)),
-            ("bn1", nn.BatchNorm2d(numHidden)),
-            ("relu", nn.ReLU())
-        ).to(device);
+                ("conv1", nn.Conv2d(8, numHidden, kernel_size: 3, padding: 1)),
+                ("bn1", nn.BatchNorm2d(numHidden)),
+                ("relu", nn.ReLU())
+            )
+            .to(device);
         _backbone = nn.Sequential(
-            Enumerable.Range(0, numResBlocks).Select(i => new ResBlock(numHidden))
-        ).to(device);
+                Enumerable.Range(0, numResBlocks).Select(i => new ResBlock(numHidden))
+            )
+            .to(device);
         _policyHead = nn.Sequential(
-            nn.Conv2d(numHidden, 32, kernel_size: 3, padding: 1),
-            nn.BatchNorm2d(32),
-            nn.ReLU(),
-            nn.Flatten(),
-            // 8x8 for chess board
-            nn.Linear(32 * 8 * 8, codec.ActionSize)
-        ).to(device);
+                nn.Conv2d(numHidden, 32, kernel_size: 3, padding: 1),
+                nn.BatchNorm2d(32),
+                nn.ReLU(),
+                nn.Flatten(),
+                // 8x8 for chess board
+                nn.Linear(32 * 8 * 8, codec.ActionSize)
+            )
+            .to(device);
         _valueHead = nn.Sequential(
-            nn.Conv2d(numHidden, 3, kernel_size: 3, padding: 1),
-            nn.BatchNorm2d(3),
-            nn.ReLU(),
-            nn.Flatten(),
-            nn.Linear(3 * 8 * 8, 1),
-            nn.Tanh()
-        ).to(device);
+                nn.Conv2d(numHidden, 3, kernel_size: 3, padding: 1),
+                nn.BatchNorm2d(3),
+                nn.ReLU(),
+                nn.Flatten(),
+                nn.Linear(3 * 8 * 8, 1),
+                nn.Tanh()
+            )
+            .to(device);
 
         RegisterComponents();
     }
