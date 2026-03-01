@@ -5,6 +5,10 @@ getting < 1 game per second. Most recent effort and todos are around azmp:
 multiprocess alphazero. Dunno if it works or not, since training is so slow
 it's going to take weeks to see if there's any improvement.
 
+Current perf stats for comparison with C#
+- nn 2 blocks 48 width, mcts 60 sims
+- 15-30 steps/sec
+
 # Quick start
 Install uv + make.
 

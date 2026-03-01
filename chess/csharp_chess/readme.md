@@ -19,9 +19,15 @@ dotnet run chess gpu
 
 # Todo
 - train. does it improve?
-    - perf: still p slow. do low hanging fruit. not multithread yet
+    - WIP perf: still p slow. do low hanging fruit. not multithread yet
         - py maxed out about 30 steps/sec with nn 2 48, mcts 60, multiprocess
         - current C# nn 2 48, mcts 60, single thread: 30-50 steps/sec, 4-8 parallel games
+        - profile notes:
+            - most time in net.forward + cpu/gpu data transfer
+        - ideas
+            - try: profile with noop evaluator. find non-gpu related issues
+            - game queue instead of batches of games - keep inference batch size the same
+            - maybe multithread before/after eval
     - check pol val loss - does it improve?
         - if looks ok, eval vs random opponent
     - if no improvement, test basics, eg
