@@ -22,6 +22,7 @@ public record MctsNode
 
     // todo: make this private
     internal IChessGame? _state;
+    private bool? _isTerminal;
 
     public IChessGame State()
     {
@@ -36,6 +37,15 @@ public record MctsNode
         return _state;
     }
 
+    internal bool IsTerminal
+    {
+        get
+        {
+            _isTerminal ??= State().IsGameOver();
+            return _isTerminal.Value;
+        }
+    }
+
     private double Value() => Visits == 0 ? 0 : TotalValue / Visits;
 
     internal double Puct(double cPuct)
@@ -48,8 +58,6 @@ public record MctsNode
 
         return Value() + cPuct * Prior * v;
     }
-
-    internal bool IsTerminal => State().IsGameOver();
 }
 
 internal class MctsSimState(MctsNode root)

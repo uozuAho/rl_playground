@@ -26,7 +26,9 @@ var evaluaotr = UnifBatchEval
 ```
 - release ~500 steps/sec
 - most time in finish sim, resize dict
-
+- prealloc dicts, now ~550
+- save _isTerminal, now ~700
+- most time in copy game -> create board from board
 
 # Todo
 - train. does it improve?
@@ -37,6 +39,9 @@ var evaluaotr = UnifBatchEval
             - most time in net.forward + cpu/gpu data transfer
         - ideas
             - WIP try: profile with noop evaluator. find non-gpu related issues
+                - WIP board copy is heavy. options
+                    - WIP don't copy board - use one at the root with move/undo
+                    - copy board fields instead of making moves from scratch
             - game queue instead of batches of games - keep inference batch size the same
             - maybe multithread before/after eval
     - check pol val loss - does it improve?
