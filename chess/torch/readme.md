@@ -5,6 +5,10 @@ getting < 1 game per second. Most recent effort and todos are around azmp:
 multiprocess alphazero. Dunno if it works or not, since training is so slow
 it's going to take weeks to see if there's any improvement.
 
+NOTE: there's likely a significant performance gain to be had by not copying
+the chess game during MCTS. I'm currently trying this in C#. If that works well,
+it may be worth trying here to see if good ol' python + torch is fast enough.
+
 Current perf stats for comparison with C#
 - nn 2 blocks 48 width, mcts 60 sims
 - 15-30 steps/sec
@@ -20,6 +24,7 @@ make pc
 
 # todo
 - port to C#. py chess players are very slow, gonna be hard to speed up
+- maybe: perf: remove chess game copy in MCTS
 - azmp player perf
     - profile: heavy: copy and is_terminal
 - try on big machine
