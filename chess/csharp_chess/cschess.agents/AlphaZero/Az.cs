@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using cschess.game;
 using TorchSharp.Modules;
 
 namespace cschess.agents.AlphaZero;
@@ -10,11 +9,11 @@ public class Az
 {
     public static void Train()
     {
-        const int numIterations = 2;
-        const int nParallelGames = 4;
-        const int nMctsSims = 60;
+        const int numIterations = 1;
+        const int nParallelGames = 2;
+        const int nMctsSims = 40;
         var net = new ResNet(2, 48, CUDA);
-        var unif = new UniformBatchEval();
+        // var unif = new UniformBatchEval();
         var optimiser = new Adam(net.ModelParams());
         var gameTimes = new List<TimeSpan>();
         var learnTimes = new List<TimeSpan>();
@@ -30,7 +29,7 @@ public class Az
                 stopwatch.Start();
                 samples = Player
                     .SelfPlayGames(
-                        evaluator: unif,
+                        evaluator: net,
                         nGames: nParallelGames,
                         nMctsSims: nMctsSims,
                         cPuct: 2.0,

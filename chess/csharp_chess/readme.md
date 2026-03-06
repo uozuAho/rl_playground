@@ -33,8 +33,10 @@ var evaluaotr = UnifBatchEval
         - profile notes:
             - most time in net.forward + cpu/gpu data transfer
         - ideas
-            - game queue instead of batches of games - keep inference batch size the same
-            - maybe multithread before/after eval
+            - keep gpu saturated
+                - design threaded approach
+                - game queue instead of batches of games - keep inference batch size the same
+                - maybe multithread before/after eval
             - DONE: profile with noop evaluator. find non-gpu related issues
     - check pol val loss - does it improve?
         - if looks ok, eval vs random opponent
