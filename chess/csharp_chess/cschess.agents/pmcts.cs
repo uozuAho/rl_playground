@@ -64,12 +64,12 @@ internal class MctsSimState
     internal double? TerminalValue;
     internal MoveProbs? Peval;
     internal double? Veval;
-    private IChessGame RootState { get; }
+    private string RootFen { get; }
 
     public MctsSimState(MctsNode root)
     {
         Root = root;
-        RootState = Root.State().Copy();
+        RootFen = root.State().Fen();
         Node = ResetNode();
     }
 
@@ -84,7 +84,7 @@ internal class MctsSimState
     private MctsNode ResetNode()
     {
         var newNode = Root;
-        newNode._state = RootState.Copy();
+        newNode._state = CodingAdventureChessGame.FromFen(RootFen);
         return newNode;
     }
 }
@@ -217,19 +217,6 @@ public class ParallelMcts(
                         child.Prior = sim.Peval[move];
                     }
                 }
-
-                // var legalMoves = sim.Node.State().LegalMoves().ToArray();
-                // sim.Node.Children = new Dictionary<Move, MctsNode>(legalMoves.Length);
-                // for (var i = 0; i < legalMoves.Length; i++)
-                // {
-                //     var move = legalMoves[i];
-                //     sim.Node.Children[move] = new MctsNode
-                //     {
-                //         Parent = sim.Node,
-                //         Prior = sim.Peval[move],
-                //         MoveFromParent = move,
-                //     };
-                // }
             }
 
             var value = sim.TerminalValue ?? sim.Veval!.Value;

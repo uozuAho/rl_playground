@@ -24,23 +24,18 @@ const int nParallelGames = 4;
 const int nMctsSims = 60;
 var evaluaotr = UnifBatchEval
 ```
-- release ~500 steps/sec
-- most time in finish sim, resize dict
-- prealloc dicts, now ~550
-- save _isTerminal, now ~700
-- most time in copy game -> create board from board
 
 # Todo
-- train. does it improve?
+- az: train. does it improve?
     - WIP perf: still p slow. do low hanging fruit. not multithread yet
         - py maxed out about 30 steps/sec with nn 2 48, mcts 60, multiprocess
         - current C# nn 2 48, mcts 60, single thread: 30-50 steps/sec, 4-8 parallel games
         - profile notes:
             - most time in net.forward + cpu/gpu data transfer
         - ideas
-            - WIP try: profile with noop evaluator. find non-gpu related issues
             - game queue instead of batches of games - keep inference batch size the same
             - maybe multithread before/after eval
+            - DONE: profile with noop evaluator. find non-gpu related issues
     - check pol val loss - does it improve?
         - if looks ok, eval vs random opponent
     - if no improvement, test basics, eg
@@ -52,12 +47,15 @@ var evaluaotr = UnifBatchEval
                 - add capture reward
                 - simplify rules
                 - train with existing replays
-- maybe make mcts agents respect timeout
-- bot ranker
-  - add andoma?
-  - maybe: report avg time per move per agent
-- maybe: handle all possible moves. See LegalMoves - mine filters out dupes
-  that have same from-to squares
+## maybe
+- az: chess perf
+    - az: creating/copying board during pmcts is still pretty heavy. preallocate? obj pool?
+    - make mcts agents respect timeout
+    - bot ranker
+        - add andoma?
+        - maybe: report avg time per move per agent
+    - maybe: az: handle all possible moves. See LegalMoves - mine filters out dupes
+      that have same from-to squares
 ## old todos
 - greedy nn bot
   - DONE test small run on cpu
