@@ -57,6 +57,11 @@ public readonly record struct Move(Square From, Square To)
     {
         return From.ToUci() + To.ToUci();
     }
+
+    public override string ToString()
+    {
+        return ToUci();
+    }
 }
 
 public interface IChessGame

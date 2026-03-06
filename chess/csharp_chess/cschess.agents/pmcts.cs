@@ -14,7 +14,7 @@ public interface IEvaluator
 public record MctsNode
 {
     public MctsNode? Parent { get; init; }
-    public double Prior { get; init; }
+    public double Prior { get; internal set; }
     public Move? MoveFromParent { get; init; }
     public Dictionary<Move, MctsNode>? Children;
     public int Visits;
@@ -22,7 +22,13 @@ public record MctsNode
 
     // todo: make this private
     internal IChessGame? _state;
-    private bool? _isTerminal;
+
+    internal bool _isTerminal;
+
+    public override string ToString()
+    {
+        return $"vists: {Visits}, puct1: {Puct(1.0):F2}, p: {Prior:F2}, tv: {TotalValue:F2}";
+    }
 
     public IChessGame State()
     {
@@ -30,20 +36,11 @@ public record MctsNode
             return _state;
 
         Debug.Assert(Parent != null);
-        _state = Parent.State().Copy();
+        _state = Parent.State();
         Debug.Assert(MoveFromParent.HasValue);
         _state.MakeMove(MoveFromParent.Value);
 
         return _state;
-    }
-
-    internal bool IsTerminal
-    {
-        get
-        {
-            _isTerminal ??= State().IsGameOver();
-            return _isTerminal.Value;
-        }
     }
 
     private double Value() => Visits == 0 ? 0 : TotalValue / Visits;
@@ -60,20 +57,35 @@ public record MctsNode
     }
 }
 
-internal class MctsSimState(MctsNode root)
+internal class MctsSimState
 {
-    internal MctsNode Root { get; set; } = root;
-    internal MctsNode Node { get; set; } = root;
+    internal MctsNode Root { get; set; }
+    internal MctsNode Node { get; set; }
     internal double? TerminalValue;
     internal MoveProbs? Peval;
     internal double? Veval;
+    private IChessGame RootState { get; }
+
+    public MctsSimState(MctsNode root)
+    {
+        Root = root;
+        RootState = Root.State().Copy();
+        Node = ResetNode();
+    }
 
     internal void Reset()
     {
-        Node = Root;
+        Node = ResetNode();
         TerminalValue = null;
         Peval = null;
         Veval = null;
+    }
+
+    private MctsNode ResetNode()
+    {
+        var newNode = Root;
+        newNode._state = RootState.Copy();
+        return newNode;
     }
 }
 
@@ -121,12 +133,19 @@ public class ParallelMcts(
         {
             sim.Reset();
 
-            while (sim.Node.Children?.Count > 0 && !sim.Node.IsTerminal)
+            while (sim.Node.Children?.Count > 0 && !sim.Node._isTerminal)
             {
                 sim.Node = sim.Node.Children.Values.MaxBy(c => c.Puct(cPuct))!;
+                // node's state is the same ref as its parent. ew this code is yuck
+                // I'm calculating state here at the latest possible moment for perf
+                // reasons. Only the tree policy node needs to have its state calculated,
+                // thus we can reuse the parent state instead of copying it
+                sim.Node._state = sim.Node.Parent!.State();
+                sim.Node._state.MakeMove(sim.Node.MoveFromParent!.Value);
+                sim.Node._isTerminal = sim.Node._state.IsGameOver();
             }
 
-            if (sim.Node.IsTerminal)
+            if (sim.Node._isTerminal)
             {
                 var gameState = sim.Node.State().GameStatus();
                 var turn = sim.Node.State().Turn();
@@ -140,18 +159,32 @@ public class ParallelMcts(
                     sim.TerminalValue = winner == movedLast ? 1.0 : -1.0;
                 }
             }
+            else
+            {
+                var legalMoves = sim.Node.State().LegalMoves().ToArray();
+                sim.Node.Children = new Dictionary<Move, MctsNode>(legalMoves.Length);
+                for (var i = 0; i < legalMoves.Length; i++)
+                {
+                    var move = legalMoves[i];
+                    sim.Node.Children[move] = new MctsNode
+                    {
+                        Parent = sim.Node,
+                        MoveFromParent = move,
+                    };
+                }
+            }
         }
     }
 
     private void Eval()
     {
-        var games = _sims.Where(s => !s.Node.IsTerminal).Select(s => s.Node.State()).ToList();
+        var games = _sims.Where(s => !s.Node._isTerminal).Select(s => s.Node.State()).ToList();
         if (games.Count == 0)
         {
             return;
         }
         var pvs = evaluator.BatchEval(games).ToList();
-        foreach (var spv in _sims.Where(s => !s.Node.IsTerminal).Zip(pvs))
+        foreach (var spv in _sims.Where(s => !s.Node._isTerminal).Zip(pvs))
         {
             var (sim, pv) = spv;
             var (p, v) = pv;
@@ -176,18 +209,27 @@ public class ParallelMcts(
                     Maths.AddDirichletNoiseInPlace(sim.Peval, dirichletAlpha, dirichletEpsilon);
                 }
 
-                var legalMoves = sim.Node.State().LegalMoves().ToArray();
-                sim.Node.Children = new Dictionary<Move, MctsNode>(legalMoves.Length);
-                for (var i = 0; i < legalMoves.Length; i++)
+                if (sim.Node.Children != null)
                 {
-                    var move = legalMoves[i];
-                    sim.Node.Children[move] = new MctsNode
+                    foreach (var kv in sim.Node.Children)
                     {
-                        Parent = sim.Node,
-                        Prior = sim.Peval[move],
-                        MoveFromParent = move,
-                    };
+                        var (move, child) = kv;
+                        child.Prior = sim.Peval[move];
+                    }
                 }
+
+                // var legalMoves = sim.Node.State().LegalMoves().ToArray();
+                // sim.Node.Children = new Dictionary<Move, MctsNode>(legalMoves.Length);
+                // for (var i = 0; i < legalMoves.Length; i++)
+                // {
+                //     var move = legalMoves[i];
+                //     sim.Node.Children[move] = new MctsNode
+                //     {
+                //         Parent = sim.Node,
+                //         Prior = sim.Peval[move],
+                //         MoveFromParent = move,
+                //     };
+                // }
             }
 
             var value = sim.TerminalValue ?? sim.Veval!.Value;
@@ -195,6 +237,10 @@ public class ParallelMcts(
             var node = sim.Node;
             while (node != null)
             {
+                if (node.Parent == null)
+                {
+                    node = sim.Root;
+                }
                 node.Visits++;
                 node.TotalValue += value;
                 node = node.Parent;

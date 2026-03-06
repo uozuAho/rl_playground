@@ -10,7 +10,7 @@ public class PmctsTests
     public void it_runs()
     {
         const int numGames = 2;
-        const int numSims = 3;
+        const int numSims = 200;
         var games = Enumerable
             .Range(0, numGames)
             .Select(_ => CodingAdventureChessGame.StandardGame())
