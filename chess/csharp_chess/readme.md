@@ -17,27 +17,20 @@ cd cschess.experiments
 dotnet run chess gpu
 ```
 
-# opt log
-```cs
-const int numIterations = 2;
-const int nParallelGames = 4;
-const int nMctsSims = 60;
-var evaluaotr = UnifBatchEval
-```
+# eval experiment notes
+- init: 2 threads, 1 player, 1 nn eval. 860 states/sec, 30% gpu
 
 # Todo
-- az: train. does it improve?
-    - WIP perf: still p slow. do low hanging fruit. not multithread yet
+- az: perf
+    - notes
         - py maxed out about 30 steps/sec with nn 2 48, mcts 60, multiprocess
-        - current C# nn 2 48, mcts 60, single thread: 30-50 steps/sec, 4-8 parallel games
-        - profile notes:
-            - most time in net.forward + cpu/gpu data transfer
-        - ideas
-            - keep gpu saturated
-                - design threaded approach
-                - game queue instead of batches of games - keep inference batch size the same
-                - maybe multithread before/after eval
-            - DONE: profile with noop evaluator. find non-gpu related issues
+        - original C# nn 2 48, mcts 60, single thread: 30-50 steps/sec, 4-8 parallel games
+    - todo
+        - WIP experiment: saturate GPU evaluating chess states. no mcts.
+        - game queue instead of batches of games - keep inference batch size the same
+            - temporarily disable learning: does inference max out gpu?
+        - design threaded approach
+- az: train. does it improve?
     - check pol val loss - does it improve?
         - if looks ok, eval vs random opponent
     - if no improvement, test basics, eg

@@ -65,7 +65,7 @@ public class ResNet : IAzNet, IEvaluator
     /// <summary>
     /// games to list(probs, value) output
     /// </summary>
-    private IEnumerable<(float[], float)> Pv(IEnumerable<IChessGame> games)
+    public IEnumerable<(float[], float)> Pv(IEnumerable<IChessGame> games)
     {
         var (logits, values) = Forward(games);
         var parr = logits.softmax(dim: 1).cpu().data<float>().ToArray();
