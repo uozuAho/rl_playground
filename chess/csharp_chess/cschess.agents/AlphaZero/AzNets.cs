@@ -68,10 +68,7 @@ public class ResNet : IAzNet, IEvaluator
     public IEnumerable<(float[], float)> Pv(IEnumerable<IChessGame> games)
     {
         var (logits, values) = Forward(games);
-        var parr = logits.softmax(dim: 1).cpu().data<float>().ToArray();
-        var varr = values.squeeze().cpu().data<float>().ToArray();
-        Debug.Assert(parr.Length == varr.Length * Codec.ActionSize);
-        return parr.Batch(Codec.ActionSize).Zip(varr);
+        return NnHeadsToPv(logits, values);
     }
 
     /// <summary>
@@ -87,6 +84,14 @@ public class ResNet : IAzNet, IEvaluator
     public IEnumerable<Parameter> ModelParams()
     {
         return _model.parameters();
+    }
+
+    public IEnumerable<(float[], float)> NnHeadsToPv(Tensor policy, Tensor value)
+    {
+        var parr = policy.softmax(dim: 1).cpu().data<float>().ToArray();
+        var varr = value.squeeze().cpu().data<float>().ToArray();
+        Debug.Assert(parr.Length == varr.Length * Codec.ActionSize);
+        return parr.Batch(Codec.ActionSize).Zip(varr);
     }
 }
 

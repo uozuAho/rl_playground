@@ -7,9 +7,9 @@ namespace cschess.agents.AlphaZero;
 
 public class ExperimentSaturateGpu
 {
-    private const int numGames = 100;
-    private static BlockingCollection<IChessGame> toEvalQueue = new(numGames);
-    private static BlockingCollection<(IChessGame, (float[], float))> evaldQueue = new(numGames);
+    private const int numGames = 1;
+    private static BlockingCollection<IChessGame> toEvalQueue = new(numGames + 3);
+    private static BlockingCollection<(IChessGame, (Tensor, Tensor))> evaldQueue = new(numGames + 3);
     static ResNet net = new(2, 48, CUDA);
 
     public static void EvaluateSaturateGpu()
@@ -26,10 +26,15 @@ public class ExperimentSaturateGpu
         moveEvaler.Wait();
     }
 
+    private static void PushToEval(IChessGame game)
+    {
+
+    }
+
     private static void AdvanceState()
     {
-        var games = 0;
-        var states = 0;
+        var gameCount = 0;
+        var stateCount = 0;
         var sw = Stopwatch.StartNew();
         var workingTime = TimeSpan.Zero;
 
@@ -40,26 +45,26 @@ public class ExperimentSaturateGpu
             if (game.IsGameOver())
             {
                 toEvalQueue.CompleteAdding();
-                games++;
+                gameCount++;
             }
             else
             {
-                var (mp, _) = mpv;
+                var (mp, _) = net.NnHeadsToPv(mpv.Item1, mpv.Item2).Single();
                 var mpd = net.Codec.Probdist2Dict(mp, game);
                 var (move, _) = mpd.MaxBy(x => x.Value);
                 game.MakeMove(move);
                 toEvalQueue.Add(game);
-                states++;
+                stateCount++;
             }
 
             workingTime += sww.Elapsed;
         }
 
         var totalTime = sw.Elapsed;
-        var gamesPerSec = games / totalTime.TotalSeconds;
-        var statesPerSec = states / totalTime.TotalSeconds;
+        var gamesPerSec = gameCount / totalTime.TotalSeconds;
+        var statesPerSec = stateCount / totalTime.TotalSeconds;
         var util = workingTime / totalTime;
-        Console.WriteLine($"Player: played {games} games, {states} states in {totalTime}");
+        Console.WriteLine($"Player: played {gameCount} games, {stateCount} states in {totalTime}");
         Console.WriteLine($"Player: {gamesPerSec:F2} games/sec, {statesPerSec:F2} states/sec");
         Console.WriteLine($"Player: utilisation: {util:F2}");
     }
@@ -77,7 +82,9 @@ public class ExperimentSaturateGpu
             // todo: transfer to cuda on producer side?
 
             var sww = Stopwatch.StartNew();
-            var mpv = net.Pv([game]).Single();
+            var arr = net.Codec.States2Array([game]);
+            var tArr = from_array(arr).to(CUDA);
+            var mpv = net.Forward(tArr);
             evaldQueue.Add((game, mpv));
             states++;
             workingTime += sww.Elapsed;
