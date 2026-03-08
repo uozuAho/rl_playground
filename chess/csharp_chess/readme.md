@@ -19,6 +19,7 @@ dotnet run chess gpu
 
 # eval experiment notes
 - init: 2 threads, 1 player, 1 nn eval. 860 states/sec, 30% gpu
+- move tensor encoding to player. ~1000 states/sec, 40% gpu
 
 # Todo
 - az: perf
@@ -27,9 +28,6 @@ dotnet run chess gpu
         - original C# nn 2 48, mcts 60, single thread: 30-50 steps/sec, 4-8 parallel games
     - todo
         - WIP experiment: saturate GPU evaluating chess states. no mcts.
-        - game queue instead of batches of games - keep inference batch size the same
-            - temporarily disable learning: does inference max out gpu?
-        - design threaded approach
 - az: train. does it improve?
     - check pol val loss - does it improve?
         - if looks ok, eval vs random opponent

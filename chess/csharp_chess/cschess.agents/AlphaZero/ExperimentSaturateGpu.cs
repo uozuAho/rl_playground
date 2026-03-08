@@ -7,10 +7,11 @@ namespace cschess.agents.AlphaZero;
 
 public class ExperimentSaturateGpu
 {
-    private const int numGames = 1;
-    private static BlockingCollection<IChessGame> toEvalQueue = new(numGames + 3);
-    private static BlockingCollection<(IChessGame, (Tensor, Tensor))> evaldQueue = new(numGames + 3);
+    private const int numGames = 100;
+    private static readonly BlockingCollection<(IChessGame, Tensor)> EvalQueue = new(numGames);
+    private static readonly BlockingCollection<(IChessGame, (Tensor, Tensor))> PlayQueue = new(numGames);
     static ResNet net = new(2, 48, CUDA);
+    private static int gamesInProgress;
 
     public static void EvaluateSaturateGpu()
     {
@@ -19,7 +20,8 @@ public class ExperimentSaturateGpu
         var moveEvaler = Task.Run(EvalJob);
         for (var i = 0; i < numGames; i++)
         {
-            toEvalQueue.Add(CodingAdventureChessGame.StandardGame());
+            PushToEval(CodingAdventureChessGame.StandardGame());
+            gamesInProgress++;
         }
 
         player.Wait();
@@ -28,7 +30,9 @@ public class ExperimentSaturateGpu
 
     private static void PushToEval(IChessGame game)
     {
-
+        var arr = net.Codec.States2Array([game]);
+        var tArr = from_array(arr).to(CUDA);
+        EvalQueue.Add((game, tArr));
     }
 
     private static void AdvanceState()
@@ -38,14 +42,18 @@ public class ExperimentSaturateGpu
         var sw = Stopwatch.StartNew();
         var workingTime = TimeSpan.Zero;
 
-        foreach (var (game, mpv) in evaldQueue.GetConsumingEnumerable())
+        foreach (var (game, mpv) in PlayQueue.GetConsumingEnumerable())
         {
             var sww = Stopwatch.StartNew();
 
             if (game.IsGameOver())
             {
-                toEvalQueue.CompleteAdding();
                 gameCount++;
+                gamesInProgress--;
+                if (gamesInProgress == 0)
+                {
+                    EvalQueue.CompleteAdding();
+                }
             }
             else
             {
@@ -53,7 +61,7 @@ public class ExperimentSaturateGpu
                 var mpd = net.Codec.Probdist2Dict(mp, game);
                 var (move, _) = mpd.MaxBy(x => x.Value);
                 game.MakeMove(move);
-                toEvalQueue.Add(game);
+                PushToEval(game);
                 stateCount++;
             }
 
@@ -75,21 +83,15 @@ public class ExperimentSaturateGpu
         var sw = Stopwatch.StartNew();
         var workingTime = TimeSpan.Zero;
 
-        foreach (var game in toEvalQueue.GetConsumingEnumerable())
+        foreach (var (game, tArr) in EvalQueue.GetConsumingEnumerable())
         {
-            // todo: convert to/from array etc on producer side?
-            // todo: convert to/from tensor on producer side?
-            // todo: transfer to cuda on producer side?
-
             var sww = Stopwatch.StartNew();
-            var arr = net.Codec.States2Array([game]);
-            var tArr = from_array(arr).to(CUDA);
             var mpv = net.Forward(tArr);
-            evaldQueue.Add((game, mpv));
+            PlayQueue.Add((game, mpv));
             states++;
             workingTime += sww.Elapsed;
         }
-        evaldQueue.CompleteAdding();
+        PlayQueue.CompleteAdding();
 
         var totalTime = sw.Elapsed;
         var statesPerSec = states / totalTime.TotalSeconds;
