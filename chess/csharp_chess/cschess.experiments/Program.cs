@@ -2,4 +2,5 @@
 
 using cschess.agents.AlphaZero;
 
-ExperimentSaturateGpu.EvaluateSaturateGpu();
+// ExperimentSaturateGpu.EvaluateSaturateGpu();
+ExperimentSaturateGpu2.EvaluateSaturateGpu();

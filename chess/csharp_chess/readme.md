@@ -18,8 +18,11 @@ dotnet run chess gpu
 ```
 
 # eval experiment notes
-- init: 2 threads, 1 player, 1 nn eval. 860 states/sec, 30% gpu
+- init: 2 threads: 1 player, 1 nn eval. 860 states/sec, 30% gpu
 - move tensor encoding to player. ~1000 states/sec, 40% gpu
+- eval empty arrays, no chess: ~1500 states/sec, 75% gpu
+- **batch size 20, 20k states/sec**, ~100% gpu, gpu faster than empty array gen?
+    - also running out of gpu mem soon after this batch size (and queue size)
 
 # Todo
 - az: perf
@@ -28,6 +31,8 @@ dotnet run chess gpu
         - original C# nn 2 48, mcts 60, single thread: 30-50 steps/sec, 4-8 parallel games
     - todo
         - WIP experiment: saturate GPU evaluating chess states. no mcts.
+            - batch games in evaluator. make play queue store evaluated batches
+            - maybe: do same in py, compare speed
 - az: train. does it improve?
     - check pol val loss - does it improve?
         - if looks ok, eval vs random opponent

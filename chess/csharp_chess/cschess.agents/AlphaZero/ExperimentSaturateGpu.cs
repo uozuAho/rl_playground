@@ -5,6 +5,17 @@ using static TorchSharp.torch;
 
 namespace cschess.agents.AlphaZero;
 
+/// <summary>
+/// Maximise games/states per second, doing greedy moves based on NN policy output.
+///
+/// Batching is essential for maximising GPU utilisation.
+///
+/// idea: jobs:
+/// - make moves: (game, policy) -> game
+/// - batch for eval: game -> (games, Tensor)
+/// - eval: (games, Tensor) -> (games, (Tensor, Tensor))
+/// - unbatch: (games, (Tensor, Tensor)) -> (game, policy)
+/// </summary>
 public class ExperimentSaturateGpu
 {
     private const int numGames = 100;
