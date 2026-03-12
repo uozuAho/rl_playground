@@ -18,12 +18,13 @@ namespace cschess.agents.AlphaZero;
 /// </summary>
 public class ExperimentSaturateGpu
 {
-    private const int numGames = 1;
+    private const int numGames = 2;
     private const int maxBatchSize = 1;
     private static readonly BlockingCollection<IChessGame> BatchQueue = new(numGames);
     private static readonly BlockingCollection<(IChessGame[], Tensor)> EvalQueue = new(numGames / maxBatchSize);
     private static readonly BlockingCollection<(IChessGame[], (Tensor, Tensor))> UnbatchQueue = new(numGames / maxBatchSize);
     private static readonly BlockingCollection<(IChessGame, Dictionary<Move, float>)> MoveQueue = new(numGames);
+    private static readonly BlockingCollection<TaskMetrics> MetricsQueue = new();
     private static readonly ResNet Net = new(2, 48, CUDA);
     private static int _gamesInProgress;
 
@@ -46,13 +47,19 @@ public class ExperimentSaturateGpu
         };
 
         Task.WaitAll(tasks);
+
+        for (var i = 0; i < tasks.Length; i++)
+        {
+            var m = MetricsQueue.Take();
+            m.PrintSummary();
+        }
     }
 
     private static void Batch()
     {
         var batchBuf = new IChessGame[maxBatchSize];
         var bufIdx = 0;
-        var metrics = TaskMetrics.StartNew();
+        var metrics = TaskMetrics.StartNew(nameof(Batch));
 
         foreach (var game in BatchQueue.GetConsumingEnumerable())
         {
@@ -61,7 +68,9 @@ public class ExperimentSaturateGpu
             var batchSize = Math.Min(maxBatchSize, _gamesInProgress);
             if (bufIdx == batchSize)
             {
-                var arr = Net.Codec.States2Array(batchBuf);
+                var batch = new IChessGame[batchSize];
+                batchBuf.CopyTo(batch, 0);
+                var arr = Net.Codec.States2Array(batch);
                 var arrT = from_array(arr).to(CUDA);
                 metrics.IncState(batchSize);
                 metrics.StopWork();
@@ -71,12 +80,12 @@ public class ExperimentSaturateGpu
         }
         EvalQueue.CompleteAdding();
 
-        metrics.PrintSummary(nameof(Batch));
+        MetricsQueue.Add(metrics);
     }
 
     private static void Eval()
     {
-        var metrics = TaskMetrics.StartNew();
+        var metrics = TaskMetrics.StartNew(nameof(Eval));
 
         foreach (var (games, tArr) in EvalQueue.GetConsumingEnumerable())
         {
@@ -88,12 +97,12 @@ public class ExperimentSaturateGpu
         }
         UnbatchQueue.CompleteAdding();
 
-        metrics.PrintSummary(nameof(Eval));
+        MetricsQueue.Add(metrics);
     }
 
     private static void Unbatch()
     {
-        var metrics = TaskMetrics.StartNew();
+        var metrics = TaskMetrics.StartNew(nameof(Unbatch));
 
         foreach (var (games, pvs) in UnbatchQueue.GetConsumingEnumerable())
         {
@@ -109,12 +118,12 @@ public class ExperimentSaturateGpu
         }
         MoveQueue.CompleteAdding();
 
-        metrics.PrintSummary(nameof(Unbatch));
+        MetricsQueue.Add(metrics);
     }
 
     private static void MakeMove()
     {
-        var metrics = TaskMetrics.StartNew();
+        var metrics = TaskMetrics.StartNew(nameof(MakeMove));
 
         foreach (var (game, mp) in MoveQueue.GetConsumingEnumerable())
         {
@@ -140,26 +149,28 @@ public class ExperimentSaturateGpu
             metrics.StopWork();
         }
 
-        metrics.PrintSummary(nameof(MakeMove));
+        MetricsQueue.Add(metrics);
     }
 }
 
 internal class TaskMetrics
 {
+    private readonly string _name;
     private readonly Stopwatch _sw;
     private TimeSpan _workStarted;
     private TimeSpan _workTime;
     private int _games;
     private int _states;
 
-    private TaskMetrics(Stopwatch sw)
+    private TaskMetrics(string name, Stopwatch sw)
     {
+        _name = name;
         _sw = sw;
     }
 
-    public static TaskMetrics StartNew()
+    public static TaskMetrics StartNew(string name)
     {
-        return new TaskMetrics(Stopwatch.StartNew());
+        return new TaskMetrics(name, Stopwatch.StartNew());
     }
 
     public void StartWork() => _workStarted = _sw.Elapsed;
@@ -168,14 +179,14 @@ internal class TaskMetrics
     public void IncState() => _states += 1;
     public void IncState(int nStates) => _states += nStates;
 
-    public void PrintSummary(string name)
+    public void PrintSummary()
     {
         var totalTime = _sw.Elapsed;
         var gamesPerSec = _games / totalTime.TotalSeconds;
         var statesPerSec = _states / totalTime.TotalSeconds;
         var util = _workTime / totalTime;
-        Console.WriteLine($"{name}: {_games} games, {_states} states in {totalTime}");
-        Console.WriteLine($"{name}: {gamesPerSec:F2} games/sec, {statesPerSec:F2} states/sec");
-        Console.WriteLine($"{name}: utilisation: {util:F2}");
+        Console.WriteLine($"{_name}: {_games} games, {_states} states in {totalTime}");
+        Console.WriteLine($"{_name}: {gamesPerSec:F2} games/sec, {statesPerSec:F2} states/sec");
+        Console.WriteLine($"{_name}: utilisation: {util:F2}");
     }
 }

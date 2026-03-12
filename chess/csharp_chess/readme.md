@@ -32,6 +32,7 @@ dotnet run chess gpu
     - todo
         - WIP experiment: saturate GPU evaluating chess states. no mcts.
             - WIP batch games in evaluator
+                - debug wrong moves when > 1 game
             - maybe: do same in py, compare speed
 - az: train. does it improve?
     - check pol val loss - does it improve?
