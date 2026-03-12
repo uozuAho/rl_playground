@@ -18,7 +18,7 @@ namespace cschess.agents.AlphaZero;
 /// </summary>
 public class ExperimentSaturateGpu
 {
-    private const int numGames = 2;
+    private const int numGames = 100;
     private const int maxBatchSize = 1;
     private static readonly BlockingCollection<IChessGame> BatchQueue = new(numGames);
     private static readonly BlockingCollection<(IChessGame[], Tensor)> EvalQueue = new(numGames / maxBatchSize);
@@ -74,7 +74,7 @@ public class ExperimentSaturateGpu
                 var arrT = from_array(arr).to(CUDA);
                 metrics.IncState(batchSize);
                 metrics.StopWork();
-                EvalQueue.Add((batchBuf, arrT));
+                EvalQueue.Add((batch, arrT));
                 bufIdx = 0;
             }
         }
