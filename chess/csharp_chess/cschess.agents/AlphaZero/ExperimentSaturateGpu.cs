@@ -10,7 +10,13 @@ namespace cschess.agents.AlphaZero;
 ///
 /// Batching is essential for maximising GPU utilisation.
 ///
-/// idea: jobs:
+/// Best I've got so far ~ 26k states/sec with
+/// NN 2 48
+/// one job each apart from unbatcher, 2x unbatchers
+/// batch size 40
+/// larger batches slow things down, and reduce eval utilisation
+///
+/// jobs:
 /// - batch for eval: game -> (games, Tensor)
 /// - eval: (games, Tensor) -> (games, (Tensor, Tensor))
 /// - unbatch: (games, (Tensor, Tensor)) -> (game, policy)
@@ -18,11 +24,11 @@ namespace cschess.agents.AlphaZero;
 /// </summary>
 public class ExperimentSaturateGpu
 {
-    private const int numGames = 100;
-    private const int maxBatchSize = 1;
+    private const int numGames = 4000;
+    private const int maxBatchSize = 40;
     private static readonly BlockingCollection<IChessGame> BatchQueue = new(numGames);
-    private static readonly BlockingCollection<(IChessGame[], Tensor)> EvalQueue = new(numGames / maxBatchSize);
-    private static readonly BlockingCollection<(IChessGame[], (Tensor, Tensor))> UnbatchQueue = new(numGames / maxBatchSize);
+    private static readonly BlockingCollection<(IChessGame[], Tensor)> EvalQueue = new(4);
+    private static readonly BlockingCollection<(IChessGame[], (Tensor, Tensor))> UnbatchQueue = new(4);
     private static readonly BlockingCollection<(IChessGame, Dictionary<Move, float>)> MoveQueue = new(numGames);
     private static readonly BlockingCollection<TaskMetrics> MetricsQueue = new();
     private static readonly ResNet Net = new(2, 48, CUDA);
@@ -42,6 +48,7 @@ public class ExperimentSaturateGpu
         {
             Task.Run(Batch),
             Task.Run(Eval),
+            Task.Run(Unbatch),
             Task.Run(Unbatch),
             Task.Run(MakeMove),
         };
@@ -91,9 +98,9 @@ public class ExperimentSaturateGpu
         {
             metrics.StartWork();
             var mpv = Net.Forward(tArr);
-            UnbatchQueue.Add((games, mpv));
             metrics.IncState(games.Length);
             metrics.StopWork();
+            UnbatchQueue.Add((games, mpv));
         }
         UnbatchQueue.CompleteAdding();
 
@@ -137,16 +144,16 @@ public class ExperimentSaturateGpu
                 {
                     BatchQueue.CompleteAdding();
                 }
+                metrics.StopWork();
             }
             else
             {
                 var (move, _) = mp.MaxBy(x => x.Value);
                 game.MakeMove(move);
-                BatchQueue.Add(game);
                 metrics.IncState();
+                metrics.StopWork();
+                BatchQueue.Add(game);
             }
-
-            metrics.StopWork();
         }
 
         MetricsQueue.Add(metrics);
