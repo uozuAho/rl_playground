@@ -31,7 +31,7 @@ dotnet run chess gpu
         - original C# nn 2 48, mcts 60, single thread: 30-50 steps/sec, 4-8 parallel games
     - todo
         - WIP experiment: saturate GPU evaluating chess states. no mcts.
-            - batch games in evaluator. make play queue store evaluated batches
+            - WIP batch games in evaluator
             - maybe: do same in py, compare speed
 - az: train. does it improve?
     - check pol val loss - does it improve?
