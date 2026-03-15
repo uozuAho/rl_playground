@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using cschess.csutils;
 using cschess.game;
+using MoreLinq;
+using TorchSharp;
 
 namespace cschess.agents.AlphaZero;
 
@@ -17,6 +19,7 @@ public interface ICodec
     float[,,] State2Array(IChessGame game);
     float[,] Probs2Array(IEnumerable<Dictionary<Move, float>> moveProbs);
     float[,] Values2Array(IEnumerable<float> values);
+    public IEnumerable<(float[], float)> NnHeadsToPv(torch.Tensor policy, torch.Tensor value);
 }
 
 /// <summary>
@@ -143,6 +146,14 @@ public class Codec4096 : ICodec
         }
 
         return outf;
+    }
+
+    public IEnumerable<(float[], float)> NnHeadsToPv(torch.Tensor policy, torch.Tensor value)
+    {
+        var parr = policy.softmax(dim: 1).cpu().data<float>().ToArray();
+        var varr = value.squeeze().cpu().data<float>().ToArray();
+        Debug.Assert(parr.Length == varr.Length * ActionSize);
+        return parr.Batch(ActionSize).Zip(varr);
     }
 
     private static int PieceLayer(PieceType piece)

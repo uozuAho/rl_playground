@@ -23,7 +23,8 @@ dotnet run chess gpu
         - py maxed out about 30 steps/sec with nn 2 48, mcts 60, multiprocess
         - original C# nn 2 48, mcts 60, single thread: 30-50 steps/sec, 4-8 parallel games
     - todo
-        - threaded mcts, using ideas from ExperimentSaturateGpu
+        - WIP threaded mcts, using ideas from ExperimentSaturateGpu
+            - compare throughput with regular pmcts
 - az: train. does it improve?
     - check pol val loss - does it improve?
         - if looks ok, eval vs random opponent
