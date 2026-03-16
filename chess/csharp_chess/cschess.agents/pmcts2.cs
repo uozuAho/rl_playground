@@ -16,6 +16,7 @@ public class AzSelfPlayer(
     IAzNet net,
     int numSimulations,
     int maxBatchSize,
+    Device device,
     double cPuct = 1.0,
     bool addDirichletNoise = false,
     double dirichletAlpha = 0.3,
@@ -25,6 +26,8 @@ public class AzSelfPlayer(
     public readonly BlockingCollection<IChessGame> DoneQueue = new();
 
     private Task[] _tasks = [];
+    private readonly ILogger _logger = new ConsoleLogger();
+    private readonly Device _device = device;
 
     private readonly BlockingCollection<MctsSimState2> _startSimQueue = new();
     private readonly BlockingCollection<MctsSimState2> _batchQueue = new();
@@ -38,7 +41,6 @@ public class AzSelfPlayer(
 
     public void Start()
     {
-        Console.WriteLine("yo");
         _tasks =
         [
             Task.Run(StartSim),
@@ -52,9 +54,11 @@ public class AzSelfPlayer(
 
     public void StopAndWait()
     {
+        _logger.Log("stop requested");
         _stopRequested = true;
         if (_gamesInProgress == 0)
         {
+            _logger.Log("0 games in progress, completing start queue");
             _startSimQueue.CompleteAdding();
         }
         Task.WaitAll(_tasks);
@@ -95,6 +99,7 @@ public class AzSelfPlayer(
     {
         foreach (var sim in _startSimQueue.GetConsumingEnumerable())
         {
+            _logger.Log("StartSim");
             sim.Reset();
 
             while (sim.Node.Children?.Count > 0 && !sim.Node.IsTerminal)
@@ -138,6 +143,7 @@ public class AzSelfPlayer(
                 _batchQueue.Add(sim);
             }
         }
+        _logger.Log("StartSim done");
 
         _batchQueue.CompleteAdding();
 
@@ -153,6 +159,7 @@ public class AzSelfPlayer(
 
         foreach (var sim in _batchQueue.GetConsumingEnumerable())
         {
+            _logger.Log("Batch");
             metrics.StartWork();
             batchBuf[bufIdx++] = sim;
             var batchSize = Math.Min(maxBatchSize, _gamesInProgress);
@@ -166,30 +173,34 @@ public class AzSelfPlayer(
                     batchStates[i] = batchBuf[i].Node.State!;
                 }
                 var batchArray = net.Codec.States2Array(batchStates);
-                var batchTensor = from_array(batchArray).to(CUDA);
+                var batchTensor = from_array(batchArray).to(_device);
                 metrics.IncState(batchSize);
                 metrics.StopWork();
                 _evalQueue.Add((batch, batchTensor));
                 bufIdx = 0;
             }
         }
+        _logger.Log("Batch done");
         _evalQueue.CompleteAdding();
     }
 
     private void Eval()
     {
-        foreach (var (sims, simsTensor) in _evalQueue)
+        foreach (var (sims, simsTensor) in _evalQueue.GetConsumingEnumerable())
         {
+            _logger.Log("Eval");
             var mpv = net.Forward(simsTensor);
             _unbatchQueue.Add((sims, mpv));
         }
+        _logger.Log("Eval done");
         _unbatchQueue.CompleteAdding();
     }
 
     private void Unbatch()
     {
-        foreach (var (sims, pvs) in _unbatchQueue)
+        foreach (var (sims, pvs) in _unbatchQueue.GetConsumingEnumerable())
         {
+            _logger.Log("Unbatch");
             foreach (var (sim, pv) in sims.Zip(net.Codec.NnHeadsToPv(pvs.Item1, pvs.Item2)))
             {
                 var (mp, v) = pv;
@@ -198,6 +209,7 @@ public class AzSelfPlayer(
                 _finishSimQueue.Add(sim);
             }
         }
+        _logger.Log("Unbatch done");
         _finishSimQueue.CompleteAdding();
     }
 
@@ -205,6 +217,7 @@ public class AzSelfPlayer(
     {
         foreach (var sim in _finishSimQueue.GetConsumingEnumerable())
         {
+            _logger.Log("FinishSim");
             Debug.Assert(sim.TerminalValue.HasValue || sim.Veval.HasValue);
 
             if (sim.TerminalValue == null)
@@ -251,6 +264,7 @@ public class AzSelfPlayer(
                 _startSimQueue.Add(sim);
             }
         }
+        _logger.Log("FinishSim done");
         _moveQueue.CompleteAdding();
         _startSimQueue.CompleteAdding();
     }
@@ -259,6 +273,7 @@ public class AzSelfPlayer(
     {
         foreach (var sim in _moveQueue.GetConsumingEnumerable())
         {
+            _logger.Log("Move");
             var move = sim.Root.Children!.Values.MaxBy(x => x.Visits)!.MoveFromParent;
             sim.Root.State!.MakeMove(move!.Value);
             if (sim.Root.State.IsGameOver())
@@ -267,6 +282,7 @@ public class AzSelfPlayer(
                 Interlocked.Decrement(ref _gamesInProgress);
                 if (_gamesInProgress == 0 && _stopRequested)
                 {
+                    _logger.Log("Move: 0 games in progress, completing start queue");
                     _startSimQueue.CompleteAdding();
                 }
             }
@@ -275,6 +291,7 @@ public class AzSelfPlayer(
                 Continue(sim.Root.State);
             }
         }
+        _logger.Log("Move done");
         DoneQueue.CompleteAdding();
     }
 }
@@ -382,5 +399,20 @@ internal class TaskMetrics
         Console.WriteLine($"{_name}: {_games} games, {_states} states in {totalTime}");
         Console.WriteLine($"{_name}: {gamesPerSec:F2} games/sec, {statesPerSec:F2} states/sec");
         Console.WriteLine($"{_name}: utilisation: {util:F2}");
+    }
+}
+
+interface ILogger
+{
+    void Log(string msg);
+}
+
+class ConsoleLogger : ILogger
+{
+    Stopwatch _sw = Stopwatch.StartNew();
+
+    public void Log(string msg)
+    {
+        Console.WriteLine($"{_sw.ElapsedMilliseconds}: {msg}");
     }
 }
