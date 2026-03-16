@@ -28,8 +28,11 @@ public class ExperimentSaturateGpu
     private const int maxBatchSize = 40;
     private static readonly BlockingCollection<IChessGame> BatchQueue = new(numGames);
     private static readonly BlockingCollection<(IChessGame[], Tensor)> EvalQueue = new(4);
-    private static readonly BlockingCollection<(IChessGame[], (Tensor, Tensor))> UnbatchQueue = new(4);
-    private static readonly BlockingCollection<(IChessGame, Dictionary<Move, float>)> MoveQueue = new(numGames);
+    private static readonly BlockingCollection<(IChessGame[], (Tensor, Tensor))> UnbatchQueue = new(
+        4
+    );
+    private static readonly BlockingCollection<(IChessGame, Dictionary<Move, float>)> MoveQueue =
+        new(numGames);
     private static readonly BlockingCollection<TaskMetrics> MetricsQueue = new();
     private static readonly ResNet Net = new(2, 48, CUDA);
     private static int _gamesInProgress;

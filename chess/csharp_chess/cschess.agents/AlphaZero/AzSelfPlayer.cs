@@ -19,14 +19,13 @@ public class AzSelfPlayer(
     double cPuct = 1.0,
     bool addDirichletNoise = false,
     double dirichletAlpha = 0.3,
-    double dirichletEpsilon = 0.25)
-    : IDisposable
+    double dirichletEpsilon = 0.25
+) : IDisposable
 {
     public readonly BlockingCollection<IChessGame> DoneQueue = new();
 
     private Task[] _tasks = [];
     private readonly ILogger _logger = new ConsoleLogger();
-    private readonly Device _device = device;
 
     private readonly BlockingCollection<MctsSimState2> _startSimQueue = new();
     private readonly BlockingCollection<MctsSimState2> _batchQueue = new();
@@ -47,7 +46,7 @@ public class AzSelfPlayer(
             Task.Run(Eval),
             Task.Run(Unbatch),
             Task.Run(FinishSim),
-            Task.Run(Move)
+            Task.Run(Move),
         ];
     }
 
@@ -89,7 +88,8 @@ public class AzSelfPlayer(
                 Prior = 1.0,
                 MoveFromParent = null,
                 State = game,
-            }, numSimulations
+            },
+            numSimulations
         );
         _startSimQueue.Add(state);
     }
@@ -172,7 +172,7 @@ public class AzSelfPlayer(
                     batchStates[i] = batchBuf[i].Node.State!;
                 }
                 var batchArray = net.Codec.States2Array(batchStates);
-                var batchTensor = from_array(batchArray).to(_device);
+                var batchTensor = from_array(batchArray).to(device);
                 metrics.IncState(batchSize);
                 metrics.StopWork();
                 _evalQueue.Add((batch, batchTensor));

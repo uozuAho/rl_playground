@@ -11,7 +11,7 @@ public class AzSelfPlayerTests
     public void runs_and_stops()
     {
         var device = CPU;
-        var net = new ResNet(1,1,device);
+        var net = new ResNet(1, 1, device);
         using var tmcts = new AzSelfPlayer(net, 1, 1, device);
         var inGame = CodingAdventureChessGame.StandardGame();
         var inFen = inGame.Fen();

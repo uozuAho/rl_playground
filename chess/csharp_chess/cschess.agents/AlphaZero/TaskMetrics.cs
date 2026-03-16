@@ -23,9 +23,13 @@ internal class TaskMetrics
     }
 
     public void StartWork() => _workStarted = _sw.Elapsed;
+
     public void StopWork() => _workTime += _sw.Elapsed - _workStarted;
+
     public void IncGame() => _games += 1;
+
     public void IncState() => _states += 1;
+
     public void IncState(int nStates) => _states += nStates;
 
     public void PrintSummary()
