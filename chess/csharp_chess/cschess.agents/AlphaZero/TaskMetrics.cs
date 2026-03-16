@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 
 namespace cschess.agents.AlphaZero;
 
@@ -32,14 +33,21 @@ internal class TaskMetrics
 
     public void IncState(int nStates) => _states += nStates;
 
-    public void PrintSummary()
+    public string Summary()
     {
         var totalTime = _sw.Elapsed;
         var gamesPerSec = _games / totalTime.TotalSeconds;
         var statesPerSec = _states / totalTime.TotalSeconds;
         var util = _workTime / totalTime;
-        Console.WriteLine($"{_name}: {_games} games, {_states} states in {totalTime}");
-        Console.WriteLine($"{_name}: {gamesPerSec:F2} games/sec, {statesPerSec:F2} states/sec");
-        Console.WriteLine($"{_name}: utilisation: {util:F2}");
+        var sb = new StringBuilder();
+        sb.AppendLine($"{_name}: {_games} games, {_states} states in {totalTime}");
+        sb.AppendLine($"{_name}: {gamesPerSec:F2} games/sec, {statesPerSec:F2} states/sec");
+        sb.AppendLine($"{_name}: utilisation: {util:F2}");
+        return sb.ToString();
+    }
+
+    public void PrintSummary()
+    {
+        Console.WriteLine(Summary());
     }
 }

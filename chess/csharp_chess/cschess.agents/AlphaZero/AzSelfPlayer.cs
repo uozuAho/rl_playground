@@ -19,20 +19,22 @@ public class AzSelfPlayer(
     double cPuct = 1.0,
     bool addDirichletNoise = false,
     double dirichletAlpha = 0.3,
-    double dirichletEpsilon = 0.25
+    double dirichletEpsilon = 0.25,
+    LogLevel logLevel = LogLevel.Info
 ) : IDisposable
 {
     public readonly BlockingCollection<IChessGame> DoneQueue = new();
 
     private Task[] _tasks = [];
-    private readonly ILogger _logger = new ConsoleLogger();
+    private readonly ILogger _logger = logLevel == LogLevel.None ? new NullLogger() : new ConsoleLogger(logLevel);
 
     private readonly BlockingCollection<MctsSimState2> _startSimQueue = new();
     private readonly BlockingCollection<MctsSimState2> _batchQueue = new();
-    private readonly BlockingCollection<(MctsSimState2[], Tensor)> _evalQueue = new();
-    private readonly BlockingCollection<(MctsSimState2[], (Tensor, Tensor))> _unbatchQueue = new();
+    private readonly BlockingCollection<(MctsSimState2[], Tensor)> _evalQueue = new(4);
+    private readonly BlockingCollection<(MctsSimState2[], (Tensor, Tensor))> _unbatchQueue = new(4);
     private readonly BlockingCollection<MctsSimState2> _finishSimQueue = new();
     private readonly BlockingCollection<MctsSimState2> _moveQueue = new();
+    private readonly BlockingCollection<TaskMetrics> _metricsQueue = new();
 
     private int _gamesInProgress;
     private bool _stopRequested;
@@ -52,14 +54,20 @@ public class AzSelfPlayer(
 
     public void StopAndWait()
     {
-        _logger.Log("stop requested");
+        _logger.Debug("stop requested");
         _stopRequested = true;
         if (_gamesInProgress == 0)
         {
-            _logger.Log("0 games in progress, completing start queue");
+            _logger.Debug("0 games in progress, completing start queue");
             _startSimQueue.CompleteAdding();
         }
         Task.WaitAll(_tasks);
+
+        for (var i = 0; i < _tasks.Length; i++)
+        {
+            var metrics = _metricsQueue.Take();
+            _logger.Info(metrics.Summary());
+        }
     }
 
     public void Enqueue(IChessGame game)
@@ -96,9 +104,12 @@ public class AzSelfPlayer(
 
     private void StartSim()
     {
+        var metrics = TaskMetrics.StartNew(nameof(StartSim));
+
         foreach (var sim in _startSimQueue.GetConsumingEnumerable())
         {
-            _logger.Log("StartSim");
+            _logger.Debug("StartSim");
+            metrics.StartWork();
             sim.Reset();
 
             while (sim.Node.Children?.Count > 0 && !sim.Node.IsTerminal)
@@ -123,6 +134,8 @@ public class AzSelfPlayer(
                     sim.TerminalValue = winner == movedLast ? 1.0 : -1.0;
                 }
 
+                metrics.IncState();
+                metrics.StopWork();
                 _finishSimQueue.Add(sim);
             }
             else
@@ -139,12 +152,15 @@ public class AzSelfPlayer(
                     };
                 }
 
+                metrics.IncState();
+                metrics.StopWork();
                 _batchQueue.Add(sim);
             }
         }
-        _logger.Log("StartSim done");
+        _logger.Debug("StartSim done");
 
         _batchQueue.CompleteAdding();
+        _metricsQueue.Add(metrics);
 
         Thread.Sleep(TimeSpan.FromSeconds(1));
         _finishSimQueue.CompleteAdding();
@@ -158,7 +174,7 @@ public class AzSelfPlayer(
 
         foreach (var sim in _batchQueue.GetConsumingEnumerable())
         {
-            _logger.Log("Batch");
+            _logger.Debug("Batch");
             metrics.StartWork();
             batchBuf[bufIdx++] = sim;
             var batchSize = Math.Min(maxBatchSize, _gamesInProgress);
@@ -179,44 +195,63 @@ public class AzSelfPlayer(
                 bufIdx = 0;
             }
         }
-        _logger.Log("Batch done");
+        _logger.Debug("Batch done");
         _evalQueue.CompleteAdding();
+        _metricsQueue.Add(metrics);
     }
 
     private void Eval()
     {
+        var metrics = TaskMetrics.StartNew(nameof(Eval));
+
         foreach (var (sims, simsTensor) in _evalQueue.GetConsumingEnumerable())
         {
-            _logger.Log("Eval");
+            metrics.StartWork();
+            _logger.Debug("Eval");
             var mpv = net.Forward(simsTensor);
+            metrics.IncState(sims.Length);
+            metrics.StopWork();
             _unbatchQueue.Add((sims, mpv));
         }
-        _logger.Log("Eval done");
+        _logger.Debug("Eval done");
         _unbatchQueue.CompleteAdding();
+        _metricsQueue.Add(metrics);
     }
 
     private void Unbatch()
     {
+        var metrics = TaskMetrics.StartNew(nameof(Unbatch));
+
         foreach (var (sims, pvs) in _unbatchQueue.GetConsumingEnumerable())
         {
-            _logger.Log("Unbatch");
+            metrics.StartWork();
+            _logger.Debug("Unbatch");
             foreach (var (sim, pv) in sims.Zip(net.Codec.NnHeadsToPv(pvs.Item1, pvs.Item2)))
             {
                 var (mp, v) = pv;
                 sim.Peval = net.Codec.Probdist2Dict(mp, sim.Node.State!);
                 sim.Veval = v;
+                metrics.IncState();
+                metrics.StopWork();
                 _finishSimQueue.Add(sim);
+                metrics.StartWork();
             }
+            metrics.StopWork();
         }
-        _logger.Log("Unbatch done");
+        _logger.Debug("Unbatch done");
         _finishSimQueue.CompleteAdding();
+        _metricsQueue.Add(metrics);
     }
 
     private void FinishSim()
     {
+        var metrics = TaskMetrics.StartNew(nameof(FinishSim));
+
         foreach (var sim in _finishSimQueue.GetConsumingEnumerable())
         {
-            _logger.Log("FinishSim");
+            metrics.StartWork();
+            metrics.IncState();
+            _logger.Debug("FinishSim");
             Debug.Assert(sim.TerminalValue.HasValue || sim.Veval.HasValue);
 
             if (sim.TerminalValue == null)
@@ -256,42 +291,54 @@ public class AzSelfPlayer(
 
             if (++sim.SimCount == sim.SimLimit)
             {
+                sim.Reset();
+                metrics.StopWork();
                 _moveQueue.Add(sim);
             }
             else
             {
+                metrics.StopWork();
                 _startSimQueue.Add(sim);
             }
         }
-        _logger.Log("FinishSim done");
+        _logger.Debug("FinishSim done");
         _moveQueue.CompleteAdding();
         _startSimQueue.CompleteAdding();
+        _metricsQueue.Add(metrics);
     }
 
     private void Move()
     {
+        var metrics = TaskMetrics.StartNew(nameof(Move));
+
         foreach (var sim in _moveQueue.GetConsumingEnumerable())
         {
-            _logger.Log("Move");
+            metrics.StartWork();
+            _logger.Debug("Move");
             var move = sim.Root.Children!.Values.MaxBy(x => x.Visits)!.MoveFromParent;
             sim.Root.State!.MakeMove(move!.Value);
+            metrics.IncState();
             if (sim.Root.State.IsGameOver())
             {
+                metrics.IncGame();
+                metrics.StopWork();
                 DoneQueue.Add(sim.Root.State);
                 Interlocked.Decrement(ref _gamesInProgress);
                 if (_gamesInProgress == 0 && _stopRequested)
                 {
-                    _logger.Log("Move: 0 games in progress, completing start queue");
+                    _logger.Debug("Move: 0 games in progress, completing start queue");
                     _startSimQueue.CompleteAdding();
                 }
             }
             else
             {
+                metrics.StopWork();
                 Continue(sim.Root.State);
             }
         }
-        _logger.Log("Move done");
+        _logger.Debug("Move done");
         DoneQueue.CompleteAdding();
+        _metricsQueue.Add(metrics);
     }
 }
 
@@ -363,17 +410,43 @@ internal class MctsSimState2
     }
 }
 
-interface ILogger
+public enum LogLevel
 {
-    void Log(string msg);
+    Debug = 0,
+    Info,
+    None
 }
 
-class ConsoleLogger : ILogger
+internal interface ILogger
+{
+    void Debug(string msg);
+    void Info(string msg);
+}
+
+internal class ConsoleLogger(LogLevel level) : ILogger
 {
     Stopwatch _sw = Stopwatch.StartNew();
 
-    public void Log(string msg)
+    public void Debug(string msg)
     {
-        Console.WriteLine($"{_sw.ElapsedMilliseconds}: {msg}");
+        if (level <= LogLevel.Debug)
+            Console.WriteLine($"{_sw.ElapsedMilliseconds}: {msg}");
+    }
+
+    public void Info(string msg)
+    {
+        if (level <= LogLevel.Info)
+            Console.WriteLine($"{_sw.ElapsedMilliseconds}: {msg}");
+    }
+}
+
+internal class NullLogger : ILogger
+{
+    public void Debug(string msg)
+    {
+    }
+
+    public void Info(string msg)
+    {
     }
 }

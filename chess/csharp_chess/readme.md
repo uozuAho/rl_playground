@@ -24,8 +24,7 @@ dotnet run chess gpu
         - original C# nn 2 48, mcts 60, single thread: 30-50 steps/sec, 4-8 parallel games
     - todo
         - WIP threaded mcts, using ideas from ExperimentSaturateGpu
-            - WIP debug: why it stop before game complete
-                - timestamp logs
+            - limit queue sizes to minimise utilisation
             - compare throughput with regular pmcts
 - az: train. does it improve?
     - check pol val loss - does it improve?

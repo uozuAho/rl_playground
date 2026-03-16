@@ -12,7 +12,9 @@ public class AzSelfPlayerTests
     {
         var device = CPU;
         var net = new ResNet(1, 1, device);
-        using var tmcts = new AzSelfPlayer(net, 1, 1, device);
+        const int mctsSims = 1;
+        const int batchSize = 1;
+        using var tmcts = new AzSelfPlayer(net, mctsSims, batchSize, device, logLevel: LogLevel.None);
         var inGame = CodingAdventureChessGame.StandardGame();
         var inFen = inGame.Fen();
         tmcts.Enqueue(inGame);
