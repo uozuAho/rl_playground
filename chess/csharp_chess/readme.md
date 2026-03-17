@@ -25,7 +25,8 @@ dotnet run chess gpu
     - todo
         - WIP threaded mcts, using ideas from ExperimentSaturateGpu
             - WIP perf: profile. why nothing anywhere near 100% util. adding unbatchers doesn't help
-                - bug: stalls when < batch size and some sims don't need eval
+                - log to file, look at eval etc timings
+                - reduce threads, queues? eg do start and finish in same job?
             - compare throughput with regular pmcts
 - az: train. does it improve?
     - check pol val loss - does it improve?

@@ -109,6 +109,7 @@ public class AzSelfPlayer(
         foreach (var sim in _startSimQueue.GetConsumingEnumerable())
         {
             metrics.StartWork();
+            metrics.IncState();
             _logger.Debug("StartSim start");
             sim.Reset();
 
@@ -133,11 +134,6 @@ public class AzSelfPlayer(
                 {
                     sim.TerminalValue = winner == movedLast ? 1.0 : -1.0;
                 }
-
-                metrics.IncState();
-                _logger.Debug("StartSim stop");
-                metrics.StopWork();
-                _finishSimQueue.Add(sim);
             }
             else
             {
@@ -152,12 +148,15 @@ public class AzSelfPlayer(
                         MoveFromParent = move,
                     };
                 }
-
-                metrics.IncState();
-                _logger.Debug("StartSim stop");
-                metrics.StopWork();
-                _batchQueue.Add(sim);
             }
+
+            // note: we add terminal states to the batcher, even though they don't
+            // need to be evaluated. The alternative is to send terminal states to
+            // the finish sim queue, however then you need to somehow tell the batcher
+            // that fewer states need evaluating
+            _logger.Debug("StartSim stop");
+            metrics.StopWork();
+            _batchQueue.Add(sim);
         }
         _logger.Debug("StartSim done");
 
@@ -206,7 +205,7 @@ public class AzSelfPlayer(
     private void Eval()
     {
         var metrics = TaskMetrics.StartNew(nameof(Eval));
-        var numUnbatches = Math.Min(4, maxBatchSize);
+        var numUnbatches = 1; // Math.Min(4, maxBatchSize);
         var unbatchSize = maxBatchSize / numUnbatches;
 
         foreach (var (sims, simsTensor) in _evalQueue.GetConsumingEnumerable())
