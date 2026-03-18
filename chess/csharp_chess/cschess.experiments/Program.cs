@@ -10,10 +10,11 @@ void runs_and_stops()
     var device = CUDA;
     const int mctsSims = 10;
     const int batchSize = 10;
-    const int numGames = 10;
+    const int unbatchSize = 10;
+    const int numGames = 20;
     var net = new ResNet(2, 48, device);
-    const LogLevel logLevel = LogLevel.Debug;
-    using var tmcts = new AzSelfPlayer(net, mctsSims, batchSize, device, logLevel: logLevel);
+    const LogLevel logLevel = LogLevel.Info;
+    using var tmcts = new AzSelfPlayer(net, mctsSims, batchSize, unbatchSize, device, logLevel: logLevel);
     for (var i = 0; i < numGames; i++)
     {
         tmcts.Enqueue(CodingAdventureChessGame.StandardGame());

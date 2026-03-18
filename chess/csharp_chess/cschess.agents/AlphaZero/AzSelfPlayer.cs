@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using cschess.csutils;
 using cschess.game;
+using MoreLinq;
 using static TorchSharp.torch;
 
 namespace cschess.agents.AlphaZero;
@@ -11,33 +12,59 @@ using MoveProbs = Dictionary<Move, float>;
 /// <summary>
 /// Self plays games to completion, using MCTS with NN evaluator.
 /// </summary>
-public class AzSelfPlayer(
-    IAzNet net,
-    int numSimulations,
-    int maxBatchSize,
-    Device device,
-    double cPuct = 1.0,
-    bool addDirichletNoise = false,
-    double dirichletAlpha = 0.3,
-    double dirichletEpsilon = 0.25,
-    LogLevel logLevel = LogLevel.Info
-) : IDisposable
+public class AzSelfPlayer : IDisposable
 {
     public readonly BlockingCollection<IChessGame> DoneQueue = new();
 
     private Task[] _tasks = [];
-    private readonly ILogger _logger = logLevel == LogLevel.None ? new NullLogger() : new ConsoleLogger(logLevel);
+    private readonly ILogger _logger;
 
     private readonly BlockingCollection<MctsSimState2> _startSimQueue = new();
     private readonly BlockingCollection<MctsSimState2> _batchQueue = new();
     private readonly BlockingCollection<(MctsSimState2[], Tensor)> _evalQueue = new(4);
-    private readonly BlockingCollection<(MctsSimState2[], (Tensor, Tensor))> _unbatchQueue = new(4);
+    private readonly BlockingCollection<(MctsSimState2[], (Tensor, Tensor))> _unbatchQueue = new(8);
     private readonly BlockingCollection<MctsSimState2> _finishSimQueue = new();
     private readonly BlockingCollection<MctsSimState2> _moveQueue = new();
     private readonly BlockingCollection<TaskMetrics> _metricsQueue = new();
 
     private int _gamesInProgress;
     private bool _stopRequested;
+    private readonly IAzNet _net;
+    private readonly int _numSimulations;
+    private readonly int _maxBatchSize;
+    private readonly int _unbatchSize;
+    private readonly Device _device;
+    private readonly double _cPuct;
+    private readonly bool _addDirichletNoise;
+    private readonly double _dirichletAlpha;
+    private readonly double _dirichletEpsilon;
+
+    public AzSelfPlayer(
+        IAzNet net,
+        int numSimulations,
+        int maxBatchSize,
+        int unbatchSize,
+        Device device,
+        double cPuct = 1.0,
+        bool addDirichletNoise = false,
+        double dirichletAlpha = 0.3,
+        double dirichletEpsilon = 0.25,
+        LogLevel logLevel = LogLevel.Info)
+    {
+        if (maxBatchSize % unbatchSize != 0)
+            throw new ArgumentException("maxBatchSize must be a multiple of unbatchSize");
+
+        _net = net;
+        _numSimulations = numSimulations;
+        _maxBatchSize = maxBatchSize;
+        _unbatchSize = unbatchSize;
+        _device = device;
+        _cPuct = cPuct;
+        _addDirichletNoise = addDirichletNoise;
+        _dirichletAlpha = dirichletAlpha;
+        _dirichletEpsilon = dirichletEpsilon;
+        _logger = logLevel == LogLevel.None ? new NullLogger() : new ConsoleLogger(logLevel);
+    }
 
     public void Start()
     {
@@ -46,6 +73,7 @@ public class AzSelfPlayer(
             Task.Run(StartSim),
             Task.Run(Batch),
             Task.Run(Eval),
+            Task.Run(Unbatch),
             Task.Run(Unbatch),
             Task.Run(FinishSim),
             Task.Run(Move),
@@ -97,7 +125,7 @@ public class AzSelfPlayer(
                 MoveFromParent = null,
                 State = game,
             },
-            numSimulations
+            _numSimulations
         );
         _startSimQueue.Add(state);
     }
@@ -115,7 +143,7 @@ public class AzSelfPlayer(
 
             while (sim.Node.Children?.Count > 0 && !sim.Node.IsTerminal)
             {
-                sim.Node = sim.Node.Children.Values.MaxBy(c => c.Puct(cPuct))!;
+                sim.Node = sim.Node.Children.Values.MaxBy(c => c.Puct(_cPuct))!;
                 sim.Node.State = sim.Node.Parent!.State!;
                 sim.Node.State.MakeMove(sim.Node.MoveFromParent!.Value);
                 sim.Node.IsTerminal = sim.Node.State.IsGameOver();
@@ -169,7 +197,7 @@ public class AzSelfPlayer(
 
     private void Batch()
     {
-        var batchBuf = new MctsSimState2[maxBatchSize];
+        var batchBuf = new MctsSimState2[_maxBatchSize];
         var bufIdx = 0;
         var metrics = TaskMetrics.StartNew(nameof(Batch));
 
@@ -178,7 +206,7 @@ public class AzSelfPlayer(
             metrics.StartWork();
             _logger.Debug("Batch start");
             batchBuf[bufIdx++] = sim;
-            var batchSize = Math.Min(maxBatchSize, _gamesInProgress);
+            var batchSize = Math.Min(_maxBatchSize, _gamesInProgress);
             if (bufIdx == batchSize)
             {
                 var batch = new MctsSimState2[batchSize];
@@ -188,8 +216,8 @@ public class AzSelfPlayer(
                     batch[i] = batchBuf[i];
                     batchStates[i] = batchBuf[i].Node.State!;
                 }
-                var batchArray = net.Codec.States2Array(batchStates);
-                var batchTensor = from_array(batchArray).to(device);
+                var batchArray = _net.Codec.States2Array(batchStates);
+                var batchTensor = from_array(batchArray).to(_device);
                 metrics.IncState(batchSize);
                 _logger.Debug("Batch stop");
                 metrics.StopWork();
@@ -205,25 +233,28 @@ public class AzSelfPlayer(
     private void Eval()
     {
         var metrics = TaskMetrics.StartNew(nameof(Eval));
-        var numUnbatches = 1; // Math.Min(4, maxBatchSize);
-        var unbatchSize = maxBatchSize / numUnbatches;
 
         foreach (var (sims, simsTensor) in _evalQueue.GetConsumingEnumerable())
         {
             metrics.StartWork();
             _logger.Debug("Eval start");
-            var mpv = net.Forward(simsTensor);
+            var mpv = _net.Forward(simsTensor);
             var (p, v) = mpv;
 
-            metrics.IncState(sims.Length);
-            for (var i = 0; i < numUnbatches; i++)
+            var batchNum = 0;
+            foreach (var simBatch in sims.Batch(_unbatchSize))
             {
-                var simsSlice = sims.AsSpan(i * unbatchSize, unbatchSize).ToArray();
-                var mpvSlice = (p.narrow(0, i * unbatchSize, unbatchSize), v.narrow(0, i * unbatchSize, unbatchSize));
+                var mpvSlice = (
+                    p.narrow(0, batchNum * _unbatchSize, simBatch.Length),
+                    v.narrow(0, batchNum * _unbatchSize, simBatch.Length)
+                );
+                batchNum++;
                 metrics.StopWork();
-                _unbatchQueue.Add((simsSlice, mpvSlice));
+                _unbatchQueue.Add((simBatch, mpvSlice));
                 metrics.StartWork();
             }
+
+            metrics.IncState(sims.Length);
             _logger.Debug("Eval stop");
             metrics.StopWork();
         }
@@ -240,11 +271,14 @@ public class AzSelfPlayer(
         {
             metrics.StartWork();
             _logger.Debug("Unbatch start");
-            foreach (var (sim, pv) in sims.Zip(net.Codec.NnHeadsToPv(pvs.Item1, pvs.Item2)))
+            foreach (var (sim, pv) in sims.Zip(_net.Codec.NnHeadsToPv(pvs.Item1, pvs.Item2)))
             {
-                var (mp, v) = pv;
-                sim.Peval = net.Codec.Probdist2Dict(mp, sim.Node.State!);
-                sim.Veval = v;
+                if (!sim.TerminalValue.HasValue)
+                {
+                    var (mp, v) = pv;
+                    sim.Peval = _net.Codec.Probdist2Dict(mp, sim.Node.State!);
+                    sim.Veval = v;
+                }
                 metrics.IncState();
                 metrics.StopWork();
                 _finishSimQueue.Add(sim);
@@ -274,9 +308,9 @@ public class AzSelfPlayer(
                 Debug.Assert(sim.Peval != null);
                 sim.Veval = -sim.Veval;
 
-                if (ReferenceEquals(sim.Node, sim.Root) && addDirichletNoise)
+                if (ReferenceEquals(sim.Node, sim.Root) && _addDirichletNoise)
                 {
-                    Maths.AddDirichletNoiseInPlace(sim.Peval, dirichletAlpha, dirichletEpsilon);
+                    Maths.AddDirichletNoiseInPlace(sim.Peval, _dirichletAlpha, _dirichletEpsilon);
                 }
 
                 if (sim.Node.Children != null)

@@ -24,9 +24,10 @@ dotnet run chess gpu
         - original C# nn 2 48, mcts 60, single thread: 30-50 steps/sec, 4-8 parallel games
     - todo
         - WIP threaded mcts, using ideas from ExperimentSaturateGpu
-            - WIP perf: profile. why nothing anywhere near 100% util. adding unbatchers doesn't help
-                - log to file, look at eval etc timings
-                - reduce threads, queues? eg do start and finish in same job?
+            - WIP perf: try to get to 20k states/sec in eval
+                - why does adding a 2nd unbatcher task reduce throughput by 50%
+                - try consolidating start, finish, move tasks
+                    - then add another unbatcher - is num CPU threads the limiter?
             - compare throughput with regular pmcts
 - az: train. does it improve?
     - check pol val loss - does it improve?
