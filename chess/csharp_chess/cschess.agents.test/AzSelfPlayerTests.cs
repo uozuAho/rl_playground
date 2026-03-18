@@ -15,7 +15,14 @@ public class AzSelfPlayerTests
         const int mctsSims = 1;
         const int batchSize = 1;
         const int unbatchSize = 1;
-        using var tmcts = new AzSelfPlayer(net, mctsSims, batchSize, unbatchSize, device, logLevel: LogLevel.None);
+        using var tmcts = new AzSelfPlayer(
+            net,
+            mctsSims,
+            batchSize,
+            unbatchSize,
+            device,
+            logLevel: LogLevel.None
+        );
         var inGame = CodingAdventureChessGame.StandardGame();
         var inFen = inGame.Fen();
         tmcts.Enqueue(inGame);

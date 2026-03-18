@@ -14,7 +14,14 @@ void runs_and_stops()
     const int numGames = 20;
     var net = new ResNet(2, 48, device);
     const LogLevel logLevel = LogLevel.Info;
-    using var tmcts = new AzSelfPlayer(net, mctsSims, batchSize, unbatchSize, device, logLevel: logLevel);
+    using var tmcts = new AzSelfPlayer(
+        net,
+        mctsSims,
+        batchSize,
+        unbatchSize,
+        device,
+        logLevel: logLevel
+    );
     for (var i = 0; i < numGames; i++)
     {
         tmcts.Enqueue(CodingAdventureChessGame.StandardGame());

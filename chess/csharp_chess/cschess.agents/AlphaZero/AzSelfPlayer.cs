@@ -49,7 +49,8 @@ public class AzSelfPlayer : IDisposable
         bool addDirichletNoise = false,
         double dirichletAlpha = 0.3,
         double dirichletEpsilon = 0.25,
-        LogLevel logLevel = LogLevel.Info)
+        LogLevel logLevel = LogLevel.Info
+    )
     {
         if (maxBatchSize % unbatchSize != 0)
             throw new ArgumentException("maxBatchSize must be a multiple of unbatchSize");
@@ -466,7 +467,7 @@ public enum LogLevel
 {
     Debug = 0,
     Info,
-    None
+    None,
 }
 
 internal interface ILogger
@@ -494,11 +495,7 @@ internal class ConsoleLogger(LogLevel level) : ILogger
 
 internal class NullLogger : ILogger
 {
-    public void Debug(string msg)
-    {
-    }
+    public void Debug(string msg) { }
 
-    public void Info(string msg)
-    {
-    }
+    public void Info(string msg) { }
 }
