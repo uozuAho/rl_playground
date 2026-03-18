@@ -140,44 +140,8 @@ public class AzSelfPlayer : IDisposable
             metrics.StartWork();
             metrics.IncState();
             _logger.Debug("StartSim start");
-            sim.Reset();
 
-            while (sim.Node.Children?.Count > 0 && !sim.Node.IsTerminal)
-            {
-                sim.Node = sim.Node.Children.Values.MaxBy(c => c.Puct(_cPuct))!;
-                sim.Node.State = sim.Node.Parent!.State!;
-                sim.Node.State.MakeMove(sim.Node.MoveFromParent!.Value);
-                sim.Node.IsTerminal = sim.Node.State.IsGameOver();
-            }
-
-            if (sim.Node.IsTerminal)
-            {
-                var gameState = sim.Node.State!.GameStatus();
-                var turn = sim.Node.State.Turn();
-                var movedLast = turn == Color.White ? Color.Black : Color.White;
-                var winner = gameState.Winner;
-
-                if (winner == null)
-                    sim.TerminalValue = 0.0;
-                else
-                {
-                    sim.TerminalValue = winner == movedLast ? 1.0 : -1.0;
-                }
-            }
-            else
-            {
-                var legalMoves = sim.Node.State!.LegalMoves().ToArray();
-                sim.Node.Children = new Dictionary<Move, MctsNode2>(legalMoves.Length);
-                for (var i = 0; i < legalMoves.Length; i++)
-                {
-                    var move = legalMoves[i];
-                    sim.Node.Children[move] = new MctsNode2
-                    {
-                        Parent = sim.Node,
-                        MoveFromParent = move,
-                    };
-                }
-            }
+            DoTreePol(sim);
 
             // note: we add terminal states to the batcher, even though they don't
             // need to be evaluated. The alternative is to send terminal states to
@@ -194,6 +158,48 @@ public class AzSelfPlayer : IDisposable
 
         Thread.Sleep(TimeSpan.FromSeconds(1));
         _finishSimQueue.CompleteAdding();
+    }
+
+    private void DoTreePol(MctsSimState2 sim)
+    {
+        sim.Reset();
+
+        while (sim.Node.Children?.Count > 0 && !sim.Node.IsTerminal)
+        {
+            sim.Node = sim.Node.Children.Values.MaxBy(c => c.Puct(_cPuct))!;
+            sim.Node.State = sim.Node.Parent!.State!;
+            sim.Node.State.MakeMove(sim.Node.MoveFromParent!.Value);
+            sim.Node.IsTerminal = sim.Node.State.IsGameOver();
+        }
+
+        if (sim.Node.IsTerminal)
+        {
+            var gameState = sim.Node.State!.GameStatus();
+            var turn = sim.Node.State.Turn();
+            var movedLast = turn == Color.White ? Color.Black : Color.White;
+            var winner = gameState.Winner;
+
+            if (winner == null)
+                sim.TerminalValue = 0.0;
+            else
+            {
+                sim.TerminalValue = winner == movedLast ? 1.0 : -1.0;
+            }
+        }
+        else
+        {
+            var legalMoves = sim.Node.State!.LegalMoves().ToArray();
+            sim.Node.Children = new Dictionary<Move, MctsNode2>(legalMoves.Length);
+            for (var i = 0; i < legalMoves.Length; i++)
+            {
+                var move = legalMoves[i];
+                sim.Node.Children[move] = new MctsNode2
+                {
+                    Parent = sim.Node,
+                    MoveFromParent = move,
+                };
+            }
+        }
     }
 
     private void Batch()
@@ -302,46 +308,11 @@ public class AzSelfPlayer : IDisposable
             metrics.StartWork();
             _logger.Debug("FinishSim start");
             metrics.IncState();
-            Debug.Assert(sim.TerminalValue.HasValue || sim.Veval.HasValue);
 
-            if (sim.TerminalValue == null)
+            ExpandAndBackprop(sim);
+
+            if (sim.SimCount == sim.SimLimit)
             {
-                Debug.Assert(sim.Peval != null);
-                sim.Veval = -sim.Veval;
-
-                if (ReferenceEquals(sim.Node, sim.Root) && _addDirichletNoise)
-                {
-                    Maths.AddDirichletNoiseInPlace(sim.Peval, _dirichletAlpha, _dirichletEpsilon);
-                }
-
-                if (sim.Node.Children != null)
-                {
-                    foreach (var kv in sim.Node.Children)
-                    {
-                        var (move, child) = kv;
-                        child.Prior = sim.Peval[move];
-                    }
-                }
-            }
-
-            var value = sim.TerminalValue ?? sim.Veval!.Value;
-
-            var node = sim.Node;
-            while (node != null)
-            {
-                if (node.Parent == null)
-                {
-                    node = sim.Root;
-                }
-                node.Visits++;
-                node.TotalValue += value;
-                node = node.Parent;
-                value = -value;
-            }
-
-            if (++sim.SimCount == sim.SimLimit)
-            {
-                sim.Reset();
                 metrics.StopWork();
                 _logger.Debug("FinishSim stop");
                 _moveQueue.Add(sim);
@@ -359,6 +330,51 @@ public class AzSelfPlayer : IDisposable
         _metricsQueue.Add(metrics);
     }
 
+    private void ExpandAndBackprop(MctsSimState2 sim)
+    {
+        Debug.Assert(sim.TerminalValue.HasValue || sim.Veval.HasValue);
+
+        if (sim.TerminalValue == null)
+        {
+            Debug.Assert(sim.Peval != null);
+            sim.Veval = -sim.Veval;
+
+            if (ReferenceEquals(sim.Node, sim.Root) && _addDirichletNoise)
+            {
+                Maths.AddDirichletNoiseInPlace(sim.Peval, _dirichletAlpha, _dirichletEpsilon);
+            }
+
+            if (sim.Node.Children != null)
+            {
+                foreach (var kv in sim.Node.Children)
+                {
+                    var (move, child) = kv;
+                    child.Prior = sim.Peval[move];
+                }
+            }
+        }
+
+        var value = sim.TerminalValue ?? sim.Veval!.Value;
+
+        var node = sim.Node;
+        while (node != null)
+        {
+            if (node.Parent == null)
+            {
+                node = sim.Root;
+            }
+            node.Visits++;
+            node.TotalValue += value;
+            node = node.Parent;
+            value = -value;
+        }
+
+        if (++sim.SimCount == sim.SimLimit)
+        {
+            sim.Reset();
+        }
+    }
+
     private void Move()
     {
         var metrics = TaskMetrics.StartNew(nameof(Move));
@@ -367,10 +383,9 @@ public class AzSelfPlayer : IDisposable
         {
             metrics.StartWork();
             _logger.Debug("Move start");
-            var move = sim.Root.Children!.Values.MaxBy(x => x.Visits)!.MoveFromParent;
-            sim.Root.State!.MakeMove(move!.Value);
+            DoBestMove(sim);
             metrics.IncState();
-            if (sim.Root.State.IsGameOver())
+            if (sim.Root.State!.IsGameOver())
             {
                 metrics.IncGame();
                 metrics.StopWork();
@@ -392,6 +407,12 @@ public class AzSelfPlayer : IDisposable
         _logger.Debug("Move done");
         DoneQueue.CompleteAdding();
         _metricsQueue.Add(metrics);
+    }
+
+    private static void DoBestMove(MctsSimState2 sim)
+    {
+        var move = sim.Root.Children!.Values.MaxBy(x => x.Visits)!.MoveFromParent;
+        sim.Root.State!.MakeMove(move!.Value);
     }
 }
 

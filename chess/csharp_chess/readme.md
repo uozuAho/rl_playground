@@ -25,9 +25,9 @@ dotnet run chess gpu
     - todo
         - WIP threaded mcts, using ideas from ExperimentSaturateGpu
             - WIP perf: try to get to 20k states/sec in eval
-                - why does adding a 2nd unbatcher task reduce throughput by 50%
-                - try consolidating start, finish, move tasks
+                - WIP try consolidating start, finish, move tasks
                     - then add another unbatcher - is num CPU threads the limiter?
+                - why does adding a 2nd unbatcher task reduce throughput by 50%
             - compare throughput with regular pmcts
 - az: train. does it improve?
     - check pol val loss - does it improve?
