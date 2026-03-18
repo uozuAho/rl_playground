@@ -383,9 +383,9 @@ public class AzSelfPlayer : IDisposable
         {
             metrics.StartWork();
             _logger.Debug("Move start");
-            DoBestMove(sim);
+            sim.DoBestMove();
             metrics.IncState();
-            if (sim.Root.State!.IsGameOver())
+            if (sim.IsDone)
             {
                 metrics.IncGame();
                 metrics.StopWork();
@@ -407,12 +407,6 @@ public class AzSelfPlayer : IDisposable
         _logger.Debug("Move done");
         DoneQueue.CompleteAdding();
         _metricsQueue.Add(metrics);
-    }
-
-    private static void DoBestMove(MctsSimState2 sim)
-    {
-        var move = sim.Root.Children!.Values.MaxBy(x => x.Visits)!.MoveFromParent;
-        sim.Root.State!.MakeMove(move!.Value);
     }
 }
 
@@ -458,6 +452,7 @@ internal class MctsSimState2
     internal MoveProbs? Peval;
     internal double? Veval;
     private string RootFen { get; }
+    public bool IsDone { get; private set; }
 
     public MctsSimState2(MctsNode2 root, int numSimulations)
     {
@@ -474,6 +469,16 @@ internal class MctsSimState2
         TerminalValue = null;
         Peval = null;
         Veval = null;
+    }
+
+    internal void DoBestMove()
+    {
+        Debug.Assert(SimCount == SimLimit);
+        Debug.Assert(Root.State != null);
+        Debug.Assert(Root.Children != null);
+        var move = Root.Children.Values.MaxBy(x => x.Visits)!.MoveFromParent;
+        Root.State.MakeMove(move!.Value);
+        IsDone = Root.State.IsGameOver();
     }
 
     private MctsNode2 ResetNode()
