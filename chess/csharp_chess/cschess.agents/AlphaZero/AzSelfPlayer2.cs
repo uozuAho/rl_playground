@@ -67,13 +67,7 @@ public class AzSelfPlayer2 : IDisposable
 
     public void Start()
     {
-        _tasks =
-        [
-            Task.Run(Advance),
-            Task.Run(Batch),
-            Task.Run(Eval),
-            Task.Run(Unbatch),
-        ];
+        _tasks = [Task.Run(Advance), Task.Run(Batch), Task.Run(Eval), Task.Run(Unbatch)];
     }
 
     public void StopAndWait()
@@ -306,7 +300,14 @@ internal sealed class SelfPlayGame
     private readonly double _dirichletAlpha;
     private readonly double _dirichletEpsilon;
 
-    public SelfPlayGame(MctsNode3 searchRoot, int numSimulations, double cPuct, bool addDirichletNoise, double dirichletAlpha, double dirichletEpsilon)
+    public SelfPlayGame(
+        MctsNode3 searchRoot,
+        int numSimulations,
+        double cPuct,
+        bool addDirichletNoise,
+        double dirichletAlpha,
+        double dirichletEpsilon
+    )
     {
         Debug.Assert(searchRoot.State != null);
         SearchRoot = searchRoot;
@@ -332,7 +333,7 @@ internal sealed class SelfPlayGame
     private void ResetSearch()
     {
         Debug.Assert(SearchRoot.State != null);
-        SearchRoot = new MctsNode3 {State = SearchRoot.State, Prior = 1.0};
+        SearchRoot = new MctsNode3 { State = SearchRoot.State, Prior = 1.0 };
         RootFen = SearchRoot.State.Fen();
         ResetSearchNode();
         _simCount = 0;
