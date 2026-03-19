@@ -5,9 +5,9 @@ using static TorchSharp.torch;
 
 namespace cschess.agents.test;
 
-public class AzSelfPlayerTests
+public class AzSelfPlayer2Tests
 {
-    [Fact(Skip = "use 2")]
+    [Fact]
     public void runs_and_stops()
     {
         var device = CPU;
@@ -15,7 +15,7 @@ public class AzSelfPlayerTests
         const int mctsSims = 1;
         const int batchSize = 1;
         const int unbatchSize = 1;
-        using var tmcts = new AzSelfPlayer(
+        using var tmcts = new AzSelfPlayer2(
             net,
             mctsSims,
             batchSize,
