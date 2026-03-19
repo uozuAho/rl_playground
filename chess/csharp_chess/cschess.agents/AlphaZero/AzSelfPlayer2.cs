@@ -67,7 +67,7 @@ public class AzSelfPlayer2 : IDisposable
 
     public void Start()
     {
-        _tasks = [Task.Run(Advance), Task.Run(Batch), Task.Run(Eval), Task.Run(Unbatch)];
+        _tasks = [Task.Run(Advance), Task.Run(Batch), Task.Run(Eval), Task.Run(Unbatch), Task.Run(Unbatch)];
     }
 
     public void StopAndWait()
@@ -135,7 +135,7 @@ public class AzSelfPlayer2 : IDisposable
                 Interlocked.Decrement(ref _gamesInProgress);
                 DoneQueue.Add(sim.SearchRoot.State!);
                 metrics.IncGame();
-                if (_gamesInProgress == 0 && _stopRequested)
+                if (_gamesInProgress < _maxBatchSize && _stopRequested)
                 {
                     _logger.Debug("Advance: 0 games in progress, completing batch queue");
                     _batchQueue.CompleteAdding();
@@ -143,6 +143,7 @@ public class AzSelfPlayer2 : IDisposable
             }
             else
             {
+                metrics.StopWork();
                 _batchQueue.Add(sim);
             }
         }
