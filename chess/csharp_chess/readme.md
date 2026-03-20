@@ -22,14 +22,18 @@ dotnet run chess gpu
     - notes
         - py maxed out about 30 steps/sec with nn 2 48, mcts 60, multiprocess
         - original C# nn 2 48, mcts 60, single thread: 30-50 steps/sec, 4-8 parallel games
+        - threaded az self player: nn 2 48, mcts 60: ~110 steps/sec. 20 games, 6700 samples in 60 sec. ~50% gpu,
+          batch size 10, needs larger batches and unbatch perf debugging (mcts evals only doing 6k states/sec,
+          should be able to get ~20k).
     - todo
         - WIP threaded mcts, using ideas from ExperimentSaturateGpu
             - WIP perf: try to get to 20k states/sec in eval
                 - az self player 2
-                    - move gpu->cpu transfer to eval thread. unbatch should be all CPU
-                    - then add another unbatcher - better throughput now?
+                    - log/profile. who's holding things up with large batches?
+                    - move gpu->cpu transfer?
                 - do same with az self player 1. same throughput? which is better?
             - compare throughput with regular pmcts
+- check az self player: are all output trajectories the same?
 - az: train. does it improve?
     - check pol val loss - does it improve?
         - if looks ok, eval vs random opponent

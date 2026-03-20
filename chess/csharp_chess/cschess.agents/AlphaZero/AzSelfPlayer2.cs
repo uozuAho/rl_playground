@@ -125,10 +125,11 @@ public class AzSelfPlayer2 : IDisposable
         foreach (var sim in _advanceQueue.GetConsumingEnumerable())
         {
             metrics.StartWork();
-            metrics.IncState();
             _logger.Debug("Advance start");
 
             sim.Advance();
+            if (sim._simCount == 1)
+                metrics.IncState();
 
             if (sim.IsDone)
             {
@@ -258,7 +259,7 @@ public class AzSelfPlayer2 : IDisposable
     }
 }
 
-internal sealed record MctsNode3
+public sealed record MctsNode3
 {
     public MctsNode3? Parent { get; init; }
     public double Prior { get; internal set; }
@@ -290,18 +291,18 @@ internal sealed record MctsNode3
     }
 }
 
-internal sealed class SelfPlayGame
+public sealed class SelfPlayGame
 {
     public bool IsDone;
 
-    internal MctsNode3 SearchRoot { get; private set; }
-    internal MctsNode3 SearchNode { get; private set; }
+    public MctsNode3 SearchRoot { get; private set; }
+    public MctsNode3 SearchNode { get; private set; }
     internal double? TerminalValue;
-    internal MoveProbs? Peval;
-    internal double? Veval;
+    public MoveProbs? Peval;
+    public double? Veval;
 
-    private string RootFen { get; set; }
-    private int _simCount;
+    public string RootFen { get; set; }
+    internal int _simCount;
     private readonly int _simLimit;
 
     private readonly double _cPuct;
