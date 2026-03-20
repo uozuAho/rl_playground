@@ -28,8 +28,11 @@ dotnet run chess gpu
     - todo
         - WIP threaded mcts, using ideas from ExperimentSaturateGpu
             - WIP perf: try to get to 20k states/sec in eval
-                - az self player 2
-                    - log/profile. who's holding things up with large batches?
+                - az self player 2. ideas
+                    - WIP try making advance a simple greedy move
+                        - single unbatch maxed at 10k? try more numbers
+                    - log 1vs2 unbatch
+                    - profile 1vs2 unbatch
                     - move gpu->cpu transfer?
                 - do same with az self player 1. same throughput? which is better?
             - compare throughput with regular pmcts

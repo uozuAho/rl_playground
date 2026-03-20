@@ -354,26 +354,38 @@ public sealed class SelfPlayGame
     /// </summary>
     public void Advance()
     {
-        if (SearchRoot.Children == null)
-        {
-            DoTreePol();
-        }
-        else
-        {
-            ExpandAndBackprop();
-            if (_simCount == _simLimit)
-            {
-                ResetSearchNode();
-                DoBestMove();
-                ResetSearch();
-            }
-            if (!IsDone)
-            {
-                DoTreePol();
-            }
-        }
+        DoGreedyBestMove();
+        // if (SearchRoot.Children == null)
+        // {
+        //     DoTreePol();
+        // }
+        // else
+        // {
+        //     ExpandAndBackprop();
+        //     if (_simCount == _simLimit)
+        //     {
+        //         ResetSearchNode();
+        //         DoBestMove();
+        //         ResetSearch();
+        //     }
+        //     if (!IsDone)
+        //     {
+        //         DoTreePol();
+        //     }
+        // }
+        //
+        // _simCount++;
+    }
 
-        _simCount++;
+    private void DoGreedyBestMove()
+    {
+        if (Peval != null)
+        {
+            var bestMove = Peval.MaxBy(x => x.Value).Key;
+            SearchRoot.State!.MakeMove(bestMove);
+            SearchNode = SearchRoot;
+            IsDone = SearchRoot.State.IsGameOver();
+        }
     }
 
     private void DoTreePol()

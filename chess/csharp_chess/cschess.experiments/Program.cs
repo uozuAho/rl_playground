@@ -9,10 +9,10 @@ return;
 void runs_and_stops()
 {
     var device = CUDA;
-    const int mctsSims = 60;
-    const int batchSize = 10;
-    const int unbatchSize = 10;
-    const int numGames = 20;
+    const int mctsSims = 10;
+    const int batchSize = 40;
+    const int unbatchSize = 40;
+    const int numGames = 800;
     var net = new ResNet(2, 48, device);
     const LogLevel logLevel = LogLevel.Info;
     using var tmcts = new AzSelfPlayer2(
