@@ -13,7 +13,9 @@ namespace cschess.agents.AlphaZero;
 /// Best I've got so far ~ 26k states/sec with
 /// NN 2 48
 /// one job each apart from unbatcher, 2x unbatchers
-/// batch size 40
+/// batch size ~40-50
+/// eval util: 84% (nvtop reports ~75% GPU)
+/// unbatch util: 32% (x2)
 /// larger batches slow things down, and reduce eval utilisation
 ///
 /// jobs:

@@ -25,10 +25,10 @@ dotnet run chess gpu
     - todo
         - WIP threaded mcts, using ideas from ExperimentSaturateGpu
             - WIP perf: try to get to 20k states/sec in eval
-                - WIP try consolidating start, finish, move tasks
-                    - test az self player 2
-                    - then add another unbatcher - is num CPU threads the limiter?
-                - why does adding a 2nd unbatcher task reduce throughput by 50%
+                - az self player 2
+                    - move gpu->cpu transfer to eval thread. unbatch should be all CPU
+                    - then add another unbatcher - better throughput now?
+                - do same with az self player 1. same throughput? which is better?
             - compare throughput with regular pmcts
 - az: train. does it improve?
     - check pol val loss - does it improve?

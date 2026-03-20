@@ -67,7 +67,7 @@ public class AzSelfPlayer2 : IDisposable
 
     public void Start()
     {
-        _tasks = [Task.Run(Advance), Task.Run(Batch), Task.Run(Eval), Task.Run(Unbatch), Task.Run(Unbatch)];
+        _tasks = [Task.Run(Advance), Task.Run(Batch), Task.Run(Eval), Task.Run(Unbatch)];
     }
 
     public void StopAndWait()
@@ -135,9 +135,9 @@ public class AzSelfPlayer2 : IDisposable
                 Interlocked.Decrement(ref _gamesInProgress);
                 DoneQueue.Add(sim.SearchRoot.State!);
                 metrics.IncGame();
-                if (_gamesInProgress < _maxBatchSize && _stopRequested)
+                if (_gamesInProgress == 0 && _stopRequested)
                 {
-                    _logger.Debug("Advance: 0 games in progress, completing batch queue");
+                    _logger.Info($"Advance: {_gamesInProgress} games in progress, completing batch queue");
                     _batchQueue.CompleteAdding();
                 }
             }
@@ -158,29 +158,40 @@ public class AzSelfPlayer2 : IDisposable
         var bufIdx = 0;
         var metrics = TaskMetrics.StartNew(nameof(Batch));
 
-        foreach (var sim in _batchQueue.GetConsumingEnumerable())
+        while (true)
         {
+            _batchQueue.TryTake(out var sim, TimeSpan.FromMilliseconds(1000));
             metrics.StartWork();
             _logger.Debug("Batch start");
-            batchBuf[bufIdx++] = sim;
-            var batchSize = Math.Min(_maxBatchSize, _gamesInProgress);
-            if (bufIdx == batchSize)
+
+            if (sim != null)
+                batchBuf[bufIdx++] = sim;
+
+            if (bufIdx > 0)
             {
-                var batch = new SelfPlayGame[batchSize];
-                var batchStates = new IChessGame[batchSize];
-                for (var i = 0; i < batchSize; i++)
+                var batchSize = Math.Min(_maxBatchSize, _gamesInProgress);
+                if (bufIdx == batchSize)
                 {
-                    batch[i] = batchBuf[i];
-                    batchStates[i] = batchBuf[i].SearchNode.State!;
+                    var batch = new SelfPlayGame[batchSize];
+                    var batchStates = new IChessGame[batchSize];
+                    for (var i = 0; i < batchSize; i++)
+                    {
+                        batch[i] = batchBuf[i];
+                        batchStates[i] = batchBuf[i].SearchNode.State!;
+                    }
+
+                    var batchArray = _net.Codec.States2Array(batchStates);
+                    var batchTensor = from_array(batchArray).to(_device);
+                    metrics.IncState(batchSize);
+                    _logger.Debug("Batch stop");
+                    metrics.StopWork();
+                    _evalQueue.Add((batch, batchTensor));
+                    bufIdx = 0;
                 }
-                var batchArray = _net.Codec.States2Array(batchStates);
-                var batchTensor = from_array(batchArray).to(_device);
-                metrics.IncState(batchSize);
-                _logger.Debug("Batch stop");
-                metrics.StopWork();
-                _evalQueue.Add((batch, batchTensor));
-                bufIdx = 0;
             }
+
+            if (sim == null && _batchQueue.IsAddingCompleted)
+                break;
         }
         _logger.Debug("Batch done");
         _evalQueue.CompleteAdding();
@@ -198,18 +209,8 @@ public class AzSelfPlayer2 : IDisposable
             var mpv = _net.Forward(simsTensor);
             var (p, v) = mpv;
 
-            var batchNum = 0;
-            foreach (var simBatch in sims.Batch(_unbatchSize))
-            {
-                var mpvSlice = (
-                    p.narrow(0, batchNum * _unbatchSize, simBatch.Length),
-                    v.narrow(0, batchNum * _unbatchSize, simBatch.Length)
-                );
-                batchNum++;
-                metrics.StopWork();
-                _unbatchQueue.Add((simBatch, mpvSlice));
-                metrics.StartWork();
-            }
+            // todo: move to codec once you figure out why multi-unbatch is slow
+            _unbatchQueue.Add((sims, (p.softmax(dim: 1).cpu(), v.squeeze().cpu())));
 
             metrics.IncState(sims.Length);
             _logger.Debug("Eval stop");
@@ -228,7 +229,14 @@ public class AzSelfPlayer2 : IDisposable
         {
             metrics.StartWork();
             _logger.Debug("Unbatch start");
-            foreach (var (sim, pv) in sims.Zip(_net.Codec.NnHeadsToPv(pvs.Item1, pvs.Item2)))
+
+            // todo: move to codec once you figure out why multi-unbatch is slow
+            var parr = pvs.Item1.data<float>().ToArray();
+            var varr = pvs.Item2.data<float>().ToArray();
+            Debug.Assert(parr.Length == varr.Length * 4096);
+            var simpvs = parr.Batch(4096).Zip(varr);
+
+            foreach (var (sim, pv) in sims.Zip(simpvs))
             {
                 if (!sim.TerminalValue.HasValue)
                 {

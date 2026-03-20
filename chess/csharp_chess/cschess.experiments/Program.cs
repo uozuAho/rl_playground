@@ -3,14 +3,15 @@ using cschess.game;
 using static TorchSharp.torch;
 
 runs_and_stops();
+// asdf();
 return;
 
 void runs_and_stops()
 {
     var device = CUDA;
-    const int mctsSims = 10;
+    const int mctsSims = 60;
     const int batchSize = 40;
-    const int unbatchSize = 20;
+    const int unbatchSize = 40;
     const int numGames = 80;
     var net = new ResNet(2, 48, device);
     const LogLevel logLevel = LogLevel.Info;
@@ -28,4 +29,9 @@ void runs_and_stops()
     }
     tmcts.Start();
     tmcts.StopAndWait();
+}
+
+void asdf()
+{
+    ExperimentSaturateGpu.EvaluateSaturateGpu();
 }
