@@ -67,7 +67,7 @@ public class AzSelfPlayer2 : IDisposable
 
     public void Start()
     {
-        _tasks = [Task.Run(Advance), Task.Run(Batch), Task.Run(Eval), Task.Run(Unbatch)];
+        _tasks = [Task.Run(Advance), Task.Run(Batch), Task.Run(Eval), Task.Run(Unbatch), Task.Run(Unbatch)];
     }
 
     public void StopAndWait()
@@ -208,14 +208,10 @@ public class AzSelfPlayer2 : IDisposable
             metrics.StartWork();
             _logger.Debug("Eval start");
             var mpv = _net.Forward(simsTensor);
-            var (p, v) = mpv;
-
-            // todo: move to codec once you figure out why multi-unbatch is slow
-            _unbatchQueue.Add((sims, (p.softmax(dim: 1).cpu(), v.squeeze().cpu())));
-
             metrics.IncState(sims.Length);
             _logger.Debug("Eval stop");
             metrics.StopWork();
+            _unbatchQueue.Add((sims, mpv));
         }
         _logger.Debug("Eval done");
         _unbatchQueue.CompleteAdding();
@@ -231,13 +227,7 @@ public class AzSelfPlayer2 : IDisposable
             metrics.StartWork();
             _logger.Debug("Unbatch start");
 
-            // todo: move to codec once you figure out why multi-unbatch is slow
-            var parr = pvs.Item1.data<float>().ToArray();
-            var varr = pvs.Item2.data<float>().ToArray();
-            Debug.Assert(parr.Length == varr.Length * 4096);
-            var simpvs = parr.Batch(4096).Zip(varr);
-
-            foreach (var (sim, pv) in sims.Zip(simpvs))
+            foreach (var (sim, pv) in sims.Zip(_net.Codec.NnHeadsToPv(pvs.Item1, pvs.Item2)))
             {
                 if (!sim.TerminalValue.HasValue)
                 {

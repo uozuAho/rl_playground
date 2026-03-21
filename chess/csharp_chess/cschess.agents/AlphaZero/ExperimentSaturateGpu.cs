@@ -55,6 +55,7 @@ public class ExperimentSaturateGpu
             Task.Run(Eval),
             Task.Run(Unbatch),
             Task.Run(Unbatch),
+            Task.Run(Unbatch),
             Task.Run(MakeMove),
         };
 
@@ -126,7 +127,9 @@ public class ExperimentSaturateGpu
                 metrics.IncState();
                 metrics.StopWork();
                 MoveQueue.Add((game, mpd));
+                metrics.StartWork();
             }
+            metrics.StopWork();
         }
         MoveQueue.CompleteAdding();
 

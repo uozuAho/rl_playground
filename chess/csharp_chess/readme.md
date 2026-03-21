@@ -31,6 +31,13 @@ dotnet run chess gpu
                 - az self player 2. ideas
                     - WIP try making advance a simple greedy move
                         - single unbatch maxed at 10k? try more numbers
+                            - experiment: 2nd unbatch helps
+                                - 1: 16k/sec, eval 55%, unbatch 100%, batch 20%
+                                - 2: 24k/sec, eval 84%, unbatch 92%, batch 45%
+                                - 3: 25k/sec, eval 90%, unbatch 75%, batch 46%
+                            - az self play 2: 2nd unbatch no help
+                                - 1: 14k/sec, eval 60%, unbatch 100%, batch 22%
+                                - 2: 10k/sec, eval 56%, unbatch 56%, batch 22%
                     - log 1vs2 unbatch
                     - profile 1vs2 unbatch
                     - move gpu->cpu transfer?
