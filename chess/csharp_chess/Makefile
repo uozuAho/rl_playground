@@ -33,3 +33,7 @@ prof-exp-rls:
 prof-clean:
 	rm *.speedscope*
 	rm *.nettrace*
+
+clean: prof-clean
+	rm -rf cschess*/bin
+	rm -rf cschess*/obj
