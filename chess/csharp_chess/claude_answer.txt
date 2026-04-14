@@ -1,0 +1,63 @@
+## Why a Second Unbatch Task Halves Throughput
+
+### The Pipeline
+
+The pipeline is a circular producer-consumer chain:
+
+  Advance → _batchQueue → Batch → _evalQueue → Eval (GPU) → _unbatchQueue → Unbatch → _advanceQueue → Advance
+
+### Why 1×Unbatch at ~100% is the bottleneck
+
+With a single Unbatch task fully occupied, it is consuming from _unbatchQueue as fast as Eval can fill it.
+The GPU sits at 40% because Eval is running fast enough to keep Unbatch fed, but the GPU isn't the
+bottleneck — the CPU-side Unbatch processing is.
+
+### What actually happens when you add a second Unbatch task
+
+The two Unbatch tasks contend on shared GPU/tensor resources:
+
+1. **CUDA stream serialization**: TorchSharp/LibTorch uses a single default CUDA stream per device.
+   GPU operations issued from multiple CPU threads are all serialized onto that one stream.
+   NnHeadsToPv almost certainly involves GPU tensor operations (slice reads, type conversions,
+   CPU-GPU transfers). With two Unbatch tasks both calling NnHeadsToPv concurrently, and Eval also
+   calling net.Forward concurrently, all three are pushing operations onto the same CUDA stream.
+   They don't execute in parallel on the GPU — they queue up and execute sequentially, but now with
+   worse CPU-GPU pipeline overlap and more synchronization overhead.
+
+2. **LibTorch internal locking**: LibTorch uses internal mutexes for tensor dispatch. Two threads
+   concurrently accessing tensor state (even for read operations like narrow + cpu()) must acquire
+   these locks, causing one to block while the other proceeds. The result is serial execution with
+   the added cost of lock acquisition, cache line invalidation, and OS context switches.
+
+3. **Contention with Eval's forward pass**: The Eval task's net.Forward is GPU-heavy. With a single
+   Unbatch, it mostly runs while Unbatch is doing CPU-side work (dict building etc.), giving good
+   overlap. With two Unbatch tasks both doing GPU tensor ops simultaneously with Eval's forward pass,
+   all three compete on the CUDA stream, slowing the forward pass itself down.
+
+### Why each Unbatch reports ~40% and total throughput halves
+
+Because each item takes ~2× longer to process (due to the contention above), each Unbatch task
+does roughly half the work per unit time compared to one uncontested task. But two tasks at half
+speed = the same total throughput — so where does the other half go?
+
+The answer is that Eval also slows down (because of (3) above), so it produces items for
+_unbatchQueue less frequently. Both Unbatch tasks then spend more time blocked on
+_unbatchQueue.GetConsumingEnumerable() waiting for work. This idle waiting is what the ~60%
+non-utilization represents.
+
+The compounding effect:
+  - Eval slows down → _unbatchQueue fills more slowly
+  - Both Unbatch tasks idle more (each ~40% instead of one at ~100%)
+  - Fewer sims return to _advanceQueue per second
+  - Batch produces smaller/fewer batches per second
+  - Eval gets less work → GPU utilization drops
+  - Circular: lower GPU util → slower Eval → sparser _unbatchQueue → lower Unbatch util
+
+### Summary
+
+The Unbatch work looks parallelisable (independent items, no shared mutable state), but the
+underlying tensor operations serialize on the GPU CUDA default stream and LibTorch internal locks.
+Adding a second worker doesn't give 2× throughput on those ops — it gives ~1× throughput with 2×
+coordination overhead. The true fix is not adding CPU threads but reducing the GPU round-trips in
+Unbatch: batch the tensor-to-CPU transfers, pre-transfer the entire p/v output to CPU in Eval
+before slicing, so that Unbatch is doing pure CPU work and doesn't contend with the forward pass.

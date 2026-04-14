@@ -1,0 +1,78 @@
+Theories on why AzSelfPlayer2 is slower than ExperimentSaturateGpu
+===================================================================
+
+1. THE ADVANCE TASK IS THE REAL BOTTLENECK
+------------------------------------------
+The most significant difference is that AzSelfPlayer2 has an Advance task doing
+heavy CPU work that has no equivalent in ExperimentSaturateGpu. For every NN eval,
+Advance must:
+  - Traverse the MCTS tree (DoTreePol) - calling Puct() on all children to find the
+    best child, and MakeMove/IsGameOver for each step down
+  - Do backpropagation (ExpandAndBackprop) - walking up the tree to update visit
+    counts and values
+  - After _simLimit simulations: pick the best move, make it, reset the tree
+
+ExperimentSaturateGpu's MakeMove is trivial by comparison: one MaxBy() and one
+MakeMove() call. Advance is orders of magnitude more expensive per game per NN eval,
+and it runs on a single thread.
+
+This means:
+  - Games come back from Unbatch → sit in _advanceQueue → Advance processes them
+    slowly → batchQueue starves → Batch waits → Eval is starved → GPU is underutilised.
+  - ExperimentSaturateGpu's pipeline never starves: MakeMove is so fast that games
+    return to BatchQueue almost instantly.
+
+2. FEN ROUND-TRIP OVERHEAD IN ResetSearchNode
+----------------------------------------------
+Every MCTS simulation calls ResetSearchNode(), which calls
+CodingAdventureChessGame.FromFen(RootFen). This parses a FEN string to reconstruct
+the game state from scratch on every simulation. With _numSimulations iterations per
+move per game, this happens extremely often and is significant CPU overhead.
+ExperimentSaturateGpu mutates game state in-place with no such reconstruction.
+
+3. WHY ADDING A SECOND UNBATCH TASK HALVES THROUGHPUT
+------------------------------------------------------
+If Unbatch were the true bottleneck, a second task should increase throughput. That
+it halves it instead points to Advance being the constraint:
+
+  - With 1 Unbatch: Unbatch is always busy (100% util) because Eval produces items
+    as fast as Unbatch can consume them. Advance is also the downstream bottleneck
+    so _advanceQueue builds up.
+
+  - With 2 Unbatch tasks: they consume from _unbatchQueue faster, but both feed into
+    the same single-threaded Advance. Advance still runs at the same rate. Now there
+    are more CPU threads competing for cores (Advance + 2 Unbatch vs Advance + 1
+    Unbatch), causing more context-switching. Advance gets less CPU time, slowing it
+    further, which reduces how fast games return to batchQueue, starving Batch and
+    Eval more - hence lower GPU utilisation and lower throughput overall.
+
+  The 40% utilisation on each Unbatch (vs ~100% with one) confirms they're both
+  mostly waiting - for either _unbatchQueue items (Eval is starved) or for
+  _advanceQueue to accept (Advance is slow).
+
+4. BATCH STARVATION FROM SLOW GAME RECYCLING
+--------------------------------------------
+ExperimentSaturateGpu starts with 4000 games and they cycle back to BatchQueue very
+fast. The batch queue is always well-stocked, so Batch always forms full batches of
+40, keeping the GPU fed.
+
+In AzSelfPlayer2, the slow Advance step means games take much longer to return to
+batchQueue after each NN eval. If the number of games in flight is not very large
+relative to the simulation time, batchQueue will often have fewer items than
+batchSize, causing Batch to either wait or send smaller batches. Smaller batches
+waste GPU capacity.
+
+5. MINOR: EXTRA ALLOCATIONS IN UNBATCH
+---------------------------------------
+AzSelfPlayer2's Unbatch calls parr = pvs.Item1.data<float>().ToArray() which
+allocates a large managed array (batchSize * 4096 floats). ExperimentSaturateGpu
+delegates this to Net.NnHeadsToPv which may be more efficient. This is likely a
+minor factor compared to the above.
+
+SUMMARY
+-------
+The dominant cause is that MCTS simulation logic (Advance task) is far more
+CPU-intensive than a greedy MoveMove, creating a bottleneck that starves the GPU.
+The FEN round-trip in every simulation adds further overhead. The pipeline in
+ExperimentSaturateGpu is designed so that the non-GPU steps are trivial, keeping
+the GPU continuously fed with large batches.
